@@ -5,6 +5,20 @@ enum BentoTile: CaseIterable, Sendable {
     case ticker, volume, note, cards, moon, owl, word
 }
 
+/// The words printed on the tiles, in capitals and in the reader's language. The wordmark is not one of them.
+enum BentoWords {
+    static let notebook = String(localized: "NOTEBOOK")
+    static let notes = String(localized: "NOTES")
+    static let page = String(localized: "P. 12")
+    static let volume = String(localized: "VOL.")
+    static let write = String(localized: "WRITE")
+    static let sketch = String(localized: "SKETCH")
+    static let study = String(localized: "STUDY")
+
+    /// The three things the app is for, each with its English, which a tile falls back on when it cannot set the word.
+    static let verbs = [(word: write, english: "WRITE"), (word: sketch, english: "SKETCH"), (word: study, english: "STUDY")]
+}
+
 /// What a tile needs to draw itself at one moment.
 struct BentoScene {
     let time: Double
@@ -70,8 +84,9 @@ struct BentoBoard {
                           bottom: side(size.height - frame.maxY), trailing: side(size.width - frame.maxX))
     }
 
+    /// A tile stops coming in the moment the tiles start to leave, so a splash sent away early only takes off what has arrived.
     func pose(_ tile: BentoTile, at clock: SplashClock) -> Pose {
-        let enter = tile.entrance.progress(clock.time), leave = tile.departure.progress(clock.exit)
+        let enter = tile.entrance.progress(clock.time - (clock.leaving ?? 0)), leave = tile.departure.progress(clock.exit)
         if tile == .volume {
             return Pose(offset: .zero, degrees: -14 * (1 - enter) + 12 * leave, scale: enter * (1 - leave))
         }
@@ -164,6 +179,12 @@ extension BentoTile {
         }
     }
 
+    /// Off the window again: a tile that came only part of the way in has left once it has gone as far back.
+    func hasLeft(at clock: SplashClock) -> Bool {
+        let came = entrance.progress(clock.time - (clock.leaving ?? 0)), gone = departure.progress(clock.exit)
+        return came <= 0 || gone >= (self == .volume ? 1 : min(came, 1))
+    }
+
     /// The clock a tile's scene is drawn from: stopped once the scene is finished, and leaving only for the owl, which watches the others go.
     func sceneClock(_ clock: SplashClock) -> SplashClock {
         switch self {
@@ -201,7 +222,7 @@ struct BentoSplash: View {
     nonisolated static let rest = 1700.0
     /// Every scene has played and only the loops run on: the moment Reduce Motion shows as a still.
     nonisolated static let still = 2160.0
-    /// When the tiles may start to leave, once the app is ready.
+    /// When the tiles may start to leave, once the app is ready; a hurried splash goes sooner.
     nonisolated static let handOver = 2150.0
     /// How long the leaving takes, the library's settling included.
     nonisolated static let leaveDuration = 510.0

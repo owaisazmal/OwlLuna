@@ -18,6 +18,51 @@ final class LaunchOverlayTests: XCTestCase {
         XCTAssertFalse(LaunchAnimation.isEnabled, "and stays off once the first scene is claimed")
     }
 
+    func testAHurriedSplashLeavesAtOnceAndOneNobodyHasSeenIsSimplyOver() {
+        var clock = SplashClock(time: 0)
+        for _ in 0..<30 { XCTAssertNil(LaunchOverlay.advance(&clock, by: 16, ready: false, hurried: true)) }
+        XCTAssertEqual(clock.time, 0, "nothing of it is shown while something is waiting")
+        XCTAssertEqual(LaunchOverlay.advance(&clock, by: 16, ready: true, hurried: true), .finished)
+        XCTAssertNil(clock.leaving, "there are no tiles to peel off")
+
+        clock = SplashClock(time: 800)
+        XCTAssertNil(LaunchOverlay.advance(&clock, by: 16, ready: false, hurried: true), "it plays on until the app is ready")
+        XCTAssertEqual(clock.time, 816, accuracy: 1e-6)
+        for (start, longest) in [(816.0, 440.0), (100, 300)] {
+            clock = SplashClock(time: start)
+            XCTAssertEqual(LaunchOverlay.advance(&clock, by: 16, ready: true, hurried: true), .handOver, "the tiles leave without waiting for 2.15 s")
+            var events: [LaunchOverlay.Event] = []
+            for _ in 0..<60 where events.isEmpty {
+                if let event = LaunchOverlay.advance(&clock, by: 16, ready: true, hurried: true) { events.append(event) }
+            }
+            XCTAssertEqual(events, [.finished])
+            XCTAssertLessThan(clock.exit, longest, "it is over as soon as what had come in has gone, from \(start) ms")
+            XCTAssertTrue(BentoTile.allCases.allSatisfy { $0.hasLeft(at: clock) })
+        }
+    }
+
+    func testTheCurtainHoldsOnlyWhileItIsUpAndAskingHurriesIt() {
+        let curtain = LaunchCurtain()
+        XCTAssertFalse(curtain.holds())
+        XCTAssertFalse(curtain.isHurried, "nothing waits for a splash that is not there")
+        curtain.isUp = true
+        XCTAssertTrue(curtain.holds())
+        XCTAssertTrue(curtain.isHurried)
+        curtain.isUp = false
+        XCTAssertFalse(curtain.holds())
+    }
+
+    func testAWindowKnowsWhetherItWillReopenANotebook() {
+        let scene = "launch-\(UUID().uuidString)", notebook = UUID()
+        defer { WindowMemory.keep(only: []) }
+        XCTAssertFalse(WindowMemory.reopens(in: scene), "nothing kept, nothing noted")
+        XCTAssertTrue(WindowMemory.reopens(in: scene, fallback: notebook.uuidString), "nothing kept yet, so the scene's own note counts")
+        WindowMemory.remember(notebook, beside: nil, in: scene)
+        XCTAssertTrue(WindowMemory.reopens(in: scene))
+        WindowMemory.remember(nil, beside: nil, in: scene)
+        XCTAssertFalse(WindowMemory.reopens(in: scene, fallback: notebook.uuidString), "back in the library: what is kept here wins over an older note")
+    }
+
     func testEveryGroupHasPartsInBothLaunchPalettes() {
         for (name, groups) in [("light", OwlLunaMarkGroups.launchLight), ("dark", .launchDark)] {
             XCTAssertNotNil(groups.skyTop, "\(name) tile")
@@ -45,7 +90,9 @@ final class BentoSplashTests: XCTestCase {
     }
 
     func testSplashStartsOnBarePaperAndLeavesTheLibraryBare() {
-        let moments = [("start", SplashClock(time: 0)), ("end", SplashClock(time: 9000, leaving: BentoSplash.leaveDuration))]
+        let moments = [("start", SplashClock(time: 0)), ("last unseen moment", SplashClock(time: LaunchOverlay.unseen)),
+                       ("end", SplashClock(time: 9000, leaving: BentoSplash.leaveDuration))]
+            + [100.0, 300, 900].map { ("end of a leave begun at \(Int($0))", SplashClock(time: $0 + BentoSplash.leaveDuration, leaving: BentoSplash.leaveDuration)) }
         for size in windows {
             for statusBar: CGFloat in [0, 24, 32] {
                 let board = BentoBoard(size: size, statusBar: statusBar), window = CGRect(origin: .zero, size: size)
@@ -55,6 +102,19 @@ final class BentoSplashTests: XCTestCase {
                         XCTAssertTrue(placed.isEmpty || !placed.intersects(window), "\(tile) at the \(name) in \(size) under a bar of \(statusBar)")
                     }
                 }
+            }
+        }
+    }
+
+    func testATileStopsComingInOnceTheTilesStartToLeave() {
+        let board = BentoBoard(size: CGSize(width: 1194, height: 834), statusBar: 24)
+        for start in [400.0, 700] {
+            for tile in BentoTile.allCases {
+                let held = board.pose(tile, at: SplashClock(time: start)), leaving = board.pose(tile, at: SplashClock(time: start + 20, leaving: 20))
+                XCTAssertEqual(leaving.offset.width, held.offset.width, accuracy: 0.001, "\(tile) from \(start)")
+                XCTAssertEqual(leaving.offset.height, held.offset.height, accuracy: 0.001, "\(tile) from \(start)")
+                XCTAssertEqual(leaving.degrees, held.degrees, accuracy: 0.001, "\(tile) from \(start)")
+                XCTAssertEqual(leaving.scale, held.scale, accuracy: 0.001, "\(tile) from \(start)")
             }
         }
     }
@@ -173,6 +233,61 @@ final class BentoSplashTests: XCTestCase {
         assertBounds("M58,148.5 A13.5,13.5 0 0 0 58,175.5 A6,13.5 0 0 0 58,148.5 Z", CGRect(x: 44.5, y: 148.5, width: 19.5, height: 27))
         assertBounds("M80,245 a5,5 0 0 1 5,-5 h108 a5,5 0 0 1 5,5 v14 h-118 z", CGRect(x: 80, y: 240, width: 118, height: 19))
         assertBounds("M10,10 L", CGRect(x: 0, y: 0, width: 10, height: 10))
+    }
+
+    func testTheHandPrintsEveryCapitalAndTheMarksTheyCarry() {
+        for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
+            XCTAssertTrue(BentoNoteTile.canPrint(String(letter)), "\(letter)")
+        }
+        for word in ["écrire", "ÀÈÊËÎÔÛ", "ÑANDÚ", "ÜBER", "GARÇON", "Straße", "S'EXERCER", "S\u{2019}EXERCER", "RENDEZ-VOUS", "TO DO", " lernen "] {
+            XCTAssertTrue(BentoNoteTile.canPrint(word), word)
+        }
+        for word in ["", "  ", "日本", "ØL", "NO. 1"] {
+            XCTAssertFalse(BentoNoteTile.canPrint(word), word)
+        }
+        let english = BentoNoteTile.printed(["WRITE", "SKETCH", "STUDY"])
+        let fallen = BentoNoteTile.printed(["日本", "sketch", "ØL"])
+        XCTAssertEqual(fallen.map(\.bounds), english.map(\.bounds), "a word the hand cannot print gives way to its row's English one")
+    }
+
+    /// The checklist's three words in every language the app is built in, read from the catalog.
+    private func checklists() throws -> [[String]] {
+        let keys: [String.LocalizationValue] = ["WRITE", "SKETCH", "STUDY"]
+        return try Bundle.main.localizations.sorted().map { code in
+            let bundle = try XCTUnwrap(Bundle.main.path(forResource: code, ofType: "lproj").flatMap(Bundle.init(path:)), code)
+            return keys.map { String(localized: $0, bundle: bundle, locale: Locale(identifier: code)) }
+        }
+    }
+
+    func testTheChecklistFitsBeforeTheStarInEveryLanguage() throws {
+        let languages = try checklists()
+        XCTAssertGreaterThanOrEqual(languages.count, 4)
+        XCTAssertTrue(languages.contains(["SCHREIBEN", "ZEICHNEN", "LERNEN"]), "the catalog's German is what is checked")
+        for words in languages {
+            for word in words { XCTAssertTrue(BentoNoteTile.canPrint(word), "the hand cannot print \(word)") }
+            let rows = BentoNoteTile.printed(words)
+            XCTAssertEqual(rows.count, 3, "\(words)")
+            XCTAssertEqual(Set(rows.map(\.scale)).count, 1, "one size on every row: \(words)")
+            for (row, word) in rows.enumerated() {
+                XCTAssertGreaterThan(word.scale, 0.75, "\(words[row]) is too small to read")
+                XCTAssertLessThan(word.bounds.maxX + word.penWidth / 2, 170, "\(words[row]) reaches the star")
+                XCTAssertGreaterThan(word.bounds.minY - word.penWidth / 2, 36 * CGFloat(row), "\(words[row]) reaches the rule above")
+            }
+        }
+        XCTAssertEqual(BentoNoteTile.printed(["WRITE", "SKETCH", "STUDY"]).first?.scale, 1, "English is printed at full size")
+        XCTAssertEqual(BentoNoteTile.checklist.count, 3)
+    }
+
+    func testTheTickerAndTheStampCanSetEveryTranslatedWord() throws {
+        let font = OwlLunaFonts.splashTitle(size: 1000, width: 95)
+        for word in try checklists().joined() {
+            XCTAssertTrue(SplashType(word, font: font).isWhole, "Archivo lacks a letter of \(word)")
+        }
+        XCTAssertTrue(SplashType("TO DO", font: font).isWhole)
+        XCTAssertTrue(SplashType("E\u{301}CRIRE", font: font).isWhole, "a letter and its mark are set as one")
+        XCTAssertFalse(SplashType("УЧИТЬ", font: font).isWhole)
+        XCTAssertFalse(SplashType("", font: font).isWhole)
+        XCTAssertEqual(SplashType("УЧИТЬ", fallback: "STUDY", font: font).width, SplashType("STUDY", font: font).width, "a word Archivo cannot set gives way to English")
     }
 
     func testTheWordmarkIsSetInArchivoAtItsNarrowest() {

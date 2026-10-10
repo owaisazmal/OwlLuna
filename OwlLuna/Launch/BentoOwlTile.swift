@@ -14,7 +14,7 @@ enum BentoOwlTile {
         if time > hops.delay { drawOwl(art, scene: scene) }
 
         let inset = scene.labelSize * 1.45
-        context.label("NOTEBOOK", corner: CGPoint(x: inset, y: inset), shown: labelRises.progress(time), scene: scene)
+        context.label(BentoWords.notebook, corner: CGPoint(x: inset, y: inset), shown: labelRises.progress(time), scene: scene)
     }
 
     private static func drawOwl(_ art: GraphicsContext, scene: BentoScene) {

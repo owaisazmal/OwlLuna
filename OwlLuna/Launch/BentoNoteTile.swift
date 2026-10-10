@@ -40,13 +40,59 @@ enum BentoNoteTile {
 
     private static func drawLabels(_ context: GraphicsContext, size: CGSize, pitch: CGFloat, scene: BentoScene) {
         let em = scene.labelSize, line = pitch * 0.95 - em / 2
-        context.label("NOTES", corner: CGPoint(x: pitch * 1.95, y: line), shown: labels[0].progress(scene.time), scene: scene)
-        context.label("P. 12", corner: CGPoint(x: size.width - em * 1.3, y: line), trailing: true, shown: labels[1].progress(scene.time), scene: scene)
+        context.label(BentoWords.notes, corner: CGPoint(x: pitch * 1.95, y: line), shown: labels[0].progress(scene.time), scene: scene)
+        context.label(BentoWords.page, corner: CGPoint(x: size.width - em * 1.3, y: line), trailing: true, shown: labels[1].progress(scene.time), scene: scene)
     }
 
     /// The drawing's own coordinates, in which the ruled lines are 36 apart.
     private static let inkBox = CGSize(width: 237.6, height: 216)
-    private static let swatch = CGRect(x: 27, y: 80, width: 113, height: 27)
+    private static let wordStart: CGFloat = 35
+    /// As far along a row as the pen may go, so that its ink ends before 170 and stands clear of the star.
+    private static let wordEnd: CGFloat = 168
+    /// As far above its baseline as a row's ink may reach, so that a mark on a capital stands clear of the bar or the rule above.
+    private static let wordRise: CGFloat = 29.5
+    /// What each row says when the hand cannot print its word.
+    private static let english = BentoWords.verbs.map(\.english)
+
+    private static func baseline(_ row: Int) -> CGFloat { 31 + 36 * CGFloat(row) }
+
+    /// A word of the checklist as the pen prints it on its row, in the drawing's coordinates.
+    struct Word: Sendable {
+        let strokes: Path
+        /// The box round the pen's path; the ink reaches half the pen's width beyond it.
+        let bounds: CGRect
+        /// The size the word is printed at; at 1 its capitals are 21 tall and the pen 3.2 wide.
+        let scale: CGFloat
+
+        var penWidth: CGFloat { NoteHand.penWidth * scale }
+    }
+
+    /// Whether the hand has strokes for every character of `word`; small letters count as their capitals, and a space between two words needs none.
+    static func canPrint(_ word: String) -> Bool {
+        NoteHand.strokes(of: word) != nil
+    }
+
+    /// One word a row from the top, all at one size: full size, or as large as lets the longest end before the star and the tallest stand clear of the rule above.
+    static func printed(_ words: [String]) -> [Word] {
+        let fullSize = zip(words, english).compactMap { NoteHand.strokes(of: $0) ?? NoteHand.strokes(of: $1) }
+        guard let longest = fullSize.map(\.boundingRect.maxX).max(), let highest = fullSize.map(\.boundingRect.minY).min() else { return [] }
+        let tallest = NoteHand.capHeight - highest + NoteHand.penWidth / 2
+        let scale = min(1, (wordEnd - wordStart) / longest, wordRise / tallest)
+        return fullSize.enumerated().map { row, word in
+            let onRow = CGAffineTransform(translationX: wordStart, y: baseline(row)).scaledBy(x: scale, y: scale).translatedBy(x: 0, y: -NoteHand.capHeight)
+            let strokes = word.applying(onRow)
+            return Word(strokes: strokes, bounds: strokes.boundingRect, scale: scale)
+        }
+    }
+
+    /// The checklist in the reader's language.
+    static let checklist = printed(BentoWords.verbs.map(\.word))
+
+    /// The highlighter's stripe over the third word: a little longer than the word, and from above its capitals to below its foot.
+    private static let swatch: CGRect = {
+        let word = checklist[2], scale = word.scale
+        return CGRect(x: word.bounds.minX - 6.75 * scale, y: baseline(2) - 23 * scale, width: word.bounds.width + 13.5 * scale, height: 27 * scale)
+    }()
     private static let highlighter = Path(roundedRect: swatch, cornerRadius: 2, style: .circular)
     private static let highlight = SplashBeat(delay: 1460, duration: 240)
 
@@ -66,17 +112,12 @@ enum BentoNoteTile {
     /// Everything the pen draws, in the order it lies on the page: boxes, words, ticks, the star, the phases and the squiggle.
     private static let lines: [PenLine] = {
         let box = Path(svg: "M4,13.5 L19.5,13 L20,29 L4.5,29.5 Z"), tick = Path(svg: "M6.5,20 L12,27 L24.5,7.5")
-        let words = [
-            "M35.0,9.6L38.2,30.4L44.4,17.5L48.7,29.9L55.1,8.7M59.4,30.2L62.9,9.2M62.8,9.7Q76.7,8.8 75.0,15.6Q73.5,21.3 61.0,20.8M66.2,21.0L72.9,30.8M85.3,10.0L82.0,31.0M92.9,10.9L108.7,10.6M100.8,11.0L97.9,31.4M126.4,10.9L114.3,11.4L111.8,31.9L124.4,31.4M113.0,21.4L122.6,20.9",
-            "M46.9,48.0Q41.6,42.5 36.9,48.5Q32.8,54.4 40.6,55.6Q48.8,57.3 45.3,62.7Q40.6,68.7 33.7,63.3M55.6,45.2L52.0,66.2M68.1,45.8L53.9,57.9M58.7,54.4L65.6,66.9M86.8,46.2L74.7,46.3L71.6,66.8L84.2,66.7M73.2,56.3L82.7,56.1M92.9,46.9L108.7,46.6M100.8,47.0L97.9,67.4M127.5,51.1Q123.1,44.3 117.0,51.1Q110.8,58.4 115.4,64.2Q119.9,70.0 126.4,63.7M134.6,45.2L132.4,66.2M148.8,45.0L146.6,66.0M133.4,56.2L147.7,55.5",
-            "M46.9,84.0Q41.6,78.5 36.9,84.5Q32.8,90.4 40.6,91.6Q48.8,93.3 45.3,98.7Q40.6,104.7 33.7,99.3M55.5,81.7L71.2,81.9M63.3,82.1L59.8,102.5M76.9,81.8L74.8,95.4Q73.6,103.3 80.9,103.5Q88.2,103.8 89.4,95.9L91.5,82.2M94.3,103.3L97.2,82.3M97.1,82.9Q112.9,82.6 110.4,93.1Q108.5,103.0 94.3,103.3M117.5,82.9L124.0,93.9L133.2,82.9M124.0,93.9L122.8,103.9",
-        ].map { Path(svg: $0) }
         let star = Path(svg: "M200,21 L214.6,66 L176.3,38.2 L223.7,38.2 L185.4,66 Z")
         let squiggle = Path(svg: "M4,207 q4.5,-9 9,0 t9,0 t9,0 t9,0 t9,0 m11,0 q4.5,-9 9,0 t9,0 t9,0 m11,0 q4.5,-9 9,0 t9,0 t9,0 t9,0")
         func row(_ path: Path, _ index: Int) -> Path { path.applying(CGAffineTransform(translationX: 0, y: 36 * CGFloat(index))) }
         func beat(_ delay: Double, _ duration: Double, _ curve: SplashCurve = .glide) -> SplashBeat { SplashBeat(delay: delay, duration: duration, curve: curve) }
         var lines = (0..<3).map { PenLine(row(box, $0), width: 2.8, beat: beat(760 + 70 * Double($0), 260)) }
-        lines += words.indices.map { PenLine(words[$0], width: 3.2, beat: beat(840 + 180 * Double($0), 320, .bezier(0.4, 0, 0.6, 1))) }
+        lines += checklist.enumerated().map { PenLine($1.strokes, width: $1.penWidth, beat: beat(840 + 180 * Double($0), 320, .bezier(0.4, 0, 0.6, 1))) }
         lines += (0..<2).map { PenLine(row(tick, $0), width: 4, red: true, beat: beat(1190 + 180 * Double($0), 170, .easeOut)) }
         lines.append(PenLine(star, width: 3.6, red: true, beat: beat(1330, 340, .easeInOut)))
         lines += moons.indices.map { PenLine(moons[$0], width: 2.8, beat: beat(1120 + 65 * Double($0), 300, .easeInOut)) }
@@ -116,6 +157,109 @@ private struct PenLine: Sendable {
 
     func draw(in context: GraphicsContext, at time: Double, palette: SplashPalette) {
         context.draw(strokes: strokes, upTo: beat.progress(time), stroke: red ? palette.tomato : palette.ink, width: width)
+    }
+}
+
+/// The hand the checklist is printed in: leaning capitals, each standing a little off its neighbours' line.
+private enum NoteHand {
+    static let capHeight: CGFloat = 21
+    static let penWidth: CGFloat = 3.2
+    /// How far a stroke leans to the right for each unit it rises: nine degrees.
+    static let slant: CGFloat = 0.158
+    static let letterGap: CGFloat = 5.7
+    /// The room a space leaves between two words, on top of the gap after a letter.
+    static let wordSpace: CGFloat = 10
+
+    struct Capital: Sendable {
+        let width: CGFloat
+        var strokes: Path
+
+        init(_ width: CGFloat, _ strokes: String) {
+            self.width = width
+            self.strokes = Path(svg: strokes)
+        }
+    }
+
+    /// Each capital standing upright, its top at 0 and its foot at 21, with the room it takes on the line.
+    static let capitals: [Character: Capital] = [
+        "A": Capital(15.6, "M0,21.1 L7.7,0 L15.6,20.8 M2.9,13.4 L12.8,13.2"),
+        "B": Capital(14, "M0.1,21 L0,0 M0,0.5 Q12.4,-0.5 12,5.4 Q11.6,10.5 2.2,10.4 Q14.8,10.2 14,15.8 Q13.4,21.3 0.1,20.9"),
+        "C": Capital(14.8, "M13.7,4.4 Q8.4,-2.5 3.1,4 Q-2.2,11.1 3.1,17 Q8.3,23 14.1,17"),
+        "D": Capital(14.8, "M0.1,20.9 L0,0 M0,0.6 Q15.8,0.6 14.8,11 Q14.3,20.9 0.1,20.9"),
+        "E": Capital(12.7, "M12.1,0.2 L0,0.3 L0,20.7 L12.6,20.7 M0,10.2 L9.5,10.1"),
+        "F": Capital(12.3, "M12.3,0.1 L0.1,0.3 L0,21 M0,10.3 L9,10.1"),
+        "G": Capital(14.8, "M13.7,4.4 Q8.4,-2.5 3.1,4 Q-2.2,11.1 3.1,17 Q8.3,23 14,16.9 L14.2,11.4 L8.2,11.6"),
+        "H": Capital(14.3, "M-0.2,-0.2 L-0.1,20.6 M14.1,0.3 L14.2,21.1 M-0.2,10.7 L14.1,10.7"),
+        "I": Capital(4.3, "M2.2,0 L2.1,21"),
+        "J": Capital(11.2, "M10.9,0 L10.8,14 Q10.8,21.6 5.4,21.4 Q0.4,21.3 0,15.4"),
+        "K": Capital(13.7, "M0,0 L0,21 M12.6,0.4 L0.5,12.7 M4.7,9.1 L13.7,21.5"),
+        "L": Capital(12, "M0.1,0 L0,20.8 L12,20.6"),
+        "M": Capital(18.4, "M0,21 L1.8,0.1 L9.2,13.4 L16.2,0 L18.4,20.8"),
+        "N": Capital(14.8, "M0,21 L0.1,0.2 L14.5,20.8 L14.7,-0.2"),
+        "O": Capital(15.4, "M12.8,3.9 Q7.8,-3.3 3.1,4 Q-2.2,10.8 3.1,17.3 Q8,24 12.8,17.1 Q17.6,9.3 11.8,2.6"),
+        "P": Capital(13.6, "M0.1,21 L0,0 M0,0.5 Q13.9,-0.5 13.4,6.4 Q12.9,12.3 0.1,12"),
+        "Q": Capital(15.4, "M12.8,3.9 Q7.8,-3.3 3.1,4 Q-2.2,10.8 3.1,17.3 Q8,24 12.8,17.1 Q17.6,9.3 11.8,2.6 M9.3,15 L16.5,22.4"),
+        "R": Capital(14.7, "M0.1,21 L0,0 M0,0.5 Q13.7,-0.6 13.2,6.2 Q12.6,11.9 0.1,11.6 M5.3,11.7 L13.7,21.4"),
+        "S": Capital(13.1, "M11.1,3.2 Q5.1,-2.6 1.1,3.2 Q-2.4,8.9 5.6,10.5 Q14,12.5 11.1,17.8 Q7,23.5 -0.5,17.8"),
+        "T": Capital(15.8, "M0,0.5 L15.7,0.5 M7.9,0.8 L7.8,21.2"),
+        "U": Capital(14.7, "M0,-0.2 L-0.1,13.4 Q-0.1,21.3 7.3,21.5 Q14.6,21.8 14.6,13.9 L14.6,0.2"),
+        "V": Capital(15.6, "M0,0.2 L7.6,21 L15.6,-0.2"),
+        "W": Capital(20.4, "M-1.2,0 L4.4,21 L9.2,8.4 L14.9,21 L19,0.1"),
+        "X": Capital(14.4, "M0.4,0.2 L14.4,21 M13.9,-0.1 L0,20.8"),
+        "Y": Capital(15.8, "M0,-0.3 L7.9,10.9 L15.8,0.3 M7.9,10.9 L7.8,20.9"),
+        "Z": Capital(13.8, "M0.3,0.4 L13.6,0.2 L0,20.7 L13.8,20.5"),
+    ]
+
+    /// The hyphen and the apostrophe, straight or curled; they stand in a word as capitals do, but carry no mark.
+    static let joiners: [Character: Capital] = [
+        "-": Capital(8.4, "M0.3,11.6 L8.1,11.2"),
+        "'": Capital(1.6, "M1.3,-0.8 L0.6,5.2"),
+        "\u{2019}": Capital(1.6, "M1.3,-0.8 L0.6,5.2"),
+    ]
+
+    /// The marks a capital may carry, drawn from the middle of its top: grave, acute, circumflex, tilde, diaeresis and cedilla.
+    static let marks: [Unicode.Scalar: Path] = [
+        "\u{300}": Path(svg: "M-1.9,-7.2 L1.5,-4.2"),
+        "\u{301}": Path(svg: "M1.7,-7.2 L-1.7,-4.2"),
+        "\u{302}": Path(svg: "M-3.6,-4.2 L0.2,-7.4 L3.8,-4.4"),
+        "\u{303}": Path(svg: "M-4.8,-4.8 Q-2.4,-8.2 0,-5.8 Q2.4,-3.4 4.8,-6.6"),
+        "\u{308}": Path(svg: "M-3.6,-5.8 L-3.4,-5.4 M3.4,-5.9 L3.6,-5.5"),
+        "\u{327}": Path(svg: "M1,21.4 Q3.6,24.2 -0.8,26"),
+    ]
+
+    /// How far below the line each letter of a word sits and how many degrees it tips, one letter after another; a longer word goes round again.
+    static let unevenness: [(drop: CGFloat, turn: Double)] = [
+        (-0.9, -2.7), (-0.7, 0.65), (0, -0.3), (0.2, -1.05), (0.95, -2.2), (-0.85, -2.9),
+        (0.4, -0.8), (-0.3, 0.4), (0.7, -1.9), (-0.6, -0.5), (0.1, -2.5), (0.8, 0.2),
+    ]
+
+    /// A character standing upright: a capital, under its mark if it carries one, or a joiner; nil if it has no strokes.
+    static func upright(_ character: Character) -> Capital? {
+        let scalars = Array(character.unicodeScalars)
+        guard scalars.count <= 2, let first = scalars.first, var capital = capitals[Character(first)] else { return joiners[character] }
+        for scalar in scalars.dropFirst() {
+            guard let mark = marks[scalar] else { return nil }
+            capital.strokes.addPath(mark, transform: CGAffineTransform(translationX: capital.width / 2, y: 0))
+        }
+        return capital
+    }
+
+    /// The word in capitals at full size, its tops at 0 and its feet at 21, a space left as a gap; nil if it is empty or a character has no strokes.
+    static func strokes(of word: String) -> Path? {
+        let letters = Array(word.uppercased().decomposedStringWithCanonicalMapping.split(whereSeparator: \.isWhitespace).joined(separator: " "))
+        guard !letters.isEmpty else { return nil }
+        var line = Path(), x: CGFloat = 0
+        for (index, letter) in letters.enumerated() {
+            guard letter != " " else { x += wordSpace; continue }
+            guard let shape = upright(letter) else { return nil }
+            let wobble = unevenness[index % unevenness.count]
+            let middle = CGPoint(x: shape.width / 2, y: capHeight / 2)
+            let lean = CGAffineTransform(a: 1, b: 0, c: -slant, d: 1, tx: slant * middle.y, ty: 0)
+            let place = lean.concatenating(.turning(wobble.turn, about: middle)).concatenating(CGAffineTransform(translationX: x, y: wobble.drop))
+            line.addPath(shape.strokes, transform: place)
+            x += shape.width + letterGap
+        }
+        return line
     }
 }
 

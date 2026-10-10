@@ -50,7 +50,7 @@ enum BentoMoonTile {
     }
 }
 
-/// The flashcard tile: three index cards fan up from below, then the STUDY stamp slams on and wobbles.
+/// The flashcard tile: three index cards fan up from below, then the stamp slams on and wobbles.
 enum BentoCardsTile {
     private static let box = CGSize(width: 240, height: 176)
     private static let card = Path(roundedRect: CGRect(x: 46, y: 36, width: 148, height: 94), cornerRadius: 4, style: .circular)
@@ -63,12 +63,14 @@ enum BentoCardsTile {
 
     private static let plate = Path(roundedRect: CGRect(x: 94, y: 95, width: 112, height: 42), cornerRadius: 3, style: .circular)
     private static let centre = plate.boundingRect.point(0.5, 0.5)
-    /// The word stretched to the stamp's measure of 84, the spacing after its last letter included, and set at 30 with capitals 0.79 of that.
+    /// The stamp's word, its ink centred on the plate and as wide as its measure; a long word is set smaller rather than squeezed by more than a quarter.
     private static let word: Path = {
-        let tracking = 0.06
-        let type = SplashType("STUDY", font: OwlLunaFonts.splashTitle(size: 1000, width: 62), tracking: tracking)
-        let fit = CGAffineTransform(translationX: 151.5 - 42, y: 127).scaledBy(x: 84 / (type.width + tracking), y: 0.79 * 30 / type.capHeight)
-        return type.outline.applying(fit)
+        let tracking = 0.06, measure = 84.0, capitals = 0.79 * 30
+        let type = SplashType(BentoWords.study, fallback: "STUDY", font: OwlLunaFonts.splashTitle(size: 1000, width: 62), tracking: tracking)
+        let across = measure / (type.width + tracking)
+        let up = min(capitals / type.capHeight, across / 0.75)
+        let baseline = 127 - capitals / 2 - up * type.outline.boundingRect.midY
+        return type.outline.applying(CGAffineTransform(translationX: 151.5 - measure / 2, y: baseline).scaledBy(x: across, y: up))
     }()
     private static let slam = SplashTrack(delay: 1340, duration: 300, stops: [
         .init(at: 0, value: 2, curve: .bezier(0.7, 0, 0.84, 0)), .init(at: 0.55, value: 0.92, curve: .easeOut), .init(at: 1, value: 1),

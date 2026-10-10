@@ -114,12 +114,20 @@ struct SplashType: Sendable {
     let letters: [Letter]
     let width: CGFloat
     let capHeight: CGFloat
+    /// Whether there is a line to set and the font has every character of it; one it lacks is set as the font's empty box.
+    let isWhole: Bool
+
+    /// `text` in the font, or `fallback` where the font lacks one of its letters.
+    init(_ text: String, fallback: String, font: CTFont, tracking: CGFloat = 0) {
+        let wanted = SplashType(text, font: font, tracking: tracking)
+        self = wanted.isWhole ? wanted : SplashType(fallback, font: font, tracking: tracking)
+    }
 
     init(_ text: String, font: CTFont, tracking: CGFloat = 0) {
         let size = CTFontGetSize(font)
-        let characters = Array(text.utf16)
+        let characters = Array(text.precomposedStringWithCanonicalMapping.utf16)
         var glyphs = [CGGlyph](repeating: 0, count: characters.count)
-        CTFontGetGlyphsForCharacters(font, characters, &glyphs, characters.count)
+        isWhole = CTFontGetGlyphsForCharacters(font, characters, &glyphs, characters.count) && !characters.isEmpty
         var advances = [CGSize](repeating: .zero, count: glyphs.count)
         CTFontGetAdvancesForGlyphs(font, .horizontal, glyphs, &advances, glyphs.count)
         var flip = CGAffineTransform(scaleX: 1 / size, y: -1 / size)

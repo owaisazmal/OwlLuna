@@ -14702,6 +14702,28 @@
         }
       }
     },
+    "NOTEBOOK" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NOTIZBUCH"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CUADERNO"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CARNET"
+          }
+        }
+      }
+    },
     "Notebook as a PDF…" : {
       "localizations" : {
         "de" : {
@@ -14862,6 +14884,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Notes"
+          }
+        }
+      }
+    },
+    "NOTES" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NOTIZEN"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NOTAS"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NOTES"
           }
         }
       }
@@ -16050,6 +16094,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sang de bœuf"
+          }
+        }
+      }
+    },
+    "P. 12" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S. 12"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PÁG. 12"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "P. 12"
           }
         }
       }
@@ -20426,6 +20492,28 @@
         }
       }
     },
+    "SKETCH" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ZEICHNEN"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DIBUJAR"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DESSINER"
+          }
+        }
+      }
+    },
     "Sketchbook" : {
       "localizations" : {
         "de" : {
@@ -21390,6 +21478,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Étudier"
+          }
+        }
+      }
+    },
+    "STUDY" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LERNEN"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ESTUDIAR"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ÉTUDIER"
           }
         }
       }
@@ -25134,6 +25244,28 @@
         }
       }
     },
+    "VOL." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BD."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VOL."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VOL."
+          }
+        }
+      }
+    },
     "Watercolour" : {
       "localizations" : {
         "de" : {
@@ -25614,6 +25746,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Épaisseur %1$@, opacité %2$@"
+          }
+        }
+      }
+    },
+    "WRITE" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SCHREIBEN"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ESCRIBIR"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ÉCRIRE"
           }
         }
       }

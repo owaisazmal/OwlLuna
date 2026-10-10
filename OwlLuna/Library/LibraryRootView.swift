@@ -25,11 +25,14 @@ struct LibraryRootView: View {
     @State private var quickNoteError: String?
     @State private var creatingQuickNote = false
     @Environment(AppModel.self) private var app
+    @Environment(LaunchCurtain.self) private var curtain: LaunchCurtain?
     @State private var sceneID: String?
     @State private var changes = LibraryChangeCenter()
     @State private var openingToday = false
     @State private var triedRestore = false
     @State private var performingAction = false
+    /// A link that came before the app was ready or while the launch splash was up, carried out once it can be.
+    @State private var heldAction: AppAction?
     @State private var window = EditorWindow()
     @SceneStorage("owlluna.openNotebook") private var restoredNotebook = ""
     @SceneStorage("owlluna.besideNotebook") private var restoredBeside = ""
@@ -138,14 +141,10 @@ struct LibraryRootView: View {
         }
         .onChange(of: sceneID) { Task { await restoreOpenNotebook() } }
         .onAppear { window.openNotebook = { id, page in Task { await perform(.open(id, page: page)) } } }
-        .task(id: app.phase) {
-            await restoreOpenNotebook()
-            takePendingAction()
-        }
+        .task(id: app.phase) { await openWhatWaits() }
         .onChange(of: app.pendingAction) { takePendingAction() }
-        .onOpenURL { url in
-            if let action = AppAction(url: url) { Task { await perform(action) } }
-        }
+        .onChange(of: curtain?.isUp) { Task { await openWhatWaits() } }
+        .onOpenURL(perform: follow)
     }
 
     /// The notebook on show in the editor's first pane: the tab on show, when there are tabs.
@@ -159,8 +158,33 @@ struct LibraryRootView: View {
     /// The sidebar stands beside the shelves only when they are narrower than the window.
     private var sidebarBeside: Bool { rootWidth - detailWidth > 1 }
 
+    /// A link is carried out at once, unless the app is still starting or the launch splash is up.
+    private func follow(_ url: URL) {
+        guard let action = AppAction(url: url) else { return }
+        if app.phase == .ready, curtain?.isUp != true {
+            Task { await perform(action) }
+        } else {
+            hold(action)
+        }
+    }
+
+    /// Keeps a link for later; saying so sends the launch splash away, or keeps it from coming.
+    private func hold(_ action: AppAction) {
+        heldAction = action
+        curtain?.hurry()
+    }
+
+    /// Once the app is ready and the launch splash has gone: what a link or a shortcut asked for, or else the notebook the window had open.
+    private func openWhatWaits() async {
+        await restoreOpenNotebook()
+        takePendingAction()
+        guard app.phase == .ready, let action = heldAction, curtain?.holds() != true else { return }
+        heldAction = nil
+        await perform(action)
+    }
+
     private func takePendingAction() {
-        guard app.phase == .ready, let action = app.pendingAction else { return }
+        guard app.phase == .ready, let action = app.pendingAction, curtain?.holds() != true else { return }
         app.pendingAction = nil
         Task { await perform(action) }
     }
@@ -169,6 +193,7 @@ struct LibraryRootView: View {
     /// showing another notebook saves and closes first.
     private func perform(_ action: AppAction) async {
         await app.start()
+        if curtain?.holds() == true { return hold(action) }
         guard !performingAction else { return }
         performingAction = true
         defer { performingAction = false }
@@ -242,6 +267,7 @@ struct LibraryRootView: View {
     /// Skipped once if this window's last restore crashed.
     private func restoreOpenNotebook() async {
         guard app.phase == .ready, open == nil, !triedRestore, let sceneID else { return }
+        if WindowMemory.reopens(in: sceneID, fallback: restoredNotebook), curtain?.holds() == true { return }
         triedRestore = true
         WindowMemory.keep(only: Set(UIApplication.shared.openSessions.map(\.persistentIdentifier)))
         if WindowMemory.restoreCrashed(in: sceneID) {
@@ -250,7 +276,9 @@ struct LibraryRootView: View {
         }
         let remembered = WindowMemory.remembered(in: sceneID) ?? (UUID(uuidString: restoredNotebook), UUID(uuidString: restoredBeside), [])
         window.restore(remembered.tabs.filter { store.record($0).map { !$0.isTrashed } ?? false }.map { OpenNotebook(id: $0) })
-        guard let id = remembered.notebook, let record = store.record(id), !record.isTrashed, !window.isOpenElsewhere(id) else { return }
+        guard let id = remembered.notebook, let record = store.record(id), !record.isTrashed else { return rememberWindow() }
+        // What a link or a shortcut asked for is shown in place of the notebook the window had.
+        guard !window.isOpenElsewhere(id), app.pendingAction == nil, heldAction == nil else { return }
         let beside = remembered.beside.flatMap(store.record)
         WindowMemory.setRestoring(true, in: sceneID)
         openNotebook(id)
@@ -261,7 +289,7 @@ struct LibraryRootView: View {
 
     /// Library shortcuts only act when nothing else is in front of the library.
     private var libraryInFront: Bool {
-        open == nil && !creating && !showingSettings && !creatingQuickNote && app.phase == .ready
+        open == nil && !creating && !showingSettings && !creatingQuickNote && app.phase == .ready && curtain?.isUp != true
     }
 
     private func quickNote() { createAndOpen { try await store.createQuickNote(folder: folder) } }
@@ -354,6 +382,12 @@ enum WindowMemory {
         all[scene].map { kept in
             (UUID(uuidString: kept.first ?? ""), UUID(uuidString: kept.dropFirst().first ?? ""), kept.dropFirst(2).compactMap(UUID.init(uuidString:)))
         }
+    }
+
+    /// Whether a window would reopen a notebook: what is kept here, or `fallback`, the scene's own note of it, when nothing is kept yet.
+    static func reopens(in scene: String, fallback: String = "") -> Bool {
+        if let kept = remembered(in: scene) { return kept.notebook != nil }
+        return UUID(uuidString: fallback) != nil
     }
 
     /// Marks a window while it reopens what it had: a mark still there at the next launch means the reopening crashed.

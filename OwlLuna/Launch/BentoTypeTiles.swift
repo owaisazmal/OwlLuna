@@ -63,7 +63,7 @@ enum BentoVolumeTile {
 
     static func draw(_ context: GraphicsContext, size: CGSize, scene: BentoScene) {
         let inset = scene.labelSize * 1.2
-        context.label("VOL.", corner: CGPoint(x: inset, y: inset), shown: fade.progress(scene.time), scene: scene)
+        context.label(BentoWords.volume, corner: CGPoint(x: inset, y: inset), shown: fade.progress(scene.time), scene: scene)
 
         let em = min(size.width * 0.56, size.height * 0.74)
         let origin = CGPoint(x: size.width * 0.94 - digits.width * em, y: size.height * 0.94 - RisingLine.height * em)
@@ -71,9 +71,8 @@ enum BentoVolumeTile {
     }
 }
 
-/// The ticker: WRITE, SKETCH and STUDY with ink diamonds between them, running leftwards for ever.
+/// The ticker: the three things the app is for, with ink diamonds between them, running leftwards for ever.
 enum BentoTickerTile {
-    private static let scroll = SplashBeat(delay: 0, duration: 6400, curve: .linear)
     /// How tall a capital stands in the band's ems; an em is half the tile's height.
     private static let capHeight: CGFloat = 0.716
     /// How far under the tile's middle the baseline runs, in ems: 0.9355 down a line 1.04 deep.
@@ -84,8 +83,8 @@ enum BentoTickerTile {
         let tracking: CGFloat = -0.035
         var words = Path(), diamonds = Path()
         var x: CGFloat = 0
-        for word in ["WRITE", "SKETCH", "STUDY"] {
-            let type = SplashType(word, font: OwlLunaFonts.splashTitle(size: 1000, width: 95), tracking: tracking)
+        for verb in BentoWords.verbs {
+            let type = SplashType(verb.word, fallback: verb.english, font: OwlLunaFonts.splashTitle(size: 1000, width: 95), tracking: tracking)
             let scale = capHeight / type.capHeight
             words.addPath(type.outline, transform: CGAffineTransform(translationX: x, y: 0).scaledBy(x: scale, y: scale))
             x += (type.width + tracking) * scale + 0.42
@@ -94,6 +93,8 @@ enum BentoTickerTile {
         }
         return (words, diamonds, x)
     }()
+    /// The band runs an em every 432 ms whatever its words, so a longer language takes longer to come round.
+    private static let scroll = SplashBeat(delay: 0, duration: band.length * 432, curve: .linear)
 
     static func draw(_ context: GraphicsContext, size: CGSize, scene: BentoScene) {
         let em = size.height * 0.5
