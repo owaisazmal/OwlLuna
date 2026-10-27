@@ -87,7 +87,7 @@ final class PlacedPictureTextTests: XCTestCase {
         var typed = page
         typed.items.append(PageItem(content: .text(TextBox(string: "Lab notes")), center: CGPoint(x: 300, y: 700), size: CGSize(width: 200, height: 40)))
         text = await index(package, [typed])
-        XCTAssertEqual(text, "Zebra crossing ahead\nLab notes")
+        XCTAssertEqual(text, "Zebra crossing ahead Lab notes", "a page's words are on one line")
         var manifest = try await package.readManifest().manifest
         manifest.pages = [typed]
         let ink = PKDrawing(strokes: BlockLetters.strokes("HELLO", origin: CGPoint(x: 150, y: 760)))
@@ -97,7 +97,7 @@ final class PlacedPictureTextTests: XCTestCase {
         text = await index(package, [written])
         let reread = await package.readText(written.id) ?? ""
         try XCTSkipUnless(reread.hasPrefix(HandwritingIndexer.header(for: written)), "text recognition isn't available on this simulator")
-        XCTAssertTrue(text.hasPrefix("Zebra crossing ahead\nLab notes"), "read as \(text)")
+        XCTAssertTrue(text.hasPrefix("Zebra crossing ahead Lab notes"), "read as \(text)")
 
         // Cropped afresh, it is read again, and only what it shows now is kept.
         var recropped = written
