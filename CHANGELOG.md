@@ -18,7 +18,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Missing a card on the same day you last answered it no longer counts as forgetting it, so going over a new deck several times doesn't make its waits grow more slowly later.
 - Library search finds every word you type, in any order, even when a line ends between them. Put words in quotes to find them together. A notebook with more matching pages than are shown says how many more.
 - Closing a study guide, changing what it is written from, or choosing Write It Again now stops the writing in progress. A very long notebook's summary is written from 24 pieces spread through it, and the progress bar moves while pages are read.
-- The grips and corner handle round a selected item now stay under your finger from where it touched down, instead of starting a little behind it.
+- A selected item, its grips and its corner handle now stay under your finger from where it touched down, instead of starting a little behind it.
 
 ## [1.0.0-build.3] - 2026-10-21
 

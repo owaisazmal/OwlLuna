@@ -34,7 +34,7 @@ final class ItemSelectionView: UIView, UIGestureRecognizerDelegate {
     private var twist: CGFloat = 0
     private var handleStart: CGPoint = .zero
     private(set) lazy var recognizers: [UIGestureRecognizer] = [
-        UIPanGestureRecognizer(target: self, action: #selector(dragged)),
+        GripPan(target: self, action: #selector(dragged)),
         UIPinchGestureRecognizer(target: self, action: #selector(pinched)),
         UIRotationGestureRecognizer(target: self, action: #selector(twisted)),
     ]
@@ -196,9 +196,14 @@ final class ItemSelectionView: UIView, UIGestureRecognizerDelegate {
         return abs(angle - nearest) < 3 * .pi / 180 ? nearest : angle
     }
 
-    @objc private func dragged(_ gesture: UIPanGestureRecognizer) {
+    @objc private func dragged(_ gesture: GripPan) {
         guard let superview else { return }
-        if gesture.state == .began { begin() }
+        if gesture.state == .began {
+            begin()
+            let point = gesture.location(in: superview), down = gesture.start(in: superview)
+            gesture.setTranslation(CGPoint(x: point.x - down.x, y: point.y - down.y), in: superview)
+            return
+        }
         guard let base else { return }
         let moved = gesture.translation(in: superview)
         gesture.setTranslation(.zero, in: superview)
@@ -335,8 +340,14 @@ private final class GripPan: UIPanGestureRecognizer {
     func start(in view: UIView) -> CGPoint { view.convert(down, from: nil) }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
-        if state == .possible, let touch = touches.first { down = touch.location(in: nil) }
+        if numberOfTouches == 0, let touch = touches.first { down = touch.location(in: nil) }
         super.touchesBegan(touches, with: event)
+    }
+
+    /// When one of two fingers lifts first, as at the end of a pinch, the one left counts from where it is then.
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent) {
+        if state == .possible, let touch = event.touches(for: self)?.subtracting(touches).first { down = touch.location(in: nil) }
+        super.touchesEnded(touches, with: event)
     }
 }
 
