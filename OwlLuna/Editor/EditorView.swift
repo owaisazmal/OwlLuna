@@ -116,6 +116,7 @@ fileprivate struct EditorContent: View {
     @State private var readingInk: InkToRead?
     @State private var hidesTranscript = false
     @State private var scanning = false
+    @State private var takingPhotos = false
     @State private var showingDeck = false
     @State private var cardDraft: CardDraft?
     @State private var studyGuide: StudyGuideRequest?
@@ -370,6 +371,13 @@ fileprivate struct EditorContent: View {
             }
             .ignoresSafeArea()
         }
+        .fullScreenCover(isPresented: $takingPhotos, onDismiss: { session.endPhotos() }) {
+            PhotoCamera { data in
+                document.perform { await addPhoto(data) }
+            } done: {
+                takingPhotos = false
+            }
+        }
         .onChange(of: photoItem) { _, item in
             guard let item else { return }
             let position = session.currentPage + 1
@@ -495,7 +503,7 @@ fileprivate struct EditorContent: View {
     private var isPresentingModal: Bool {
         showingPages || showingBoardGuide || showingRecordings || showingRecordingsSheet || pickingBeside || export != nil || importingPDF || showingPhotoPicker || renaming || goToPage || paperMode != nil
             || editingCover != nil || namingBookmark != nil || showingStickers || pickingLink || renamingLink || editingNotes != nil || readingInk != nil
-            || isCovered || scanning || showingDeck || cardDraft != nil || studyGuide != nil || (pane != .secondary && window?.pickingTab == true) || tagging != nil
+            || isCovered || scanning || takingPhotos || showingDeck || cardDraft != nil || studyGuide != nil || (pane != .secondary && window?.pickingTab == true) || tagging != nil
     }
 
     private func enter(_ mode: EditorMode) {
@@ -584,6 +592,7 @@ fileprivate struct EditorContent: View {
             ToolbarItem(placement: .topBarTrailing) {
                 BarGroup {
                     AnyView(addMenu)
+                    if PhotoCamera.isAvailable { cameraButton }
                     recordButton
                     recordingsButton
                     toolsButton
@@ -679,6 +688,12 @@ fileprivate struct EditorContent: View {
         }
         .accessibilityLabel(Text("\(document.title), notebook options"))
         .accessibilityIdentifier("editor.title")
+    }
+
+    private var cameraButton: some View {
+        Button(action: startPhotos) { Label("Take Photos", systemImage: "camera") }
+            .disabled(document.isReadOnly)
+            .accessibilityIdentifier("editor.camera")
     }
 
     private var recordingsButton: some View {
@@ -1240,6 +1255,9 @@ fileprivate struct EditorContent: View {
                 Button(action: startScan) { Label("Scan Documents…", systemImage: "doc.viewfinder") }
             }
             MenuBreak()
+            if PhotoCamera.isAvailable {
+                Button(action: startPhotos) { Label("Take Photos…", systemImage: "camera") }
+            }
             Button { photoBecomesPage = false; showingPhotoPicker = true } label: { Label("Picture on This Page…", systemImage: "photo.on.rectangle.angled") }
             Button { showingStickers = true } label: { Label("Sticker…", systemImage: "seal") }
             Button { session.addText() } label: { Label("Text Box", systemImage: "character.textbox") }
@@ -1398,6 +1416,20 @@ extension EditorContent {
         if LaunchOptions.arguments.contains("-fakeScan") { return insertScan(DocumentScan.samples()) }
         #endif
         scanning = true
+    }
+
+    fileprivate func startPhotos() {
+        session.canvas?.select(nil)
+        session.beginPhotos()
+        takingPhotos = true
+    }
+
+    fileprivate func addPhoto(_ data: Data) async {
+        do {
+            try await session.addPhoto(data)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     /// Each scanned sheet becomes a page after the current one, as one undo step.

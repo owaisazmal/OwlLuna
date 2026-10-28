@@ -13,6 +13,7 @@ protocol EditorCanvasControlling: AnyObject {
     func present(page index: Int)
     func setLaserColor(_ color: LaserColor)
     func visibleCenter(ofPage index: Int) -> CGPoint?
+    func visibleRect(ofPage index: Int) -> CGRect?
     func select(_ selection: ItemSelection?)
     func editText()
     func beginCrop()
@@ -487,6 +488,67 @@ final class EditorSession {
         guard let file, let shape, let page = shownPage?.sheetSize else { return }
         let fit = min(150, page.width * 0.4) / max(shape.width, shape.height, 1)
         addItem(.image(file: file), size: CGSize(width: (shape.width * fit).rounded(), height: (shape.height * fit).rounded()), source: sticker.id)
+    }
+
+    // MARK: Photos from the camera
+
+    @ObservationIgnored private var photoRun: (id: UUID, pageID: UUID, run: PhotoRun)?
+    @ObservationIgnored private var photoQueue: Task<Void, Never>?
+
+    /// Lays out what the camera takes from here on, sized to what is showing of the current page.
+    func beginPhotos() {
+        guard !document.isReadOnly, document.pages.indices.contains(currentPage) else { return }
+        let page = document.pages[currentPage]
+        let visible = canvas?.visibleRect(ofPage: currentPage) ?? CGRect(origin: .zero, size: page.sheetSize)
+        let bounds = page.isBoard
+            ? CGRect(x: visible.minX, y: visible.minY, width: visible.width, height: page.size.height - visible.minY)
+            : CGRect(origin: .zero, size: page.size)
+        photoRun = (UUID(), page.id, PhotoRun(visible: visible, bounds: bounds.insetBy(dx: PhotoRun.margin, dy: PhotoRun.margin)))
+    }
+
+    /// Stores a photo and places it after the one before, in the order they were taken.
+    func addPhoto(_ data: Data) async throws {
+        let previous = photoQueue
+        let placing = Task { @MainActor in
+            await previous?.value
+            try await placePhoto(data)
+        }
+        photoQueue = Task { _ = try? await placing.value }
+        try await placing.value
+    }
+
+    /// Once the last photo is placed, shows the page it went on.
+    func endPhotos() {
+        guard let id = photoRun?.id else { return }
+        let queue = photoQueue
+        Task { @MainActor in
+            await queue?.value
+            guard let run = photoRun, run.id == id else { return }
+            photoRun = nil
+            if let index = document.pages.firstIndex(where: { $0.id == run.pageID }), index != currentPage { go(to: index) }
+        }
+    }
+
+    private func placePhoto(_ data: Data) async throws {
+        guard photoRun != nil else { return }
+        let picture = try await Task.detached(priority: .userInitiated) {
+            guard let image = UIImage(data: data) else { throw ImportError.unreadable }
+            return try PhotoImport.picture(image, longSide: 2400)
+        }.value
+        let file = try await document.package.writeAsset(picture.data, ext: picture.ext)
+        guard var current = photoRun, var index = document.pages.firstIndex(where: { $0.id == current.pageID }) else { return }
+        let size = current.run.size(for: picture.size)
+        var frame = current.run.place(size)
+        if frame == nil {
+            document.insertPages([document.newPage(after: index)], at: index + 1)
+            index += 1
+            current.run.turnPage(to: CGRect(origin: .zero, size: document.pages[index].size).insetBy(dx: PhotoRun.margin, dy: PhotoRun.margin))
+            frame = current.run.place(size)
+        }
+        current.pageID = document.pages[index].id
+        photoRun = current
+        guard let frame else { return }
+        addItem(.image(file: file), size: size, onPage: index, at: CGPoint(x: frame.midX, y: frame.midY), actionName: String(localized: "Take Photo"))
     }
 
     func deleteSelection() {

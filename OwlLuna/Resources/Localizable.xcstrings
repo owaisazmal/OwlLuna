@@ -1070,6 +1070,82 @@
         }
       }
     },
+    "%lld photos on the page" : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Foto auf der Seite"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Fotos auf der Seite"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld photo on the page"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld photos on the page"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld foto en la página"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld fotos en la página"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld photo sur la page"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld photos sur la page"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld pt" : {
       "localizations" : {
         "de" : {
@@ -1638,6 +1714,28 @@
         }
       }
     },
+    "Close the camera and try again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließe die Kamera und versuche es erneut."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cierra la cámara y vuelve a intentarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermez l’appareil photo et réessayez."
+          }
+        }
+      }
+    },
     "Created" : {
       "localizations" : {
         "de" : {
@@ -1744,6 +1842,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chaque carnet est copié en entier dans votre espace de stockage iCloud privé, puis de là vers vos autres iPad, avec vos dossiers, étagères intelligentes, autocollants et stylos. Un carnet ouvert ici est envoyé quelques secondes après que vous avez cessé d’écrire, et s’il est ouvert sur un autre iPad, il y affiche la version la plus récente, sauf s’il a des modifications qui lui sont propres. S’il a été modifié sur deux appareils avant qu’ils aient pu se synchroniser, la version la plus récente est conservée et l’ancienne est enregistrée à côté sous forme de copie en conflit. L’historique d’écriture n’est pas synchronisé. Désactiver la synchronisation laisse la copie dans iCloud. Pour la supprimer, désactivez la synchronisation sur chaque appareil, puis supprimez les données d’OwlLuna dans Réglages › votre nom › iCloud."
+          }
+        }
+      }
+    },
+    "Each photo goes straight onto the page." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jedes Foto kommt direkt auf die Seite."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada foto va directamente a la página."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque photo va directement sur la page."
           }
         }
       }
@@ -2076,6 +2196,28 @@
         }
       }
     },
+    "Goes back to no zoom" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setzt den Zoom zurück"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quita el zoom"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annule le zoom"
+          }
+        }
+      }
+    },
     "Include Recordings" : {
       "localizations" : {
         "de" : {
@@ -2292,6 +2434,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Carnet en texte…"
+          }
+        }
+      }
+    },
+    "OwlLuna can't use the camera" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OwlLuna kann die Kamera nicht verwenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OwlLuna no puede usar la cámara"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OwlLuna ne peut pas utiliser l’appareil photo"
+          }
+        }
+      }
+    },
+    "Open Settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen öffnen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Ajustes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir Réglages"
           }
         }
       }
@@ -2522,6 +2708,72 @@
         }
       }
     },
+    "Take Photo" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foto aufnehmen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hacer foto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prendre une photo"
+          }
+        }
+      }
+    },
+    "Take Photos" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotos aufnehmen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hacer fotos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prendre des photos"
+          }
+        }
+      }
+    },
+    "Take Photos…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotos aufnehmen …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hacer fotos…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prendre des photos…"
+          }
+        }
+      }
+    },
     "Text" : {
       "localizations" : {
         "de" : {
@@ -2540,6 +2792,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Texte"
+          }
+        }
+      }
+    },
+    "The camera couldn't start" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Kamera konnte nicht starten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se ha podido iniciar la cámara"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’appareil photo n’a pas pu démarrer"
+          }
+        }
+      }
+    },
+    "The camera is paused" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Kamera ist pausiert"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La cámara está en pausa"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’appareil photo est en pause"
           }
         }
       }
@@ -2584,6 +2880,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cette page en PDF…"
+          }
+        }
+      }
+    },
+    "Turn on Camera for OwlLuna in Settings to take photos for your pages." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiviere in den Einstellungen „Kamera“ für OwlLuna, um Fotos für deine Seiten aufzunehmen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa la cámara para OwlLuna en Ajustes para hacer fotos para tus páginas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activez l’appareil photo pour OwlLuna dans Réglages pour prendre des photos pour vos pages."
           }
         }
       }

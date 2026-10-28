@@ -1811,15 +1811,20 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     @objc private func deleteSelectedItem() { session.deleteSelection() }
     @objc private func clearSelection() { select(nil) }
 
-    /// The middle of what's showing of a page, in page points: where a new picture or sticker lands.
-    func visibleCenter(ofPage index: Int) -> CGPoint? {
+    /// What's showing of a page, in page points; the whole page when none of it is.
+    func visibleRect(ofPage index: Int) -> CGRect? {
         guard layout.isLaidOut(index, in: pages), effectiveScale > 0 else { return nil }
         let frame = layout.frames[index]
         let area = readableArea
         let visible = CGRect(x: (scrollView.contentOffset.x + area.minX) / effectiveScale, y: (scrollView.contentOffset.y + area.minY) / effectiveScale,
                              width: area.width / effectiveScale, height: area.height / effectiveScale).intersection(frame)
-        guard !visible.isNull, !visible.isEmpty else { return CGPoint(x: frame.width / 2, y: frame.height / 2) }
-        return CGPoint(x: visible.midX - frame.minX, y: visible.midY - frame.minY)
+        guard !visible.isNull, !visible.isEmpty else { return CGRect(origin: .zero, size: frame.size) }
+        return visible.offsetBy(dx: -frame.minX, dy: -frame.minY)
+    }
+
+    /// The middle of what's showing of a page, in page points: where a new picture or sticker lands.
+    func visibleCenter(ofPage index: Int) -> CGPoint? {
+        visibleRect(ofPage: index).map { CGPoint(x: $0.midX, y: $0.midY) }
     }
 
     private static func changedIDs(_ updated: [SlotKey], _ current: [SlotKey]) -> Set<UUID> {

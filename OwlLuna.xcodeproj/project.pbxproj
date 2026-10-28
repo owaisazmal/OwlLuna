@@ -548,7 +548,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = OwlLuna;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "OwlLuna reads today's events to print them on a page when you ask it to. They are read on this iPad, and once printed they are part of the notebook.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "OwlLuna uses the camera to scan paper into your notebooks.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "OwlLuna uses the camera to scan paper and take photos for your notebooks.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "OwlLuna uses Face ID to open the notebooks you have locked.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "OwlLuna records audio alongside your notes when you tap the record button.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "OwlLuna saves the pictures and videos you export to your photo library when you choose to.";
@@ -588,7 +588,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = OwlLuna;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "OwlLuna reads today's events to print them on a page when you ask it to. They are read on this iPad, and once printed they are part of the notebook.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "OwlLuna uses the camera to scan paper into your notebooks.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "OwlLuna uses the camera to scan paper and take photos for your notebooks.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "OwlLuna uses Face ID to open the notebooks you have locked.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "OwlLuna records audio alongside your notes when you tap the record button.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "OwlLuna saves the pictures and videos you export to your photo library when you choose to.";

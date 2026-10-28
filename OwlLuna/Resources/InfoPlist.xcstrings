@@ -62,25 +62,25 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OwlLuna verwendet die Kamera, um Papier in deine Notizbücher zu scannen."
+            "value" : "OwlLuna verwendet die Kamera, um Papier zu scannen und Fotos für deine Notizbücher aufzunehmen."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "OwlLuna uses the camera to scan paper into your notebooks."
+            "value" : "OwlLuna uses the camera to scan paper and take photos for your notebooks."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OwlLuna usa la cámara para escanear papel en tus cuadernos."
+            "value" : "OwlLuna usa la cámara para escanear papel y hacer fotos para tus cuadernos."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OwlLuna utilise l’appareil photo pour numériser du papier dans vos carnets."
+            "value" : "OwlLuna utilise l’appareil photo pour numériser du papier et prendre des photos pour vos carnets."
           }
         }
       }
