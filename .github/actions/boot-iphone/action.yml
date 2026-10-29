@@ -1,5 +1,10 @@
 name: Boot an iPhone simulator
-description: Boots an iPhone Duo on the newest iOS runtime that has one, or else another iPhone on the newest runtime with an iPhone, and sets SIMULATOR_UDID.
+description: Boots an iPhone on the newest iOS runtime that has the one asked for, and sets SIMULATOR_UDID.
+
+inputs:
+  device:
+    description: "`duo` for an iPhone Duo, or another iPhone when there is none; `iphone` for an iPhone 17, or another iPhone that isn't a Duo."
+    default: duo
 
 outputs:
   udid:
@@ -11,6 +16,8 @@ runs:
   steps:
     - id: boot
       shell: bash
+      env:
+        DEVICE: ${{ inputs.device }}
       run: |
         runtimes=$(xcrun simctl list runtimes available --json)
         devices=$(xcrun simctl list devices available --json)
@@ -21,24 +28,24 @@ runs:
           echo "udid=" >> "$GITHUB_OUTPUT"
           exit 0
         fi
-        # The Duo has the vertical bar the folded layouts are built for, so it comes first.
+        # The Duo has the vertical bar the folded layouts are built for; any other iPhone has the top bar and tray.
+        pick='def pick($want): map(select(.name | startswith("iPhone")))
+          | if $want == "duo" then map(select(.name == "iPhone Duo")) + .
+            else map(select(.name == "iPhone 17")) + map(select(.name != "iPhone Duo")) end;'
         runtime=
         for candidate in $candidates; do
-          udid=$(jq -r --arg runtime "$candidate" '
-            .devices[$runtime] // []
-            | (map(select(.name == "iPhone Duo")) + map(select(.name | startswith("iPhone"))))
-            | first | .udid // empty' <<< "$devices")
-          type=$(jq -r --arg runtime "$candidate" '
+          udid=$(jq -r --arg runtime "$candidate" --arg want "$DEVICE" "$pick"'
+            .devices[$runtime] // [] | pick($want) | first | .udid // empty' <<< "$devices")
+          type=$(jq -r --arg runtime "$candidate" --arg want "$DEVICE" "$pick"'
             .runtimes[] | select(.identifier == $runtime) | .supportedDeviceTypes
-            | (map(select(.name == "iPhone Duo")) + map(select(.productFamily == "iPhone")))
-            | first | .identifier // empty' <<< "$runtimes")
+            | pick($want) | first | .identifier // empty' <<< "$runtimes")
           if [ -n "$udid" ] || [ -n "$type" ]; then
             runtime=$candidate
             break
           fi
         done
         if [ -z "$runtime" ]; then
-          echo "::error::No iOS runtime on this runner has an iPhone ($(echo $candidates))."
+          echo "::error::No iOS runtime on this runner has an iPhone for '$DEVICE' ($(echo $candidates))."
           exit 1
         fi
         if [ -z "$udid" ]; then

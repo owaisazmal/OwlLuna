@@ -122,15 +122,25 @@ jobs:
             ${{ runner.temp }}/*.xcresult
 
   iphone:
-    name: Build and tests (iPhone)
+    name: Build and tests (${{ matrix.name }})
     runs-on: xcode-27
     timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - device: duo
+            name: iPhone Duo
+          - device: iphone
+            name: iPhone
     steps:
       - uses: actions/checkout@v7
 
       - name: Boot an iPhone simulator
         id: simulator
         uses: ./.github/actions/boot-iphone
+        with:
+          device: ${{ matrix.device }}
 
       - name: Build
         id: build
@@ -185,7 +195,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: test-results-iphone
+          name: test-results-${{ matrix.device }}
           retention-days: 14
           path: |
             ${{ runner.temp }}/*.log

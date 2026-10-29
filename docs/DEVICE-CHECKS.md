@@ -413,7 +413,7 @@ Expect: ink lands under the tip and is sharp at any distance, with no blank tile
 
 ## iPhone
 
-Only checked in the simulator, on an iPhone Duo (iOS 27.1, folded), an iPhone 17 Pro and an iPhone 18 Pro Max. Use an iPhone signed in to the same test Apple Account as the iPads, and an iPhone Duo if you can.
+Only checked in the simulator, on an iPhone Duo (iOS 27.1, folded), an iPhone 17, an iPhone 17 Pro and an iPhone 18 Pro Max. Use an iPhone signed in to the same test Apple Account as the iPads, and an iPhone Duo if you can.
 
 1. Write with a finger. Scroll and pinch with two fingers, then rest the side of your hand on the page while writing.
 2. On a folded Duo, use the column on the right: change shelves from its tabs, make a notebook from New, and in the editor take each pen, the eraser and the lasso, Undo, Add and More. Tap the title and the page count at the top of the page.
@@ -421,8 +421,9 @@ Only checked in the simulator, on an iPhone Duo (iOS 27.1, folded), an iPhone 17
 4. On another iPhone, go back from the shelf with the plate at the top left and choose the same place again. Turn the phone to landscape in the library and the editor.
 5. Write a page on the iPhone and let it sync to an iPad, then the other way. Open Settings and read the notes under iCloud, Recordings and Search.
 6. On a Duo with iOS 27.2 or later, write with an Apple Pencil (USB-C), then with a finger, then look at Settings › Input.
+7. On the smallest iPhone you have, ideally an iPhone SE or a mini, go through the library, a notebook, the tool tray, More and Settings, upright and on its side.
 
-Expect: a finger draws from the first launch, two fingers never draw, and a resting hand makes no marks. After the Pencil's first stroke only the Pencil draws, and Draw With is back in Settings. Nothing in the column sits under the camera or the status bar, and menus open beside it. Unfolding keeps the page and shelf you were on, with the sidebar and the Pages column beside them. The same notebook opens on both devices with its pages and ink. Notes say iPhone, never iPad, and until a Pencil is used Settings has no Draw With, Double-Tap or Squeeze.
+Expect: a finger draws from the first launch, two fingers never draw, and a resting hand makes no marks. On the small iPhone every control can be reached and nothing is cut off. After the Pencil's first stroke only the Pencil draws, and Draw With is back in Settings. Nothing in the column sits under the camera or the status bar, and menus open beside it. Unfolding keeps the page and shelf you were on, with the sidebar and the Pages column beside them. The same notebook opens on both devices with its pages and ink. Notes say iPhone, never iPad, and until a Pencil is used Settings has no Draw With, Double-Tap or Squeeze.
 
 ## Performance
 
