@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.0.0-build.4] - 2026-10-28
+
+### Added
+
+- Take Photos: a camera button next to Add opens the camera straight away and keeps it open. Each photo goes onto the page with no step to check it, sized to how far you're zoomed in, and lined up in columns that carry on to a new page when one is full. Resize and rotate them afterwards. The volume buttons take a photo too, and you can pinch to zoom.
+
 ### Fixed
 
 - Undo and Redo do nothing while presenting. After typing in a new text box, one Undo takes the box away and Redo brings it back with its words.
@@ -166,6 +172,7 @@ The first build for TestFlight testers. No accounts, no ads and no tracking.
 
 - The app is now called OwlLuna. Notebooks and backups from before the rename still open.
 
-[Unreleased]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.3...HEAD
+[Unreleased]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.4...HEAD
+[1.0.0-build.4]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.3...v1.0.0-build.4
 [1.0.0-build.3]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.2...v1.0.0-build.3
 [1.0.0-build.2]: https://github.com/owaisazmal/OwlLuna/releases/tag/v1.0.0-build.2
