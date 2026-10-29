@@ -202,8 +202,9 @@ final class PageResizeTests: XCTestCase {
         let upright = Device.isPhone ? screen : portrait, turned = CGSize(width: upright.height, height: upright.width)
         let (_, controller, window) = try await show(document, size: upright)
         controller.scrollToPage(2)
-        // High enough that the keyboard, which UIKit keeps the box clear of, can't cover it in either shape.
-        try bring(item.center, to: CGPoint(x: 0.5, y: 0.4), controller)
+        // High enough that the keyboard, which UIKit keeps the box clear of, can't cover it in either shape. An iPhone
+        // on its side keeps only the top half clear.
+        try bring(item.center, to: CGPoint(x: 0.5, y: Device.isPhone ? 0.25 : 0.4), controller)
         controller.select(ItemSelection(pageID: document.pages[2].id, itemID: item.id))
         controller.editText()
         let textView = try XCTUnwrap(window.descendants(UITextView.self).first { $0.accessibilityIdentifier == "page.text.editor" })

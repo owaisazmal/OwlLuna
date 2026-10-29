@@ -33,7 +33,7 @@ struct OpenBookSpread: View {
 
     var body: some View {
         let regular = sizeClass == .regular && !dynamicTypeSize.isAccessibilitySize
-        let pageHeight: CGFloat = regular ? 200 : 170
+        let pageHeight: CGFloat = regular ? 200 : compactPageHeight
         let sideBySide = regular && availableWidth >= bookWidth(pageHeight: pageHeight) + Space.x8 + 280
         let layout = sideBySide ? AnyLayout(HStackLayout(alignment: .center, spacing: Space.x8))
                                 : AnyLayout(VStackLayout(alignment: .leading, spacing: Space.x4))
@@ -62,6 +62,14 @@ struct OpenBookSpread: View {
         let aspect = pages.map { $0.current.shownSize.width / max($0.current.shownSize.height, 1) } ?? PageSize.letter.points.width / PageSize.letter.points.height
         let width = min(height * aspect, height * 0.9)
         return CGSize(width: width.rounded(), height: (width / aspect).rounded())
+    }
+
+    /// On a narrow screen the book spans the width, up to a size that still leaves the shelf in view.
+    private var compactPageHeight: CGFloat {
+        guard availableWidth > 0 else { return 170 }
+        let aspect = pageSize(height: 100).width / 100
+        let fits = (availableWidth - (Self.stackDepth + Self.caseMargin) * 2) / 2 / max(aspect, 0.1)
+        return min(max(fits.rounded(.down), 170), 280)
     }
 
     private func bookWidth(pageHeight: CGFloat) -> CGFloat {

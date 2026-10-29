@@ -51,19 +51,29 @@ struct ShelfListSort: View {
                 tabs
                 order(worded: false)
             }
+            // A phone's width: the tabs close up before any name has to break.
+            HStack(spacing: Space.x2) {
+                picker(padding: Space.x2).fixedSize()
+                order(worded: false)
+            }
+            // Measured at its names' own width, so it is only chosen where none of them breaks, then spans the row.
+            VStack(alignment: .leading, spacing: Space.x2) {
+                picker(padding: Space.x2)
+                order(worded: true)
+            }
             // Narrower still, the tabs take the whole width and their names wrap.
             VStack(alignment: .leading, spacing: Space.x2) {
-                picker
+                picker()
                 order(worded: true)
             }
         }
     }
 
-    private var tabs: some View { picker.fixedSize() }
+    private var tabs: some View { picker().fixedSize() }
 
-    private var picker: some View {
+    private func picker(padding: CGFloat = Space.x4) -> some View {
         OwlLunaSegmentedPicker("Sort By", selection: $sort, options: LibrarySortOrder.allCases,
-                               identifier: { "library.list.sort.\($0.rawValue)" }) { Text($0.shortName) }
+                               identifier: { "library.list.sort.\($0.rawValue)" }, padding: padding) { Text($0.shortName) }
     }
 
     private func order(worded: Bool) -> some View {

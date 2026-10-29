@@ -33,6 +33,9 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     private var document: NotebookDocument { session.document }
     private let scrollView = UIScrollView()
     private let contentView = UIView()
+    private lazy var addPageCard = AddPageCard { [weak self] in self?.session.addPage() }
+    /// The room under the last page the card takes, with the gap above the tools; kept while a pinch is under way.
+    private var addPageRoom: CGFloat = 0
     private let anchor = ResponderAnchor()
     private let toolbox: Toolbox
     private let undoProxy: CanvasUndoProxy
@@ -200,6 +203,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         scrollView.scrollsToTop = true
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
+        addPageCard.isHidden = true
+        scrollView.addSubview(addPageCard)
         anchor.undoProxy = undoProxy
         anchor.onResign = { [weak self] in DispatchQueue.main.async { self?.reclaimAnchor() } }
         anchor.frame = .zero
@@ -593,13 +598,35 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     private func updateInsets() {
         let horizontal = max(0, (scrollView.bounds.width - scrollView.contentSize.width) / 2)
-        let vertical = max(0, (scrollView.bounds.height - scrollView.contentSize.height) / 2)
+        // On an iPhone a page shorter than the screen sits under the bar rather than in the middle of it.
+        let vertical = Device.isPhone && !isPresenting ? 0 : max(0, (scrollView.bounds.height - scrollView.contentSize.height) / 2)
         // Room to centre the first and last page while presenting.
         let slack = isPresenting ? scrollView.bounds.height / 2 : 0
         let panel = zoomPanel.map { view.bounds.maxY - $0.frame.minY } ?? 0
+        if !scrollView.isZooming && !scrollView.isZoomBouncing {
+            let free = scrollView.bounds.height - view.safeAreaInsets.top - scrollView.contentSize.height - toolsObscured
+            addPageRoom = showsAddPage ? max(free, Self.addPageHeight + Space.x3) : 0
+        }
         scrollView.contentInset = UIEdgeInsets(top: max(vertical + view.safeAreaInsets.top, slack), left: horizontal,
-                                               bottom: max(vertical, toolsObscured, slack, panel, textView == nil && !isFinding ? 0 : keyboardOverlap),
+                                               bottom: max(vertical, toolsObscured + addPageRoom, slack, panel,
+                                                           textView == nil && !isFinding ? 0 : keyboardOverlap),
                                                right: horizontal)
+        layoutAddPage()
+    }
+
+    private static let addPageHeight: CGFloat = 72
+
+    private var showsAddPage: Bool { Device.isPhone && !isSolo && !isPresenting && !document.isReadOnly && !pages.isEmpty }
+
+    /// The card fills the room under the last page down to the tools; it sits out a pinch, which doesn't scale it.
+    private func layoutAddPage() {
+        guard showsAddPage, addPageRoom > 0, !scrollView.isZooming, let last = layout.frames.last else {
+            addPageCard.isHidden = true
+            return
+        }
+        addPageCard.isHidden = false
+        addPageCard.frame = CGRect(x: last.minX * bakedScale, y: scrollView.contentSize.height,
+                                   width: last.width * bakedScale, height: addPageRoom - Space.x3)
     }
 
     private func clamped(_ offset: CGPoint) -> CGPoint {
@@ -3120,6 +3147,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) {
         pendingPage = nil
         dropLaser()
+        addPageCard.isHidden = true
     }
 
     func scrollViewDidZoom(_ scrollView: UIScrollView) {
