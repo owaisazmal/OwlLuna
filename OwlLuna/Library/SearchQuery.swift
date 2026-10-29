@@ -58,7 +58,7 @@ struct SearchQuery: Sendable, Hashable {
             .sorted { $0.lowerBound < $1.lowerBound }
     }
 
-    private static func ranges(of term: String, in text: String) -> [Range<String.Index>] {
+    static func ranges(of term: String, in text: String) -> [Range<String.Index>] {
         var found: [Range<String.Index>] = []
         var start = text.startIndex
         while start < text.endIndex, let match = text[start...].localizedStandardRange(of: term), !match.isEmpty {

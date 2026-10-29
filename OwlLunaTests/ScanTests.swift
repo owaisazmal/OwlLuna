@@ -142,13 +142,13 @@ final class ScanTests: XCTestCase {
     func testWordsOnAScannedPDFAreFoundWhereTheyArePrinted() async throws {
         let url = try scannedPDF()
         let reader = FindReader()
-        let rects = await reader.pdfRects(for: "revenue", file: url, index: 0, pageSize: sheetSize)
+        let rects = await reader.pdfRects(for: SearchQuery("revenue"), file: url, index: 0, pageSize: sheetSize).rects
         try XCTSkipIf(rects.isEmpty, "text recognition isn't available on this simulator")
         XCTAssertEqual(rects.count, 1)
         // On the sheet the line starts 120 px in and 340 px down, in 56 pt type, on a sheet 1,240 px wide.
         XCTAssertEqual(rects[0].minX, 120 * sheetSize.width / 1240, accuracy: 12)
         XCTAssertEqual(rects[0].midY, 374 * sheetSize.width / 1240, accuracy: 16)
-        let none = await reader.pdfRects(for: "goodbye", file: url, index: 0, pageSize: sheetSize)
+        let none = await reader.pdfRects(for: SearchQuery("goodbye"), file: url, index: 0, pageSize: sheetSize).rects
         XCTAssertTrue(none.isEmpty)
     }
 }

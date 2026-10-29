@@ -15,20 +15,93 @@ struct RecognizedLine: @unchecked Sendable {
     let text: VNRecognizedText
 }
 
-/// Where words are on a page: in what was typed, in a PDF's own text, and in what the recogniser reads of ink, scans and pictures.
-enum NotebookFind {
-    private static let options: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive]
+/// Where the query is marked on a page, and the text of each source it was looked for in.
+struct FindRects: Sendable {
+    var texts: [String] = []
+    var rects: [CGRect] = []
 
-    static func contains(_ text: String, _ query: String) -> Bool {
-        text.range(of: query, options: options) != nil
+    /// Every term is on the page, each within one source's text.
+    func holds(_ search: SearchQuery) -> Bool {
+        search.terms.allSatisfy { term in texts.contains { $0.localizedStandardContains(term) } }
     }
 
-    /// A text box that holds the words is marked whole.
-    static func typed(_ query: String, on page: NotebookPage) -> [CGRect] {
-        guard page.hasItems else { return [] }
-        return page.items.compactMap { item in
-            guard let box = item.text, contains(box.string, query) else { return nil }
-            return item.boundingBox
+    static func += (found: inout FindRects, more: FindRects) {
+        found.texts += more.texts
+        found.rects += more.rects
+    }
+}
+
+/// Pieces of text joined by single spaces, each word kept with its place in its piece.
+struct FlatText {
+    let pieces: [String]
+    private(set) var text = ""
+    private var words: [(piece: Int, range: Range<String.Index>, start: Int, length: Int)] = []
+
+    init(_ pieces: [String]) {
+        self.pieces = pieces
+        var count = 0
+        for (index, piece) in pieces.enumerated() {
+            for word in piece.split(whereSeparator: \.isWhitespace) {
+                if count > 0 {
+                    text.append(" ")
+                    count += 1
+                }
+                words.append((index, word.startIndex..<word.endIndex, count, word.utf16.count))
+                text.append(contentsOf: word)
+                count += word.utf16.count
+            }
+        }
+    }
+
+    /// What a range of the text covers of each piece, in order.
+    func spans(of range: Range<String.Index>) -> [(piece: Int, range: Range<String.Index>)] {
+        let lower = text.utf16.distance(from: text.startIndex, to: range.lowerBound)
+        let upper = text.utf16.distance(from: text.startIndex, to: range.upperBound)
+        var spans: [(piece: Int, range: Range<String.Index>)] = []
+        for word in words where word.start < upper && lower < word.start + word.length {
+            let utf16 = pieces[word.piece].utf16
+            let from = utf16.index(word.range.lowerBound, offsetBy: max(lower - word.start, 0))
+            let to = utf16.index(word.range.lowerBound, offsetBy: min(upper - word.start, word.length))
+            if let last = spans.last, last.piece == word.piece {
+                spans[spans.count - 1].range = last.range.lowerBound..<to
+            } else {
+                spans.append((word.piece, from..<to))
+            }
+        }
+        return spans
+    }
+}
+
+/// Where words are on a page: in what was typed, in a PDF's own text, and in what the recogniser reads of ink, scans and pictures.
+enum NotebookFind {
+    static func contains(_ text: String, anyOf search: SearchQuery) -> Bool {
+        search.terms.contains { text.localizedStandardContains($0) }
+    }
+
+    /// A text box that holds a term is marked whole; presenter notes count toward the page but aren't marked.
+    static func typed(_ search: SearchQuery, on page: NotebookPage) -> FindRects {
+        var found = FindRects(texts: [SearchQuery.collapsed(page.notes)])
+        guard page.hasItems else { return found }
+        for item in page.items {
+            guard let box = item.text else { continue }
+            let text = SearchQuery.collapsed(box.string)
+            found.texts.append(text)
+            if contains(text, anyOf: search) { found.rects.append(item.boundingBox) }
+        }
+        return found
+    }
+
+    /// The phrase and word-start terms, or a term anywhere it starts no word; overlaps merged.
+    static func ranges(of search: SearchQuery, in text: String) -> [Range<String.Index>] {
+        let words = search.highlights(in: text)
+        let inside = search.terms.filter { term in !words.contains { text[$0].localizedStandardRange(of: term)?.lowerBound == $0.lowerBound } }
+        let ranges = words + inside.flatMap { SearchQuery.ranges(of: $0, in: text) }
+        return ranges.sorted { $0.lowerBound < $1.lowerBound }.reduce(into: []) { merged, range in
+            if let last = merged.last, range.lowerBound < last.upperBound {
+                merged[merged.count - 1] = last.lowerBound..<max(last.upperBound, range.upperBound)
+            } else {
+                merged.append(range)
+            }
         }
     }
 
@@ -43,36 +116,29 @@ enum NotebookFind {
     }
 
     /// The image the lines were read from filled the page, so their boxes are fractions of it, measured from the bottom.
-    static func rects(for query: String, in lines: [RecognizedLine], pageSize: CGSize) -> [CGRect] {
+    static func rects(for search: SearchQuery, in lines: [RecognizedLine], pageSize: CGSize) -> FindRects {
+        let flat = FlatText(lines.map(\.text.string))
         var rects: [CGRect] = []
-        for line in lines {
-            let string = line.text.string
-            var range = string.startIndex..<string.endIndex
-            while let found = string.range(of: query, options: options, range: range) {
-                if let box = try? line.text.boundingBox(for: found)?.boundingBox {
-                    rects.append(CGRect(x: box.minX * pageSize.width, y: (1 - box.maxY) * pageSize.height,
-                                        width: box.width * pageSize.width, height: box.height * pageSize.height))
-                }
-                range = found.upperBound..<string.endIndex
-            }
+        for span in ranges(of: search, in: flat.text).flatMap(flat.spans) {
+            guard let box = try? lines[span.piece].text.boundingBox(for: span.range)?.boundingBox else { continue }
+            let rect = CGRect(x: box.minX * pageSize.width, y: (1 - box.maxY) * pageSize.height,
+                              width: box.width * pageSize.width, height: box.height * pageSize.height)
+            if !rects.contains(rect) { rects.append(rect) }
         }
-        return rects
+        return FindRects(texts: [flat.text], rects: rects)
     }
 
-    static func pdfRects(for query: String, on page: PDFPage, pageSize: CGSize) -> [CGRect] {
-        guard let text = page.string as NSString? else { return [] }
-        let toPage = transform(of: page, to: pageSize)
-        var rects: [CGRect] = [], range = NSRange(location: 0, length: text.length)
-        while range.length > 0 {
-            let found = text.range(of: query, options: [.caseInsensitive, .diacriticInsensitive], range: range)
-            guard found.location != NSNotFound else { break }
-            for line in page.selection(for: found)?.selectionsByLine() ?? [] {
+    static func pdfRects(for search: SearchQuery, on page: PDFPage, pageSize: CGSize) -> FindRects {
+        guard let string = page.string else { return FindRects() }
+        let toPage = transform(of: page, to: pageSize), flat = FlatText([string])
+        var rects: [CGRect] = []
+        for span in ranges(of: search, in: flat.text).flatMap(flat.spans) {
+            for line in page.selection(for: NSRange(span.range, in: string))?.selectionsByLine() ?? [] {
                 let rect = line.bounds(for: page).applying(toPage).standardized
                 if rect.width > 0, rect.height > 0 { rects.append(rect) }
             }
-            range = NSRange(location: found.upperBound, length: text.length - found.upperBound)
         }
-        return rects
+        return FindRects(texts: [flat.text], rects: rects)
     }
 
     /// From a PDF page's own space to the page as it is shown: the same turn and flip the page is drawn with.
@@ -114,46 +180,48 @@ actor FindReader {
     private var lines: [String: [RecognizedLine]] = [:]
     private var pdfs: [String: PDFDocument] = [:]
 
-    func inkRects(for query: String, page: NotebookPage, ink: PKDrawing, assets: URL) -> [CGRect] {
-        guard !ink.strokes.isEmpty else { return [] }
+    func inkRects(for search: SearchQuery, page: NotebookPage, ink: PKDrawing, assets: URL) -> FindRects {
+        guard !ink.strokes.isEmpty else { return FindRects() }
         // A whiteboard is read as the part of it that has something on it, and what is found is put back where it lies.
         let piece = Whiteboard.whole(page, ink: ink)
         let key = "ink-\(page.id.uuidString)-\(NotebookFind.fingerprint(ink))" + (piece.cut == nil ? "" : "-\(piece.inkRect)")
-        let found = rects(for: query, key: key, pageSize: piece.size) {
+        var found = rects(for: search, key: key, pageSize: piece.size) {
             PageRenderer.image(of: piece, ink: ink, assets: assets, width: Whiteboard.readingWidth(for: piece), includeBackground: false)
         }
         guard let cut = piece.cut else { return found }
-        return found.map { $0.offsetBy(dx: cut.x, dy: cut.y) }
+        found.rects = found.rects.map { $0.offsetBy(dx: cut.x, dy: cut.y) }
+        return found
     }
 
-    func pictureRects(for query: String, file: URL, pageSize: CGSize) -> [CGRect] {
-        rects(for: query, key: "picture-\(file.lastPathComponent)", pageSize: pageSize) { UIImage(contentsOfFile: file.path(percentEncoded: false)) }
+    func pictureRects(for search: SearchQuery, file: URL, pageSize: CGSize) -> FindRects {
+        rects(for: search, key: "picture-\(file.lastPathComponent)", pageSize: pageSize) { UIImage(contentsOfFile: file.path(percentEncoded: false)) }
     }
 
     /// A placed picture is read as it shows, cropped, and what is found is taken through its turn to where it lies.
-    func placedPictureRects(for query: String, item: PageItem, assets: URL) -> [CGRect] {
-        guard let file = item.assetFile, let key = item.readingKey else { return [] }
-        let found = rects(for: query, key: "item-\(key)", pageSize: item.size) {
+    func placedPictureRects(for search: SearchQuery, item: PageItem, assets: URL) -> FindRects {
+        guard let file = item.assetFile, let key = item.readingKey else { return FindRects() }
+        var found = rects(for: search, key: "item-\(key)", pageSize: item.size) {
             PageItemRenderer.image(file, assets: assets, crop: item.crop, cached: false).map(UIImage.init(cgImage:))
         }
-        return found.map { $0.applying(item.placement) }
+        found.rects = found.rects.map { $0.applying(item.placement) }
+        return found
     }
 
-    private func rects(for query: String, key: String, pageSize: CGSize, image: () -> UIImage?) -> [CGRect] {
+    private func rects(for search: SearchQuery, key: String, pageSize: CGSize, image: () -> UIImage?) -> FindRects {
         if lines[key] == nil {
-            guard let image = image(), let read = NotebookFind.read(image) else { return [] }
+            guard let image = image(), let read = NotebookFind.read(image) else { return FindRects() }
             if lines.count > 400 { lines.removeAll() }
             lines[key] = read
         }
-        return NotebookFind.rects(for: query, in: lines[key] ?? [], pageSize: pageSize)
+        return NotebookFind.rects(for: search, in: lines[key] ?? [], pageSize: pageSize)
     }
 
-    func pdfRects(for query: String, file: URL, index: Int, pageSize: CGSize) -> [CGRect] {
+    func pdfRects(for search: SearchQuery, file: URL, index: Int, pageSize: CGSize) -> FindRects {
         let key = file.path(percentEncoded: false)
         if pdfs[key] == nil { pdfs[key] = PDFDocument(url: file) }
-        guard let page = pdfs[key]?.page(at: index) else { return [] }
-        guard PDFText.isPicture(withText: page.string) else { return NotebookFind.pdfRects(for: query, on: page, pageSize: pageSize) }
-        return rects(for: query, key: "pdf-\(file.lastPathComponent)#\(index)", pageSize: pageSize) { PDFText.picture(of: page) }
+        guard let page = pdfs[key]?.page(at: index) else { return FindRects() }
+        guard PDFText.isPicture(withText: page.string) else { return NotebookFind.pdfRects(for: search, on: page, pageSize: pageSize) }
+        return rects(for: search, key: "pdf-\(file.lastPathComponent)#\(index)", pageSize: pageSize) { PDFText.picture(of: page) }
     }
 }
 
@@ -183,13 +251,13 @@ final class NotebookFinder {
     func search(_ text: String) {
         task?.cancel()
         query = text
-        let needle = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !needle.isEmpty else { return reset() }
+        let search = SearchQuery(text)
+        guard !search.isEmpty else { return reset() }
         isSearching = true
         task = Task { [weak self, delay] in
             try? await Task.sleep(for: delay)
             guard !Task.isCancelled else { return }
-            await self?.run(needle)
+            await self?.run(search)
         }
     }
 
@@ -207,7 +275,7 @@ final class NotebookFinder {
     }
 
     /// Reads from the page being looked at to the end, then from the start, so the nearest match ahead comes first.
-    private func run(_ needle: String) async {
+    private func run(_ search: SearchQuery) async {
         let pages = document.pages
         guard !pages.isEmpty else { return reset() }
         let start = min(max(startPage(), 0), pages.count - 1)
@@ -216,7 +284,7 @@ final class NotebookFinder {
         current = nil
         onChange?()
         for index in Array(start..<pages.count) + Array(0..<start) {
-            let rects = await rects(for: needle, on: pages[index])
+            let rects = await rects(for: search, on: pages[index])
             if Task.isCancelled { return }
             guard !rects.isEmpty else { continue }
             found[index] = rects.map { FindMatch(pageID: pages[index].id, page: index, rect: $0) }
@@ -229,31 +297,33 @@ final class NotebookFinder {
         AccessibilityNotification.Announcement(count == 0 ? String(localized: "No matches") : String(localized: "\(count) matches")).post()
     }
 
-    private func rects(for needle: String, on page: NotebookPage) async -> [CGRect] {
-        var rects = NotebookFind.typed(needle, on: page)
+    /// Marks only a page that has every term somewhere on it.
+    private func rects(for search: SearchQuery, on page: NotebookPage) async -> [CGRect] {
         let package = document.package, unsaved = document.hasUnsavedInk(page.id)
         // What the page was last read as, while that is still what is on it, says whether it is worth reading again.
         if !unsaved, let text = await package.readText(page.id), text.hasPrefix(HandwritingIndexer.header(for: page)),
-           !NotebookFind.contains(text, needle) { return rects }
+           !search.matches(SearchQuery.searchable(text)) { return [] }
+        var found = NotebookFind.typed(search, on: page)
         switch page.background {
         case .pdf(let file, let index) where page.hasPDFText:
-            rects += await reader.pdfRects(for: needle, file: package.assetURL(file), index: index, pageSize: page.size)
+            found += await reader.pdfRects(for: search, file: package.assetURL(file), index: index, pageSize: page.size)
         case .image(let file) where page.hasPicture:
-            rects += await reader.pictureRects(for: needle, file: package.assetURL(file), pageSize: page.size)
+            found += await reader.pictureRects(for: search, file: package.assetURL(file), pageSize: page.size)
         default:
             break
         }
         let pictures = page.placedPictures
-        // What a picture showed was kept when it was read, and it can't change, so one without the words is passed over.
+        // What a picture showed was kept when it was read, and it can't change, so one without any of the words is passed over.
         let read = pictures.isEmpty ? [:] : await package.readPictureText(page.id)
-        for item in pictures where read[item.readingKey ?? ""].map({ NotebookFind.contains($0.joined(separator: "\n"), needle) }) ?? true {
-            rects += await reader.placedPictureRects(for: needle, item: item, assets: package.assetsDirectory)
+        for item in pictures
+        where read[item.readingKey ?? ""].map({ NotebookFind.contains(SearchQuery.searchable($0.joined(separator: "\n")), anyOf: search) }) ?? true {
+            found += await reader.placedPictureRects(for: search, item: item, assets: package.assetsDirectory)
         }
         if page.inkHash != nil || unsaved {
             let ink = await document.ink(page.id)
-            rects += await reader.inkRects(for: needle, page: page, ink: ink, assets: package.assetsDirectory)
+            found += await reader.inkRects(for: search, page: page, ink: ink, assets: package.assetsDirectory)
         }
-        return NotebookFind.inReadingOrder(rects)
+        return found.holds(search) ? NotebookFind.inReadingOrder(found.rects) : []
     }
 
     /// The next match, or the one before; past either end it comes round again.

@@ -19,6 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Library search finds every word you type, in any order, even when a line ends between them. Put words in quotes to find them together. A notebook with more matching pages than are shown says how many more.
 - Closing a study guide, changing what it is written from, or choosing Write It Again now stops the writing in progress. A very long notebook's summary is written from 24 pieces spread through it, and the progress bar moves while pages are read.
 - A selected item, its grips and its corner handle now stay under your finger from where it touched down, instead of starting a little behind it.
+- Find in Notebook works like library search: it finds every word you type, in any order, on the same page, and a quoted phrase even when a line ends between its words.
 
 ## [1.0.0-build.3] - 2026-10-21
 
