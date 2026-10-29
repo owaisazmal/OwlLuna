@@ -621,7 +621,8 @@ final class RecordingsTests: XCTestCase {
         XCTAssertEqual(RecordingStop.clock(5.9), "0:05")
         XCTAssertEqual(RecordingStop.clock(3725), "1:02:05", "an hour or more shows the hours")
         XCTAssertEqual(RecordingStop.locked.message(at: 2472), "Recording stopped at 41:12 when the notebook locked.")
-        XCTAssertEqual(RecordingStop.coverClosed.message(at: 2472), "Recording stopped at 41:12 when the iPad's cover was closed.")
+        XCTAssertEqual(RecordingStop.coverClosed.message(at: 2472), Device.isPhone ? "Recording stopped at 41:12 when the microphone was muted."
+                                                                                   : "Recording stopped at 41:12 when the iPad's cover was closed.")
         XCTAssertEqual(RecordingStop.interrupted.message(at: 2472), "Recording stopped at 41:12 when another app needed the microphone.")
         XCTAssertEqual(RecordingStop.failed.message(at: 2472), "Recording stopped at 41:12 because the audio couldn't be written. What came before is kept.")
         XCTAssertEqual(RecordingStop.quit.message(at: 2472), "Recording stopped at 41:12 when OwlLuna quit. What came before is kept.")

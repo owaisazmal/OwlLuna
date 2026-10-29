@@ -9,10 +9,24 @@ final class DrawingInputTests: XCTestCase {
         return try XCTUnwrap(UserDefaults(suiteName: suite))
     }
 
-    func testAMacStartsWithFingersDrawing() {
+    @MainActor
+    func testAMacAndAnIPhoneStartWithFingersDrawing() {
         XCTAssertEqual(DrawingInput.initial(isMac: false), .pencilOnly)
         XCTAssertEqual(DrawingInput.initial(isMac: true), .anyInput, "a Mac has no Pencil")
-        XCTAssertEqual(DrawingInput.initial, DrawingInput.initial(isMac: ProcessInfo.processInfo.isiOSAppOnMac))
+        XCTAssertEqual(DrawingInput.initial(isMac: false, isPhone: true), .anyInput, "nor has an iPhone at first")
+        XCTAssertEqual(DrawingInput.initial(isMac: false, isPhone: true, pencilSeen: true), .pencilOnly, "until a Pencil touches it")
+        XCTAssertEqual(DrawingInput.initial, DrawingInput.initial(isMac: ProcessInfo.processInfo.isiOSAppOnMac, isPhone: Device.isPhone,
+                                                                  pencilSeen: UserDefaults.standard.bool(forKey: SettingsKey.pencilSeen)))
+    }
+
+    func testTheFirstPencilTouchIsToldOnce() throws {
+        let defaults = try ownSettings()
+        let told = expectation(forNotification: .owlLunaPencilSeen, object: nil)
+        told.assertForOverFulfill = true
+        FingerDrawHint.pencilTouched(defaults: defaults)
+        FingerDrawHint.pencilTouched(defaults: defaults)
+        wait(for: [told], timeout: 1)
+        XCTAssertTrue(defaults.bool(forKey: SettingsKey.pencilSeen))
     }
 
     func testTheNoticeIsShownOncePerInstall() throws {

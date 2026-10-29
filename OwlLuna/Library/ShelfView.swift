@@ -29,6 +29,8 @@ struct ShelfView: View {
     @Environment(\.undoManager) private var undoManager
     @Environment(LibraryChangeCenter.self) private var changes
     @Environment(AppModel.self) private var app: AppModel?
+    @Environment(ShelfRequests.self) private var requests: ShelfRequests?
+    @Environment(\.verticalBar) private var verticalBar
     @Query private var records: [NotebookRecord]
     @Query(sort: \FolderRecord.sortIndex) private var folders: [FolderRecord]
     @AppStorage(SettingsKey.librarySort) private var sort: LibrarySortOrder = .opened
@@ -167,7 +169,15 @@ struct ShelfView: View {
         .background(Color.paper)
         .overlay { if visible.isEmpty, !showsTagPages, !searchPending { emptyState } }
         .safeAreaInset(edge: .top, spacing: 0) {
-            if !searchInBar {
+            if verticalBar != nil {
+                HStack(spacing: Space.x2) {
+                    searchField
+                    railActions(visible)
+                }
+                .padding(.horizontal, Space.x4)
+                .padding(.vertical, Space.x2)
+                .background(Color.paper)
+            } else if !searchInBar {
                 searchField
                     .padding(.horizontal, Space.x8)
                     .padding(.bottom, Space.x2)
@@ -186,6 +196,7 @@ struct ShelfView: View {
         .background(SearchActivator(isSearching: searchFocused, isCovered: isCovered) { searchFocused = true })
         .toolbar { toolbar(visible) }
         .toolbar { if isSelecting { selectionBar(visible) } }
+        .toolbar(verticalBar == nil ? .automatic : .hidden, for: .navigationBar)
         .fileImporter(isPresented: $importingPDF, allowedContentTypes: [.pdf], allowsMultipleSelection: true) { result in
             importPDFs(result)
         }
@@ -247,6 +258,16 @@ struct ShelfView: View {
             if !Task.isCancelled { changes.dismiss() }
         }
         .onChange(of: isCovered) { _, covered in if covered { changes.dismiss() } }
+        .onChange(of: requests?.importPDF ?? false) { _, asked in
+            guard asked else { return }
+            requests?.importPDF = false
+            importingPDF = true
+        }
+        .onChange(of: requests?.scan ?? false) { _, asked in
+            guard asked else { return }
+            requests?.scan = false
+            startScan()
+        }
     }
 
     // MARK: Shelves
@@ -650,6 +671,60 @@ struct ShelfView: View {
     /// In a narrow bar, as beside the sidebar on an 11-inch iPad held upright, Sort and New show just their symbols so the title has room.
     private var compactActions: Bool { barRoom < 600 }
 
+    @ViewBuilder
+    private func selectingButtons(_ visible: [NotebookRecord]) -> some View {
+        let count = selected(visible).count, everything = !visible.isEmpty && count == visible.count
+        Button(everything ? String(localized: "Deselect All") : String(localized: "Select All")) {
+            selection = everything ? [] : filter.selectingAll(records)
+        }
+        .buttonStyle(.owlLuna(.secondary, inBar: true))
+        .disabled(visible.isEmpty)
+        .accessibilityIdentifier("library.selectAll")
+        Button("Done") { endSelection() }
+            .buttonStyle(.owlLuna(.primary, inBar: true))
+            .accessibilityLabel(count == 0 ? String(localized: "Done") : String(localized: "\(count) selected, done"))
+    }
+
+    /// Sort, and with `withLayout` Shelf or List as well, for a bar with no room for the layout's own control.
+    private func sortMenu(withLayout: Bool) -> some View {
+        OwlLunaMenu {
+            if withLayout {
+                OwlLunaPicker("View As", selection: $layout) {
+                    ForEach(LibraryLayout.allCases) { Text($0.displayName).tag($0) }
+                }
+            }
+            OwlLunaPicker("Sort By", selection: $sort) {
+                ForEach(LibrarySortOrder.allCases) { Text($0.displayName).tag($0) }
+            }
+            OwlLunaPicker("Order", selection: $sortReversed) {
+                ForEach([false, true], id: \.self) { Text(sort.directionName(reversed: $0)).tag($0) }
+            }
+            OwlLunaPicker("Group By", selection: $grouping) {
+                ForEach(LibraryGrouping.allCases) { Text($0.displayName).tag($0) }
+            }
+        } label: { Label("Sort", systemImage: "arrow.up.arrow.down") }
+    }
+
+    /// Beside the search field on a folded iPhone Duo, whose bar is a rail of places with New at its head.
+    private func railActions(_ visible: [NotebookRecord]) -> some View {
+        HStack(spacing: Space.x2) {
+            if isSelecting {
+                selectingButtons(visible)
+            } else {
+                if let sync = app?.sync, !sync.news.isEmpty { SyncNoticeButton(sync: sync, onOpen: onOpen) }
+                if scope == .trash {
+                    Button("Empty") { confirmingEmptyTrash = true }.disabled(visible.isEmpty)
+                } else {
+                    sortMenu(withLayout: true).symbolOnly(true)
+                }
+                Button("Select") { isSelecting = true }.disabled(visible.isEmpty)
+            }
+        }
+        .buttonStyle(.owlLuna(.secondary, inBar: true))
+        .labelStyle(.titleAndIcon)
+        .fixedSize()
+    }
+
     @ToolbarContentBuilder
     private func toolbar(_ visible: [NotebookRecord]) -> some ToolbarContent {
         ToolbarItem(placement: .principal) {
@@ -665,18 +740,7 @@ struct ShelfView: View {
         }
         ToolbarItem(placement: .primaryAction) {
             if isSelecting {
-                let count = selected(visible).count, everything = !visible.isEmpty && count == visible.count
-                HStack(spacing: Space.x2) {
-                    Button(everything ? String(localized: "Deselect All") : String(localized: "Select All")) {
-                        selection = everything ? [] : filter.selectingAll(records)
-                    }
-                    .buttonStyle(.owlLuna(.secondary, inBar: true))
-                    .disabled(visible.isEmpty)
-                    .accessibilityIdentifier("library.selectAll")
-                    Button("Done") { endSelection() }
-                        .buttonStyle(.owlLuna(.primary, inBar: true))
-                        .accessibilityLabel(count == 0 ? String(localized: "Done") : String(localized: "\(count) selected, done"))
-                }
+                HStack(spacing: Space.x2) { selectingButtons(visible) }
             } else {
                 HStack(spacing: Space.x2) {
                     if let sync = app?.sync, !sync.news.isEmpty { SyncNoticeButton(sync: sync, onOpen: onOpen) }
@@ -687,17 +751,7 @@ struct ShelfView: View {
                     if scope == .trash {
                         Button("Empty") { confirmingEmptyTrash = true }.disabled(visible.isEmpty)
                     } else {
-                        OwlLunaMenu {
-                            OwlLunaPicker("Sort By", selection: $sort) {
-                                ForEach(LibrarySortOrder.allCases) { Text($0.displayName).tag($0) }
-                            }
-                            OwlLunaPicker("Order", selection: $sortReversed) {
-                                ForEach([false, true], id: \.self) { Text(sort.directionName(reversed: $0)).tag($0) }
-                            }
-                            OwlLunaPicker("Group By", selection: $grouping) {
-                                ForEach(LibraryGrouping.allCases) { Text($0.displayName).tag($0) }
-                            }
-                        } label: { Label("Sort", systemImage: "arrow.up.arrow.down").symbolOnly(compactActions) }
+                        sortMenu(withLayout: false).symbolOnly(compactActions)
                     }
                     Button("Select") { isSelecting = true }.disabled(visible.isEmpty)
                     if scope != .trash {

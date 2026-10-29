@@ -43,27 +43,74 @@ struct LibraryRootView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var rootWidth: CGFloat = 0
     @State private var detailWidth: CGFloat = 0
+    @State private var verticalBar: VerticalBar?
+    @State private var showingShelves = false
+    @State private var shelfRequests = ShelfRequests()
 
     /// With Reduce Motion the editor cross-fades in over the library instead of zooming out of the cover.
     private var usesZoom: Bool { !reduceMotion }
 
     private var folder: FolderRecord? { scope?.folder(in: folders) }
 
-    var body: some View {
-        ZStack {
+    /// A folded iPhone Duo keeps the library's places in its vertical bar instead of a sidebar.
+    private var railBar: VerticalBar? { sizeClass == .compact ? verticalBar : nil }
+
+    private var shelf: some View {
+        ShelfView(scope: scope ?? .all, zoomNamespace: zoom, onOpen: { openNotebook($0.id) },
+                  onOpenPage: { openNotebook($0.id, pageID: $1) },
+                  onOpenZoomed: { openNotebook($0.id, pageID: $1, zoomSource: $2) }, onCreate: { creating = true },
+                  onQuickNote: quickNote, onWhiteboard: newWhiteboard, isCovered: open != nil || creating || showingSettings || showingShelves)
+    }
+
+    @ViewBuilder
+    private var library: some View {
+        if let railBar {
+            NavigationStack { shelf }
+                .overlay {
+                    ThumbIndex(scope: $scope, bar: railBar, onCreate: { creating = true }, onQuickNote: quickNote, onWhiteboard: newWhiteboard,
+                               onShelves: { showingShelves = true }, onSettings: { showingSettings = true })
+                        .padding(.top, railBar.top)
+                        .padding(.bottom, railBar.bottom)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: railBar.edge == .leading ? .leading : .trailing)
+                        .ignoresSafeArea()
+                }
+                .environment(\.verticalBar, railBar)
+                .environment(shelfRequests)
+                .sheet(isPresented: $showingShelves) {
+                    NavigationStack {
+                        LibrarySidebar(scope: $scope, showingSettings: Binding(get: { false }, set: { if $0 { openSettingsFromShelves() } }),
+                                       hideSidebar: { showingShelves = false })
+                    }
+                    .environment(changes)
+                    .presentationCornerRadius(Radius.sheet)
+                }
+                .onChange(of: scope) { showingShelves = false }
+        } else {
             NavigationSplitView {
                 LibrarySidebar(scope: $scope, showingSettings: $showingSettings, hideSidebar: hidesSidebar ? { sidebar.toggle() } : nil)
             } detail: {
                 NavigationStack {
-                    ShelfView(scope: scope ?? .all, zoomNamespace: zoom, onOpen: { openNotebook($0.id) },
-                              onOpenPage: { openNotebook($0.id, pageID: $1) },
-                              onOpenZoomed: { openNotebook($0.id, pageID: $1, zoomSource: $2) }, onCreate: { creating = true },
-                              onQuickNote: quickNote, onWhiteboard: newWhiteboard, isCovered: open != nil || creating || showingSettings)
-                        .modifier(BoardSidebarToggle(shows: sizeClass == .regular && !sidebarBeside) { sidebar.toggle() })
+                    shelf.modifier(BoardSidebarToggle(shows: sizeClass == .regular && !sidebarBeside) { sidebar.toggle() })
+                        .modifier(PlateBack(shows: Device.isPhone && sizeClass == .compact) { scope = nil })
                 }
                 .background(SidebarAnchor(control: sidebar))
                 .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { detailWidth = $0 }
             }
+        }
+    }
+
+    /// The shelves sheet goes before Settings comes up in its place.
+    private func openSettingsFromShelves() {
+        showingShelves = false
+        Task {
+            try? await Task.sleep(for: .milliseconds(450))
+            showingSettings = true
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            AnyView(library)
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { rootWidth = $0 }
             .tint(Color.accentColor)
             .environment(changes)
@@ -73,6 +120,7 @@ struct LibraryRootView: View {
             if !usesZoom, let open {
                 EditorPanes(primary: open, sceneID: sceneID) { self.open = nil }
                     .environment(window)
+                    .environment(\.verticalBar, verticalBar)
                     .id(open.id)
                     .accessibilityAddTraits(.isModal)
                     .transition(.opacity)
@@ -83,6 +131,7 @@ struct LibraryRootView: View {
         .fullScreenCover(item: Binding(get: { usesZoom ? open : nil }, set: { open = $0 })) { item in
             EditorPanes(primary: item, sceneID: sceneID) { open = nil }
                 .environment(window)
+                .environment(\.verticalBar, verticalBar)
                 .navigationTransition(.zoom(sourceID: item.zoomSource, in: zoom))
                 // A sideways finger drag on the page would otherwise pull the editor shut without its save-and-close.
                 .interactiveDismissDisabled()
@@ -112,6 +161,7 @@ struct LibraryRootView: View {
             sceneID = $0
             window.scene = $0
         })
+        .background(VerticalBarReader { verticalBar = $0 })
         .keyboardShortcut(for: { creating = true }, enabled: libraryInFront)
         .background {
             if libraryInFront {

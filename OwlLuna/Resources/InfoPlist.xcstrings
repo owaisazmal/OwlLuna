@@ -32,25 +32,25 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OwlLuna liest die heutigen Termine, um sie auf eine Seite zu drucken, wenn du darum bittest. Sie werden auf diesem iPad gelesen und gehören nach dem Drucken zum Notizbuch."
+            "value" : "OwlLuna liest die heutigen Termine, um sie auf eine Seite zu drucken, wenn du darum bittest. Sie werden auf diesem Gerät gelesen und gehören nach dem Drucken zum Notizbuch."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "OwlLuna reads today's events to print them on a page when you ask it to. They are read on this iPad, and once printed they are part of the notebook."
+            "value" : "OwlLuna reads today's events to print them on a page when you ask it to. They are read on this device, and once printed they are part of the notebook."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OwlLuna lee los eventos de hoy para imprimirlos en una página cuando se lo pides. Se leen en este iPad y, una vez impresos, forman parte del cuaderno."
+            "value" : "OwlLuna lee los eventos de hoy para imprimirlos en una página cuando se lo pides. Se leen en este dispositivo y, una vez impresos, forman parte del cuaderno."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OwlLuna lit les événements du jour pour les imprimer sur une page lorsque vous le demandez. Ils sont lus sur cet iPad et, une fois imprimés, font partie du carnet."
+            "value" : "OwlLuna lit les événements du jour pour les imprimer sur une page lorsque vous le demandez. Ils sont lus sur cet appareil et, une fois imprimés, font partie du carnet."
           }
         }
       }
@@ -212,25 +212,25 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OwlLuna schreibt auf, was in einer Aufnahme gesagt wurde, wenn du darum bittest. Die Aufnahme wird auf diesem iPad transkribiert."
+            "value" : "OwlLuna schreibt auf, was in einer Aufnahme gesagt wurde, wenn du darum bittest. Die Aufnahme wird auf diesem Gerät transkribiert."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "OwlLuna writes down what was said in a recording when you ask it to. The recording is transcribed on this iPad."
+            "value" : "OwlLuna writes down what was said in a recording when you ask it to. The recording is transcribed on this device."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OwlLuna pone por escrito lo que se dijo en una grabación cuando se lo pides. La grabación se transcribe en este iPad."
+            "value" : "OwlLuna pone por escrito lo que se dijo en una grabación cuando se lo pides. La grabación se transcribe en este dispositivo."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OwlLuna met par écrit ce qui a été dit dans un enregistrement lorsque vous le demandez. L’enregistrement est transcrit sur cet iPad."
+            "value" : "OwlLuna met par écrit ce qui a été dit dans un enregistrement lorsque vous le demandez. L’enregistrement est transcrit sur cet appareil."
           }
         }
       }

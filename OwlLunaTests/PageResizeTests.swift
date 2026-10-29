@@ -25,14 +25,14 @@ final class PageResizeTests: XCTestCase {
         return try await NotebookDocument.open(manifest.id, root: root)
     }
 
-    /// The page stack in a window of its own, or under a bar of `bar` points, once its first page has loaded.
-    private func show(_ document: NotebookDocument, under bar: CGFloat? = nil) async throws -> (EditorSession, PageStackController, UIWindow) {
+    /// The page stack in a window of its own, `size` or upright, or under a bar of `bar` points, once its first page has loaded.
+    private func show(_ document: NotebookDocument, under bar: CGFloat? = nil, size: CGSize? = nil) async throws -> (EditorSession, PageStackController, UIWindow) {
         let session = EditorSession(document: document)
         let controller = PageStackController(session: session)
         session.canvas = controller
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let window = UIWindow(windowScene: scene)
-        window.frame = CGRect(origin: .zero, size: portrait)
+        window.frame = CGRect(origin: .zero, size: size ?? portrait)
         if let bar {
             let container = UIViewController()
             container.addChild(controller)
@@ -44,6 +44,8 @@ final class PageResizeTests: XCTestCase {
             window.rootViewController = controller
         }
         window.makeKeyAndVisible()
+        // The container takes the window's size only once shown; on an iPhone, whose screen is smaller, it would stretch the stack with it.
+        if let bar { controller.view.frame = CGRect(x: 0, y: bar, width: portrait.width, height: portrait.height - bar) }
         window.overrideUserInterfaceStyle = .light
         addTeardownBlock { @MainActor in window.isHidden = true }
         controller.view.layoutIfNeeded()
@@ -195,7 +197,10 @@ final class PageResizeTests: XCTestCase {
         let box = TextBox(string: "Lower half", fontSize: 24)
         let item = PageItem(content: .text(box), center: CGPoint(x: 430, y: 640), size: CGSize(width: 200, height: box.height(width: 200)))
         let document = try await makeDocument(items: [item])
-        let (_, controller, window) = try await show(document)
+        // An iPhone's keyboard is its screen's, so there the window is the screen, upright and then on its side.
+        let screen = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first).screen.bounds.size
+        let upright = Device.isPhone ? screen : portrait, turned = CGSize(width: upright.height, height: upright.width)
+        let (_, controller, window) = try await show(document, size: upright)
         controller.scrollToPage(2)
         // High enough that the keyboard, which UIKit keeps the box clear of, can't cover it in either shape.
         try bring(item.center, to: CGPoint(x: 0.5, y: 0.4), controller)
@@ -205,7 +210,7 @@ final class PageResizeTests: XCTestCase {
         await pause(0.5)
         let before = try share(of: item.center, onPage: 2, controller)
 
-        await resize(window, controller, to: landscape)
+        await resize(window, controller, to: turned)
         assertNear(try share(of: item.center, onPage: 2, controller), before, 0.01, "the box being typed in keeps its place in the view")
         XCTAssertTrue(controller.view.bounds.contains(controller.view.convert(textView.frame, from: textView.superview)))
         XCTAssertTrue(textView.isFirstResponder, "and typing goes on")

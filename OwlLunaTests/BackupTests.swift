@@ -493,8 +493,9 @@ final class BackupTests: XCTestCase {
                 _ = try await LibraryBackup.restore(from: backup, into: store.root, beforeRewrite: { _ in throw error })
                 XCTFail("the restore carried on with no room left")
             } catch {
-                XCTAssertEqual(error.localizedDescription,
-                               "There isn't enough free space on this iPad. Free some up in Settings › General › iPad Storage, then try again.")
+                XCTAssertEqual(error.localizedDescription, Device.isPhone
+                               ? "There isn't enough free space on this iPhone. Free some up in Settings › General › iPhone Storage, then try again."
+                               : "There isn't enough free space on this iPad. Free some up in Settings › General › iPad Storage, then try again.")
             }
         }
         XCTAssertEqual(store.root.packageIDs(), [notes.id], "nothing half-restored is left in the library")

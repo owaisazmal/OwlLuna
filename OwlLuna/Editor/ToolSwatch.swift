@@ -82,10 +82,13 @@ struct ToolSwatch: View {
 }
 
 struct ToolSwatchButtonStyle: ButtonStyle {
+    /// In a column, a slot is as wide as a button and as tall as a slot is wide.
+    var turned = false
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.92 : 1)
-            .frame(width: ToolTray.slot, height: ToolTray.button)
+            .frame(width: turned ? ToolTray.button : ToolTray.slot, height: turned ? ToolTray.slot : ToolTray.button)
             .contentShape(Rectangle())
             .contentShape(.hoverEffect, RoundedRectangle.plate.inset(by: 1))
             .hoverEffect(.highlight)

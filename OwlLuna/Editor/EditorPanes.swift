@@ -33,7 +33,7 @@ struct EditorPanes: View {
     private var showsTabs: Bool { window.tabs.count > 1 && !window.hidesChrome }
 
     /// A tab can move beside the first pane wherever the title menu would offer to open a notebook there.
-    private var hasRoomBeside: Bool { window.beside == nil && sizeClass != .compact && size.width >= Self.narrowWidth }
+    private var hasRoomBeside: Bool { window.beside == nil && sizeClass != .compact && size.width >= Self.narrowWidth && !Device.isPhone }
 
     var body: some View {
         @Bindable var window = window

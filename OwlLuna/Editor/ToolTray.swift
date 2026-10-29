@@ -8,6 +8,8 @@ struct ToolTray: View {
     let session: EditorSession
     /// The width of the pane the tray stands in.
     let room: CGFloat
+    /// Down the vertical bar of a folded iPhone Duo the tray is a column of the pens, the eraser and the lasso.
+    var vertical = false
     let use: (ToolExtra) -> Void
     @State private var toolbox = Toolbox.shared
     @State private var hidden: Edge.Set = []
@@ -48,6 +50,27 @@ struct ToolTray: View {
     }
 
     var body: some View {
+        if vertical { column } else { tray }
+    }
+
+    /// The pens scroll when the column is too short for them all.
+    private var column: some View {
+        let pens = toolbox.shelf.usable
+        let rows = CGFloat(pens.count + (toolbox.shelf.isFull ? 0 : 1))
+        return VStack(spacing: 0) {
+            penRow(pens, axis: .vertical)
+                .frame(maxHeight: rows * Self.slot)
+            Rectangle().fill(Color.hairline).frame(width: 24, height: 1).padding(.vertical, Space.x1)
+            eraserButton
+            lassoButton
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text("Tools"))
+        .accessibilityIdentifier("editor.tools.tray")
+    }
+
+    @ViewBuilder
+    private var tray: some View {
         let pens = toolbox.shelf.usable
         let extras = ToolExtra.allCases.filter(toolbox.extras.contains)
         let plan = Self.plan(pens: pens.count, extras: extras.count, room: room)
@@ -94,26 +117,27 @@ struct ToolTray: View {
 
     // MARK: Pens
 
-    private func penRow(_ pens: [ToolPreset]) -> some View {
-        ScrollViewReader { proxy in
-            ScrollView(.horizontal) {
-                HStack(spacing: 0) {
+    private func penRow(_ pens: [ToolPreset], axis: Axis = .horizontal) -> some View {
+        let layout = axis == .horizontal ? AnyLayout(HStackLayout(spacing: 0)) : AnyLayout(VStackLayout(spacing: 0))
+        return ScrollViewReader { proxy in
+            ScrollView(axis == .horizontal ? .horizontal : .vertical) {
+                layout {
                     ForEach(Array(pens.enumerated()), id: \.element.id) { index, pen in
                         penButton(pen, at: index, of: pens.count).id(pen.id)
                     }
                     if !toolbox.shelf.isFull {
                         Button(action: addPen) { Label("New Pen", systemImage: "plus") }
-                            .buttonStyle(NewPenButtonStyle())
+                            .buttonStyle(NewPenButtonStyle(turned: vertical))
                             .accessibilityHint(Text("Adds a pen like the one in hand, in another colour"))
                             .accessibilityIdentifier("editor.tools.add")
                     }
                 }
             }
-            .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+            .scrollBounceBehavior(.basedOnSize, axes: axis == .horizontal ? .horizontal : .vertical)
             .scrollIndicators(.hidden)
             .onScrollGeometryChange(for: Edge.Set.self) { geometry in
                 // A tray with no width yet has no edges to report.
-                guard room > 0 else { return [] }
+                guard room > 0, axis == .horizontal else { return [] }
                 let x = geometry.contentOffset.x, end = geometry.contentSize.width - geometry.containerSize.width
                 return (x > 1 ? Edge.Set.leading : []).union(x < end - 1 ? .trailing : [])
             } action: { _, edges in hidden = edges }
@@ -134,7 +158,7 @@ struct ToolTray: View {
         return Button { if inHand { editing = pen.id } else { take(.pen(pen.id), named: pen.name) } } label: {
             ToolSwatch(preset: pen, inUse: inHand, onDark: session.inkIsLight, turned: session.paperIsNight)
         }
-        .buttonStyle(ToolSwatchButtonStyle())
+        .buttonStyle(ToolSwatchButtonStyle(turned: vertical))
         .panel("Pen Options", isPresented: Binding(get: { editing == pen.id }, set: { if !$0, editing == pen.id { editing = nil } })) {
             ScrollView { PenOptions(id: pen.id, toolbox: toolbox, onDark: session.inkIsLight, turned: session.paperIsNight) { remove(pen) } }
                 .scrollBounceBehavior(.basedOnSize)
@@ -146,8 +170,8 @@ struct ToolTray: View {
         .accessibilityAddTraits(inHand ? .isSelected : [])
         .accessibilityActions {
             Button("Change Pen") { change(pen) }
-            if index > 0 { Button("Move Left") { toolbox.shelf.move(pen.id, by: -1) } }
-            if index < count - 1 { Button("Move Right") { toolbox.shelf.move(pen.id, by: 1) } }
+            if index > 0 { Button(vertical ? "Move Up" : "Move Left") { toolbox.shelf.move(pen.id, by: -1) } }
+            if index < count - 1 { Button(vertical ? "Move Down" : "Move Right") { toolbox.shelf.move(pen.id, by: 1) } }
             if count > 1 { Button("Remove") { remove(pen) } }
         }
         .accessibilityShowsLargeContentViewer { Label(pen.name, systemImage: pen.symbol) }
@@ -273,12 +297,15 @@ private struct ShapeStrip: View {
 }
 
 private struct NewPenButtonStyle: ButtonStyle {
+    var turned = false
+
     func makeBody(configuration: Configuration) -> some View {
-        Icon(configuration: configuration)
+        Icon(configuration: configuration, turned: turned)
     }
 
     private struct Icon: View {
         let configuration: Configuration
+        let turned: Bool
         @Environment(\.accessibilityShowBorders) private var showBorders
 
         /// An empty label waiting for a pen, so it isn't taken for the bar's Add.
@@ -292,7 +319,7 @@ private struct NewPenButtonStyle: ButtonStyle {
                 .overlay {
                     ToolSwatch.shape.strokeBorder(Color.ink.opacity(0.45), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
                 }
-                .frame(width: ToolTray.slot, height: ToolTray.button)
+                .frame(width: turned ? ToolTray.button : ToolTray.slot, height: turned ? ToolTray.slot : ToolTray.button)
                 .contentShape(Rectangle())
                 .contentShape(.hoverEffect, RoundedRectangle.plate.inset(by: 1))
                 .hoverEffect(.highlight)

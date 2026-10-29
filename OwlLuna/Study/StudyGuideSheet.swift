@@ -316,7 +316,7 @@ struct StudyGuideSheet: View {
 
     private var unavailable: some View {
         ScrollView {
-            EmptyPlate("Not on This iPad Yet", systemImage: "lock.ipad", message: Text(unavailableReason))
+            EmptyPlate("Not on This iPad Yet", systemImage: Device.isPhone ? "lock.iphone" : "lock.ipad", message: Text(unavailableReason))
         }
         .scrollBounceBehavior(.basedOnSize)
         .accessibilityIdentifier("guide.unavailable")

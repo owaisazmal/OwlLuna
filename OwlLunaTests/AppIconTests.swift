@@ -3,9 +3,9 @@ import XCTest
 
 @MainActor
 final class AppIconTests: XCTestCase {
-    /// Each alternate is declared in the generated Info.plist, or iPadOS refuses to switch to it.
+    /// Each alternate is declared in the generated Info.plist, or the system refuses to switch to it.
     func testEveryAlternateIconIsDeclared() throws {
-        let icons = try XCTUnwrap(Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons~ipad") as? [String: Any])
+        let icons = try XCTUnwrap(Bundle.main.object(forInfoDictionaryKey: Device.isPhone ? "CFBundleIcons" : "CFBundleIcons~ipad") as? [String: Any])
         let alternates = try XCTUnwrap(icons["CFBundleAlternateIcons"] as? [String: Any])
         let names = AppIconChoice.allCases.compactMap(\.iconName)
         XCTAssertEqual(names.count, AppIconChoice.allCases.count - 1)

@@ -382,7 +382,7 @@
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -408,7 +408,7 @@
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -547,13 +547,13 @@
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = OwlLuna;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "OwlLuna reads today's events to print them on a page when you ask it to. They are read on this iPad, and once printed they are part of the notebook.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "OwlLuna reads today's events to print them on a page when you ask it to. They are read on this device, and once printed they are part of the notebook.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "OwlLuna uses the camera to scan paper and take photos for your notebooks.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "OwlLuna uses Face ID to open the notebooks you have locked.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "OwlLuna records audio alongside your notes when you tap the record button.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "OwlLuna saves the pictures and videos you export to your photo library when you choose to.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "OwlLuna adds photos you pick as pages or pictures in your notebooks.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "OwlLuna writes down what was said in a recording when you ask it to. The recording is transcribed on this iPad.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "OwlLuna writes down what was said in a recording when you ask it to. The recording is transcribed on this device.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -567,7 +567,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -587,13 +587,13 @@
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = OwlLuna;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "OwlLuna reads today's events to print them on a page when you ask it to. They are read on this iPad, and once printed they are part of the notebook.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "OwlLuna reads today's events to print them on a page when you ask it to. They are read on this device, and once printed they are part of the notebook.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "OwlLuna uses the camera to scan paper and take photos for your notebooks.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "OwlLuna uses Face ID to open the notebooks you have locked.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "OwlLuna records audio alongside your notes when you tap the record button.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "OwlLuna saves the pictures and videos you export to your photo library when you choose to.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "OwlLuna adds photos you pick as pages or pictures in your notebooks.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "OwlLuna writes down what was said in a recording when you ask it to. The recording is transcribed on this iPad.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "OwlLuna writes down what was said in a recording when you ask it to. The recording is transcribed on this device.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -607,7 +607,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -626,7 +626,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OwlLuna.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OwlLuna";
 			};
 			name = Debug;
@@ -646,7 +646,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OwlLuna.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OwlLuna";
 			};
 			name = Release;
@@ -664,7 +664,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = OwlLuna;
 			};
 			name = Debug;
@@ -682,7 +682,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = OwlLuna;
 			};
 			name = Release;

@@ -50,3 +50,27 @@ struct BoardSidebarToggle: ViewModifier {
         }
     }
 }
+
+/// On an iPhone the folded-up sidebar's back button is the system's glass bubble; this puts a plate in its place.
+/// It goes back by clearing the chosen place, so the same place can be chosen again.
+struct PlateBack: ViewModifier {
+    let shows: Bool
+    let action: () -> Void
+
+    func body(content: Content) -> some View {
+        if shows {
+            content
+                .navigationBarBackButtonHidden(true)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(action: action) { Label("Shelves", systemImage: "chevron.backward") }
+                            .buttonStyle(.plateIcon)
+                            .accessibilityIdentifier("library.back")
+                    }
+                    .boardBackground()
+                }
+        } else {
+            content
+        }
+    }
+}

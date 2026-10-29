@@ -12,6 +12,8 @@ extension EnvironmentValues {
     @Entry var panelClose: PanelClose?
     /// The least height a card's control is taken to have. A title in a bar is short; with this its card hangs as low as the bar's others.
     @Entry var panelAnchorHeight: CGFloat = 0
+    /// Set down a rail at the screen's side, where a card opens beside its control rather than under it.
+    @Entry var panelsOpenBeside = false
 }
 
 // MARK: Opening
@@ -52,6 +54,7 @@ struct PanelPresenter<Panel: View>: ViewModifier {
     @State private var pending: (() -> Void)?
     @Environment(\.panelClose) private var outer
     @Environment(\.panelAnchorHeight) private var least
+    @Environment(\.panelsOpenBeside) private var opensBeside
 
     func body(content: Content) -> some View {
         content.background {
@@ -79,7 +82,7 @@ struct PanelPresenter<Panel: View>: ViewModifier {
 
     @ViewBuilder
     private var stage: some View {
-        if notice { NoticeStage(panel: panel) } else { PanelStage(anchor: anchor, beside: beside, close: close, panel: panel) }
+        if notice { NoticeStage(panel: panel) } else { PanelStage(anchor: anchor, beside: beside || opensBeside, close: close, panel: panel) }
     }
 
     private func close(then action: (() -> Void)?) {

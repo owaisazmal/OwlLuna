@@ -84,6 +84,7 @@ fileprivate struct EditorContent: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.verticalBar) private var verticalBar
     @State private var paneWidth: CGFloat = 1024
     @State private var pickingBeside = false
     @State private var showingRecordingsSheet = false
@@ -161,6 +162,9 @@ fileprivate struct EditorContent: View {
     }
     private var isCompact: Bool { sizeClass == .compact || isNarrow }
 
+    /// A folded iPhone Duo keeps the bar and the tools in its vertical bar, and the title and page over the page's top margin.
+    private var railBar: VerticalBar? { pane == .single && sizeClass == .compact ? verticalBar : nil }
+
     /// An open whiteboard has its own button in the bar, where there is room for one.
     private var showsBoardMenu: Bool { session.openBoard != nil && !isNarrow }
     private var showsLeaveBoard: Bool { showsBoardMenu && session.pageBehindBoard != nil }
@@ -189,11 +193,18 @@ fileprivate struct EditorContent: View {
             }
             .background(Color.desk.ignoresSafeArea())
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { paneWidth = $0 }
+            .verticalRail(session.mode == .writing ? railBar : nil) { AnyView(rail) }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbar }
             .toolbarBackground(.hidden, for: .navigationBar)
-            .toolbar(session.mode == .writing ? .visible : .hidden, for: .navigationBar)
+            .toolbar(session.mode == .writing && railBar == nil ? .visible : .hidden, for: .navigationBar)
         }
+        .onChange(of: railBar != nil, initial: true) { _, railed in
+            guard session.toolsInRail != railed else { return }
+            session.toolsInRail = railed
+            session.canvas?.toolTrayDidChange()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .owlLunaPencilSeen)) { _ in session.pencilSeen() }
         .statusBarHidden(session.mode != .writing)
         .persistentSystemOverlays(session.mode == .writing ? .automatic : .hidden)
     }
@@ -215,6 +226,15 @@ fileprivate struct EditorContent: View {
                 .frame(width: 300)
                 .transition(.move(edge: side.edge))
         }
+        if showsPagesColumn {
+            PagesColumn(session: session, side: side)
+                .transition(.move(edge: side.edge))
+        }
+    }
+
+    /// An iPhone wide enough for it, as an unfolded iPhone Duo is, keeps the pages beside the page while nothing else is there.
+    private var showsPagesColumn: Bool {
+        Device.isPhone && sizeClass == .regular && pane == .single && session.mode == .writing && !showsPresenterPanel && !showsTranscriptPanel
     }
 
     private var pageStack: some View {
@@ -245,7 +265,7 @@ fileprivate struct EditorContent: View {
             }
             .overlay(alignment: side.topCorner) {
                 switch session.mode {
-                case .writing: ribbons
+                case .writing: if railBar == nil { ribbons }
                 case .focus: focusExit
                 case .presenting, .replaying, .selecting, .finding, .selectingText: EmptyView()
                 }
@@ -264,6 +284,7 @@ fileprivate struct EditorContent: View {
                     arrangeBar
                 } else {
                     VStack(spacing: 0) {
+                        if railBar != nil, session.mode == .writing { AnyView(runningHead) }
                         returnBar
                         if session.mode == .writing, session.openBoard != nil, !boardTipSeen { boardTip }
                     }
@@ -280,7 +301,7 @@ fileprivate struct EditorContent: View {
                         .floatingBar()
                         .padding(.bottom, Space.x5)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
-                } else if session.showsToolTray, !isCovered {
+                } else if session.showsToolTray, !isCovered, railBar == nil {
                     // The tray keeps its place when a keyboard comes up; it is put away while a text box is typed in.
                     ToolTray(session: session, room: paneWidth, use: use)
                         .padding(.bottom, ToolTray.gap + session.zoomPanelLift)
@@ -545,13 +566,7 @@ fileprivate struct EditorContent: View {
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            Button {
-                session.canvas?.select(nil)
-                session.recorder.shutdown()
-                if window?.linkReturn?.destination == document.id { window?.linkReturn = nil }
-                if pane != .secondary { window?.closing = .library }
-                close()
-            } label: {
+            Button(action: leave) {
                 if pane == .secondary { Label("Close", systemImage: "xmark") } else { Label("Library", systemImage: "chevron.backward") }
             }
             .buttonStyle(.plateIcon)
@@ -620,8 +635,68 @@ fileprivate struct EditorContent: View {
             .accessibilityIdentifier("editor.redo")
     }
 
+    private func leave() {
+        session.canvas?.select(nil)
+        session.recorder.shutdown()
+        if window?.linkReturn?.destination == document.id { window?.linkReturn = nil }
+        if pane != .secondary { window?.closing = .library }
+        close()
+    }
+
+    /// The bar's buttons and the tools, one above another down the vertical bar.
+    private var rail: some View {
+        VStack(spacing: 0) {
+            Button(action: leave) { Label("Library", systemImage: "chevron.backward") }
+                .buttonStyle(.plateIcon)
+                .keyboardShortcut((window?.tabs.count ?? 0) > 1 ? nil : shortcut("w", always: true))
+                .accessibilityIdentifier("editor.back")
+                .padding(.bottom, Space.x1)
+            undoButtons.buttonStyle(TrayIconStyle())
+            if session.showsTools, !document.isReadOnly {
+                Rectangle().fill(Color.hairline).frame(width: 24, height: 1).padding(.vertical, Space.x1)
+                ToolTray(session: session, room: 0, vertical: true, use: use)
+            }
+            Rectangle().fill(Color.hairline).frame(width: 24, height: 1).padding(.vertical, Space.x1)
+            AnyView(addMenu).buttonStyle(TrayIconStyle())
+            AnyView(moreMenu).buttonStyle(TrayIconStyle())
+        }
+        .labelStyle(.iconOnly)
+        .environment(\.panelsOpenBeside, true)
+        .dynamicTypeSize(...barTextLimit)
+    }
+
+    /// The title and the page, set in the top margin over the page as a running head.
+    private var runningHead: some View {
+        let page = min(session.currentPage + 1, document.pages.count), count = document.pages.count
+        return HStack(spacing: Space.x2) {
+            AnyView(titleMenu.environment(\.panelAnchorHeight, 36))
+                .padding(.horizontal, Space.x2)
+                .frame(height: 36)
+                .plate(in: RoundedRectangle.plate, fill: Color.surface)
+            Spacer(minLength: Space.x2)
+            Button { showingPages = true } label: {
+                Text("\(page) of \(count)")
+                    .font(.subheadline.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(cloth.onCloth)
+                    .padding(.horizontal, Space.x3)
+                    .frame(height: 36)
+                    .background { RoundedRectangle.plate.fill(cloth.color) }
+            }
+            .buttonStyle(.plain)
+            .simultaneousGesture(LongPressGesture(minimumDuration: 0.4).onEnded { _ in goToText = ""; goToPage = true })
+            .accessibilityLabel(Text("Page \(session.currentPage + 1) of \(document.pages.count)"))
+            .accessibilityHint(Text("Opens the page navigator. Touch and hold to go to a page."))
+            .accessibilityAction(named: Text("Go to page")) { goToText = ""; goToPage = true }
+            .accessibilityIdentifier("editor.ribbon")
+        }
+        .dynamicTypeSize(...barTextLimit)
+        .padding(.horizontal, Space.x3)
+        .padding(.top, Space.x2)
+    }
+
     /// The bar lets a long title run under the buttons, so the title is given what they leave.
     private var titleRoom: CGFloat {
+        if railBar != nil { return max(paneWidth - 150, 44) }
         let buttons = isNarrow ? buttonGroupWidth : undoGroupWidth + buttonGroupWidth + Space.x4 + (showsBoardMenu ? 52 + Space.x4 : 0)
         return max(paneWidth - buttons - 90 - (showsLeaveBoard ? leaveBoardWidth + Space.x2 : 0), 44)
     }
@@ -672,7 +747,7 @@ fileprivate struct EditorContent: View {
                 MenuBreak()
                 Button { window.pickingTab = true } label: { Label("Open Another Notebook in a Tab…", systemImage: "plus.rectangle.on.rectangle") }
                     .disabled(window.tabs.count >= EditorWindow.tabLimit)
-                if pane == .single, !isNarrow, sizeClass != .compact {
+                if pane == .single, !isNarrow, sizeClass != .compact, !Device.isPhone {
                     Button { pickingBeside = true } label: { Label("Open Another Notebook Beside…", systemImage: "rectangle.split.2x1") }
                         .disabled(window.beside != nil)
                 } else if pane == .primary, let beside = window.beside {
@@ -1344,12 +1419,14 @@ fileprivate struct EditorContent: View {
             if let current, !document.isReadOnly {
                 Button { editingNotes = NotesTarget(id: current.id) } label: { Label("Presenter Notes…", systemImage: "note.text") }
             }
-            MenuBreak()
-            OwlLunaMenu {
-                OwlLunaPicker(selection: $session.drawingInput) {
-                    ForEach(DrawingInput.allCases) { Text($0.displayName).tag($0) }
-                }
-            } label: { Label("Draw With", systemImage: "hand.draw") }
+            if DrawingInput.hasPencil {
+                MenuBreak()
+                OwlLunaMenu {
+                    OwlLunaPicker(selection: $session.drawingInput) {
+                        ForEach(DrawingInput.allCases) { Text($0.displayName).tag($0) }
+                    }
+                } label: { Label("Draw With", systemImage: "hand.draw") }
+            }
         } label: {
             Label("More", systemImage: "ellipsis.circle")
         }

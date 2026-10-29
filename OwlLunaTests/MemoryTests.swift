@@ -80,7 +80,8 @@ final class MemoryTests: XCTestCase {
         let screen = window.traitCollection.displayScale
         let star = PageItem(content: .sticker("star"), center: CGPoint(x: 306, y: 300), size: CGSize(width: 612, height: 459))
         let view = PageItemView(item: star, assets: FileManager.default.temporaryDirectory)
-        view.layout(scale: 1.6)
+        // Small enough to stay under the cap on a 3× iPhone screen as well.
+        view.layout(scale: 1.4)
         window.addSubview(view)
         let art = try XCTUnwrap(view.subviews.first)
         XCTAssertEqual(art.frame, view.bounds)
@@ -93,7 +94,7 @@ final class MemoryTests: XCTestCase {
         XCTAssertEqual(art.frame, view.bounds)
         XCTAssertLessThan(art.contentScaleFactor, 1, "enlarged at 5×, fewer pixels than points")
         XCTAssertLessThanOrEqual(art.bounds.width * art.contentScaleFactor * art.bounds.height * art.contentScaleFactor, 2400 * 2400 + 1)
-        view.layout(scale: 1.6)
+        view.layout(scale: 1.4)
         XCTAssertEqual(art.contentScaleFactor, screen, "and sharp again back at 1×")
     }
 

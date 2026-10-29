@@ -657,7 +657,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     /// What the tool tray takes of the foot of the view while it shows: itself, the gap under it and what it stands on,
     /// the home indicator's margin or the zoom window.
     private var toolsObscured: CGFloat {
-        guard session.showsToolTray else { return 0 }
+        guard session.showsToolTray, !session.toolsInRail else { return 0 }
         return ToolTray.height + ToolTray.gap + max(view.safeAreaInsets.bottom, zoomPanel.map { view.bounds.maxY - $0.frame.minY } ?? 0)
     }
 

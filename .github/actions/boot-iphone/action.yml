@@ -1,0 +1,50 @@
+name: Boot an iPhone simulator
+description: Boots an iPhone Duo on the newest iOS runtime that has one, or else another iPhone on the newest runtime with an iPhone, and sets SIMULATOR_UDID.
+
+outputs:
+  udid:
+    description: The booted simulator; empty when the runner has no iOS runtime.
+    value: ${{ steps.boot.outputs.udid }}
+
+runs:
+  using: composite
+  steps:
+    - id: boot
+      shell: bash
+      run: |
+        runtimes=$(xcrun simctl list runtimes available --json)
+        devices=$(xcrun simctl list devices available --json)
+        candidates=$(jq -r '
+          [.runtimes[] | select(.platform == "iOS")]
+          | sort_by(.version | split(".") | map(tonumber)) | reverse | .[].identifier' <<< "$runtimes")
+        if [ -z "$candidates" ]; then
+          echo "udid=" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        # The Duo has the vertical bar the folded layouts are built for, so it comes first.
+        runtime=
+        for candidate in $candidates; do
+          udid=$(jq -r --arg runtime "$candidate" '
+            .devices[$runtime] // []
+            | (map(select(.name == "iPhone Duo")) + map(select(.name | startswith("iPhone"))))
+            | first | .udid // empty' <<< "$devices")
+          type=$(jq -r --arg runtime "$candidate" '
+            .runtimes[] | select(.identifier == $runtime) | .supportedDeviceTypes
+            | (map(select(.name == "iPhone Duo")) + map(select(.productFamily == "iPhone")))
+            | first | .identifier // empty' <<< "$runtimes")
+          if [ -n "$udid" ] || [ -n "$type" ]; then
+            runtime=$candidate
+            break
+          fi
+        done
+        if [ -z "$runtime" ]; then
+          echo "::error::No iOS runtime on this runner has an iPhone ($(echo $candidates))."
+          exit 1
+        fi
+        if [ -z "$udid" ]; then
+          udid=$(xcrun simctl create "CI iPhone" "$type" "$runtime")
+        fi
+        echo "Booting $(xcrun simctl list devices --json | jq -r --arg udid "$udid" '.devices[][] | select(.udid == $udid) | .name') on $runtime"
+        xcrun simctl boot "$udid"
+        echo "udid=$udid" >> "$GITHUB_OUTPUT"
+        echo "SIMULATOR_UDID=$udid" >> "$GITHUB_ENV"

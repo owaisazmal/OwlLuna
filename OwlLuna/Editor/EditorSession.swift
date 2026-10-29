@@ -126,6 +126,12 @@ final class EditorSession {
             if drawingInput != .pencilOnly { document.dismissNotices(.onlyPencilDraws) }
         }
     }
+    /// Once a Pencil touches an iPhone's pages only the Pencil draws, as on an iPad, unless a choice was made before.
+    func pencilSeen() {
+        guard Device.isPhone, UserDefaults.standard.string(forKey: SettingsKey.drawingInput) == nil else { return }
+        drawingInput = .pencilOnly
+    }
+
     @ObservationIgnored weak var canvas: EditorCanvasControlling?
     /// The titles of the notebooks this one links to. Nil until they've been looked up.
     @ObservationIgnored var notebookTitles: [UUID: String]? {
@@ -576,6 +582,9 @@ final class EditorSession {
             if items.indices.contains(target) { items.swapAt(index, target) }
         }
     }
+
+    /// On a folded iPhone Duo the tools stand in the vertical bar, so the foot of the editor stays clear for the pages.
+    var toolsInRail = false
 
     /// The tool tray is at the foot of the editor while the page can be written on and nothing is being typed.
     var showsToolTray: Bool {

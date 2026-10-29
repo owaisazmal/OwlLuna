@@ -8,6 +8,7 @@ You need:
 - An Apple Pencil Pro for squeeze and hover. Double-tap also works with an Apple Pencil (2nd generation).
 - iPadOS 18 or later, and iPadOS 26 for the calligraphy pen and the study guide. CI's iPadOS 18 job is skipped, so try the main paths on iPadOS 18 too.
 - A keyboard with a trackpad, a display with a USB-C to HDMI adapter or an Apple TV, a Mac with Xcode 27, and an iPhone that films at 240 fps.
+- For the iPhone checks, an iPhone on iOS 18 or later, ideally an iPhone Duo.
 
 Names are spelt as the app spells them. In the editor, ⋯ is More, + is Add, and the title menu opens from the notebook's title. Keep a screen recording of every check, and film your hand with a phone where it matters. Write the build, the iPadOS version and the Pencil beside every result.
 
@@ -409,6 +410,19 @@ A board has only been laid out at 5× in the simulator, never written on with a 
 6. Title menu › Export › This Page as a Time-lapse Video…. ⌘F a word written far out. Present the board on a display.
 
 Expect: ink lands under the tip and is sharp at any distance, with no blank tiles or jumps. Show Everything fits all the ink within about a second, and the board reopens quickly where you left it. Memory levels off. The time-lapse shows all the ink in order, at most twenty seconds. Find brings the word into view, and the display shows the inked area with the laser. Keep Animation Hitches for 30 seconds of panning and Allocations for a minute.
+
+## iPhone
+
+Only checked in the simulator, on an iPhone Duo (iOS 27.1, folded), an iPhone 17 Pro and an iPhone 18 Pro Max. Use an iPhone signed in to the same test Apple Account as the iPads, and an iPhone Duo if you can.
+
+1. Write with a finger. Scroll and pinch with two fingers, then rest the side of your hand on the page while writing.
+2. On a folded Duo, use the column on the right: change shelves from its tabs, make a notebook from New, and in the editor take each pen, the eraser and the lasso, Undo, Add and More. Tap the title and the page count at the top of the page.
+3. Unfold the Duo with a notebook open, then fold it again. Do the same in the library.
+4. On another iPhone, go back from the shelf with the plate at the top left and choose the same place again. Turn the phone to landscape in the library and the editor.
+5. Write a page on the iPhone and let it sync to an iPad, then the other way. Open Settings and read the notes under iCloud, Recordings and Search.
+6. On a Duo with iOS 27.2 or later, write with an Apple Pencil (USB-C), then with a finger, then look at Settings › Input.
+
+Expect: a finger draws from the first launch, two fingers never draw, and a resting hand makes no marks. After the Pencil's first stroke only the Pencil draws, and Draw With is back in Settings. Nothing in the column sits under the camera or the status bar, and menus open beside it. Unfolding keeps the page and shelf you were on, with the sidebar and the Pages column beside them. The same notebook opens on both devices with its pages and ink. Notes say iPhone, never iPad, and until a Pencil is used Settings has no Draw With, Double-Tap or Squeeze.
 
 ## Performance
 

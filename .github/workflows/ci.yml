@@ -121,6 +121,76 @@ jobs:
             ${{ runner.temp }}/*.log
             ${{ runner.temp }}/*.xcresult
 
+  iphone:
+    name: Build and tests (iPhone)
+    runs-on: xcode-27
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Boot an iPhone simulator
+        id: simulator
+        uses: ./.github/actions/boot-iphone
+
+      - name: Build
+        id: build
+        run: |
+          set -o pipefail
+          test -n "$SIMULATOR_UDID" || { echo "::error::No iOS simulator runtime is available on this runner."; exit 1; }
+          xcodebuild -version
+          xcodebuild build-for-testing \
+            -project OwlLuna.xcodeproj \
+            -scheme OwlLuna \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+            SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
+            GCC_TREAT_WARNINGS_AS_ERRORS=YES \
+            2>&1 | tee "$RUNNER_TEMP/build.log" \
+            | xcbeautify --renderer github-actions
+
+      - name: Wait for the simulator
+        if: steps.build.outcome == 'success'
+        run: xcrun simctl bootstatus "$SIMULATOR_UDID"
+
+      - name: Unit tests
+        if: steps.build.outcome == 'success'
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project OwlLuna.xcodeproj \
+            -scheme OwlLuna \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+            -only-testing:OwlLunaTests \
+            -parallel-testing-enabled NO \
+            -resultBundlePath "$RUNNER_TEMP/Unit.xcresult" \
+            2>&1 | tee "$RUNNER_TEMP/test.log" \
+            | xcbeautify --renderer github-actions
+
+      - name: UI smoke test
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 30
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project OwlLuna.xcodeproj \
+            -scheme OwlLuna \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+            -only-testing:OwlLunaUITests/SliceUITests/testVerticalSlice \
+            -parallel-testing-enabled NO \
+            -retry-tests-on-failure -test-iterations 2 \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 600 \
+            -resultBundlePath "$RUNNER_TEMP/Smoke.xcresult" \
+            2>&1 | tee "$RUNNER_TEMP/smoke.log" \
+            | xcbeautify --renderer github-actions
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: test-results-iphone
+          retention-days: 14
+          path: |
+            ${{ runner.temp }}/*.log
+            ${{ runner.temp }}/*.xcresult
+
   release:
     name: Release build
     runs-on: xcode-27

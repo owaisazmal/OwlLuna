@@ -10,6 +10,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - A password-protected PDF now opens with its password. Import it or insert it and OwlLuna asks for the password, again if it's wrong, or you can skip it. The notebook keeps the PDF without its lock, so it opens, exports and syncs like any other, and the password isn't kept.
 - Importing a large PDF, or several, shows how far it has got at the foot of the shelf.
+- OwlLuna runs on iPhone as well as iPad, with the same library and iCloud sync, so a notebook written on one opens on the other.
+- On iPhone a finger draws and two fingers scroll and zoom. Once an Apple Pencil touches the pages, it works as on an iPad: only the Pencil draws, and Settings shows its choices.
+- On a folded iPhone Duo the library's places are tabs down the right-hand column, with New at the top and Settings at the foot. In the editor the same column holds back, Undo, Redo, the pens, Eraser, Lasso, Add and More, and the title and page count sit over the top of the page.
+- On an iPhone wide enough, such as an unfolded Duo, the pages are listed beside the page.
+- Messages and notes say iPhone on an iPhone, in English, French, German and Spanish.
 
 ### Fixed
 

@@ -70,6 +70,7 @@ struct LibrarySidebar: View {
                     addLabel("New Folder", systemImage: "folder.badge.plus")
                 }
                 .background(CellFocusRing(shown: true))
+                .listRowBackground(Color.clear)
             } header: {
                 Text("Shelves").metaStyle(.footnote)
             }
@@ -87,6 +88,7 @@ struct LibrarySidebar: View {
                         }
                         .accessibilityIdentifier("sidebar.newSmartShelf")
                         .background(CellFocusRing(shown: true))
+                        .listRowBackground(Color.clear)
                     }
                 } header: {
                     Text("Smart shelves").metaStyle(.footnote)

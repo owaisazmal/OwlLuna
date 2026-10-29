@@ -20,6 +20,10 @@ struct OwlLunaSettingsView: View {
     @AppStorage(SettingsKey.circleSelects) private var circleSelects = true
     @AppStorage(SettingsKey.pencilDoubleTap) private var pencilDoubleTap: PencilAction = .system
     @AppStorage(SettingsKey.pencilSqueeze) private var pencilSqueeze: PencilAction = .system
+    @AppStorage(SettingsKey.pencilSeen) private var pencilSeen = false
+
+    /// An iPhone shows the Pencil's choices once a Pencil has touched it.
+    private var hasPencil: Bool { !Device.isPhone || pencilSeen }
     @AppStorage(SettingsKey.journalAgenda) private var printsAgenda = false
     @AppStorage(SettingsKey.spotlight) private var showsInSpotlight = true
     @AppStorage(SettingsKey.appearance) private var appearance: AppAppearance = .initial
@@ -106,14 +110,19 @@ struct OwlLunaSettingsView: View {
         }
     }
 
+    /// An iPhone that has never had a Pencil on it draws with a finger, so there is nothing to choose.
     private var inputSection: some View {
-        SettingsSection("Input", note: "“System Setting” follows Settings › Apple Pencil › Only Draw with Apple Pencil. With Left-Handed on, the page ribbon, the zoom window's buttons and the panels beside the page are on the left.") {
-            VStack(alignment: .leading, spacing: Space.x2) {
-                Text("Draw With")
-                OwlLunaSegmentedPicker("Draw With", selection: $drawingInput, options: DrawingInput.allCases) { Text($0.displayName) }
+        SettingsSection("Input", note: !hasPencil
+                        ? "With Left-Handed on, the page ribbon, the zoom window's buttons and the panels beside the page are on the left."
+                        : "“System Setting” follows Settings › Apple Pencil › Only Draw with Apple Pencil. With Left-Handed on, the page ribbon, the zoom window's buttons and the panels beside the page are on the left.") {
+            if hasPencil {
+                VStack(alignment: .leading, spacing: Space.x2) {
+                    Text("Draw With")
+                    OwlLunaSegmentedPicker("Draw With", selection: $drawingInput, options: DrawingInput.allCases) { Text($0.displayName) }
+                }
+                .padding(.vertical, Space.x2)
+                .settingsRow()
             }
-            .padding(.vertical, Space.x2)
-            .settingsRow()
             Toggle("Left-Handed", isOn: $leftHanded)
                 .accessibilityIdentifier("settings.input.leftHanded")
                 .settingsRow()
@@ -151,7 +160,7 @@ struct OwlLunaSettingsView: View {
     }
 
     private var trashSection: some View {
-        SettingsSection("Recently Deleted", note: "Notebooks in Recently Deleted are deleted for good once they have been there this long. Each iPad keeps to its own setting: with iCloud sync on, a notebook whose time runs out here stays on another iPad set to keep it longer, until its time there runs out too.") {
+        SettingsSection("Recently Deleted", note: "Notebooks in Recently Deleted are deleted for good once they have been there this long. Each device keeps to its own setting: with iCloud sync on, a notebook whose time runs out here stays on another device set to keep it longer, until its time there runs out too.") {
             VStack(alignment: .leading, spacing: Space.x2) {
                 Text("Keep Deleted Notebooks For")
                 OwlLunaSegmentedPicker("Keep Deleted Notebooks For", selection: $trashLength, options: TrashLength.allCases,
@@ -166,8 +175,11 @@ struct OwlLunaSettingsView: View {
         }
     }
 
+    /// Without a Pencil the same gestures are drawn with a finger, and there is nothing to double-tap or squeeze.
     private var pencilSection: some View {
-        SettingsSection("Apple Pencil", note: "Draw a line, arrow, circle, rectangle or triangle and hold still before lifting to straighten it, or draw a loop round ink and hold still to select it. Scribble back and forth over ink with a pen to erase it; Undo brings it back. A highlighter drawn along a line of a PDF's text is laid straight over that line. For Double-Tap and Squeeze, “System Setting” follows Settings › Apple Pencil.") {
+        SettingsSection(hasPencil ? "Apple Pencil" : "Drawing", note: !hasPencil
+                        ? "Draw a line, arrow, circle, rectangle or triangle and hold still before lifting to straighten it, or draw a loop round ink and hold still to select it. Scribble back and forth over ink with a pen to erase it; Undo brings it back. A highlighter drawn along a line of a PDF's text is laid straight over that line."
+                        : "Draw a line, arrow, circle, rectangle or triangle and hold still before lifting to straighten it, or draw a loop round ink and hold still to select it. Scribble back and forth over ink with a pen to erase it; Undo brings it back. A highlighter drawn along a line of a PDF's text is laid straight over that line. For Double-Tap and Squeeze, “System Setting” follows Settings › Apple Pencil.") {
             Toggle("Straighten Shapes", isOn: $snapsShapes).settingsRow()
             Toggle("Snap Highlighter to PDF Text", isOn: $snapsHighlighter).settingsRow()
             Toggle("Circle and Hold to Select", isOn: $circleSelects)
@@ -176,14 +188,16 @@ struct OwlLunaSettingsView: View {
             Toggle("Scribble to Erase", isOn: $scribbleErases)
                 .accessibilityIdentifier("settings.pencil.scribble")
                 .settingsRow()
-            SettingsChoiceRow(title: "Double-Tap", value: pencilDoubleTap.displayName, selection: $pencilDoubleTap) {
-                ForEach(PencilAction.allCases) { Text($0.displayName).tag($0) }
+            if hasPencil {
+                SettingsChoiceRow(title: "Double-Tap", value: pencilDoubleTap.displayName, selection: $pencilDoubleTap) {
+                    ForEach(PencilAction.allCases) { Text($0.displayName).tag($0) }
+                }
+                .accessibilityIdentifier("settings.pencil.doubleTap")
+                SettingsChoiceRow(title: "Squeeze", value: pencilSqueeze.displayName, selection: $pencilSqueeze) {
+                    ForEach(PencilAction.allCases) { Text($0.displayName).tag($0) }
+                }
+                .accessibilityIdentifier("settings.pencil.squeeze")
             }
-            .accessibilityIdentifier("settings.pencil.doubleTap")
-            SettingsChoiceRow(title: "Squeeze", value: pencilSqueeze.displayName, selection: $pencilSqueeze) {
-                ForEach(PencilAction.allCases) { Text($0.displayName).tag($0) }
-            }
-            .accessibilityIdentifier("settings.pencil.squeeze")
         }
     }
 
@@ -252,7 +266,7 @@ struct OwlLunaSettingsView: View {
     @ViewBuilder
     private var syncSection: some View {
         if let sync = app?.sync {
-            SettingsSection("iCloud", note: "Each notebook is copied whole to your private iCloud storage and from there to your other iPads, with your folders, smart shelves, stickers and pens. A notebook open here is sent a few seconds after you stop writing, and one open on another iPad then shows the newer version, unless it has changes of its own. If one was changed on two devices before they could sync, the newer version is kept and the older is saved beside it as a conflicted copy. Writing history is not synced. Turning sync off leaves the copy in iCloud. To remove it, turn sync off on every device, then delete OwlLuna's data in Settings › your name › iCloud.") {
+            SettingsSection("iCloud", note: "Each notebook is copied whole to your private iCloud storage and from there to your other devices, with your folders, smart shelves, stickers and pens. A notebook open here is sent a few seconds after you stop writing, and one open on another device then shows the newer version, unless it has changes of its own. If one was changed on two devices before they could sync, the newer version is kept and the older is saved beside it as a conflicted copy. Writing history is not synced. Turning sync off leaves the copy in iCloud. To remove it, turn sync off on every device, then delete OwlLuna's data in Settings › your name › iCloud.") {
                 Toggle("Sync with iCloud", isOn: Bindable(sync).isEnabled)
                     .accessibilityIdentifier("settings.sync.toggle")
                     .settingsRow()

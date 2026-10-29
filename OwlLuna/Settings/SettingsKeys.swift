@@ -5,10 +5,19 @@ enum DrawingInput: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 
     /// What draws until the setting is changed.
-    static let initial = initial(isMac: ProcessInfo.processInfo.isiOSAppOnMac)
+    @MainActor static var initial: DrawingInput {
+        initial(isMac: ProcessInfo.processInfo.isiOSAppOnMac, isPhone: Device.isPhone,
+                pencilSeen: UserDefaults.standard.bool(forKey: SettingsKey.pencilSeen))
+    }
 
-    /// A Mac has no Pencil to draw with, so there the pointer and fingers draw from the start.
-    static func initial(isMac: Bool) -> DrawingInput { isMac ? .anyInput : .pencilOnly }
+    /// Whether the Pencil's choices apply: always on an iPad, and on an iPhone once a Pencil has touched it.
+    @MainActor static var hasPencil: Bool { !Device.isPhone || UserDefaults.standard.bool(forKey: SettingsKey.pencilSeen) }
+
+    /// A Mac has no Pencil to draw with, so there the pointer and fingers draw from the start. So do they on an iPhone,
+    /// until a Pencil has touched its pages; from then on it is as on an iPad.
+    static func initial(isMac: Bool, isPhone: Bool = false, pencilSeen: Bool = false) -> DrawingInput {
+        isMac || (isPhone && !pencilSeen) ? .anyInput : .pencilOnly
+    }
 
     var displayName: String {
         switch self {
@@ -46,9 +55,14 @@ enum FingerDrawHint {
         return true
     }
 
-    /// Whoever has a Pencil on the pages knows it draws, so the notice isn't needed.
+    /// Whoever has a Pencil on the pages knows it draws, so the notice isn't needed. The first touch is told, for an
+    /// iPhone that has drawn with fingers until now.
     static func pencilTouched(defaults: UserDefaults = .standard) {
         if !defaults.bool(forKey: SettingsKey.fingerDrawHintSeen) { defaults.set(true, forKey: SettingsKey.fingerDrawHintSeen) }
+        if !defaults.bool(forKey: SettingsKey.pencilSeen) {
+            defaults.set(true, forKey: SettingsKey.pencilSeen)
+            NotificationCenter.default.post(name: .owlLunaPencilSeen, object: nil)
+        }
     }
 }
 
@@ -66,6 +80,8 @@ enum SettingsKey {
     static let dailyJournalID = "dailyJournalID"
     static let whiteboardTipSeen = "whiteboardTipSeen"
     static let fingerDrawHintSeen = "fingerDrawHintSeen"
+    /// A Pencil has touched the pages on this device.
+    static let pencilSeen = "pencilSeen"
     static let dailyJournalPromptHidden = "dailyJournalPromptHidden"
     static let showsOnThisDay = "showsOnThisDay"
     static let onThisDayHiddenDay = "onThisDayHiddenDay"
@@ -103,4 +119,8 @@ extension UserDefaults {
     var defaultTemplate: PaperTemplate { string(forKey: SettingsKey.defaultTemplate).flatMap(PaperTemplate.init(rawValue:)) ?? .narrowRuled }
     var defaultPaperColor: PaperColor { string(forKey: SettingsKey.defaultPaperColor).flatMap(PaperColor.init(rawValue:)) ?? .white }
     var defaultPageSize: PageSize { string(forKey: SettingsKey.defaultPageSize).flatMap(PageSize.init(rawValue:)) ?? .letter }
+}
+
+extension Notification.Name {
+    static let owlLunaPencilSeen = Notification.Name("OwlLunaPencilSeen")
 }
