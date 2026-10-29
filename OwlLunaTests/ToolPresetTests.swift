@@ -222,6 +222,19 @@ final class ToolPresetTests: XCTestCase {
         XCTAssertEqual(toolbox.choice, .lasso)
     }
 
+    func testTheKeyboardTakesUpThePenLastInHand() throws {
+        let toolbox = Toolbox(defaults: try freshDefaults())
+        let pens = toolbox.shelf.usable
+        toolbox.take(.pen(pens[2].id))
+        toolbox.take(.eraser)
+        toolbox.take(.lasso)
+        toolbox.takePen()
+        XCTAssertEqual(toolbox.choice, .pen(pens[2].id), "back to the pen last in hand, not the first")
+        toolbox.take(.pen(pens[1].id))
+        toolbox.takePen()
+        XCTAssertEqual(toolbox.choice, .pen(pens[1].id), "a pen in hand stays in hand")
+    }
+
     func testResettingThePenTrayBringsBackTheFourItStartedWith() throws {
         let defaults = try freshDefaults()
         let toolbox = Toolbox(defaults: defaults)

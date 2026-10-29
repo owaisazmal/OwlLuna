@@ -47,6 +47,19 @@ extension EnvironmentValues {
     @Entry fileprivate var noticeKeys: NoticeKeys?
 }
 
+extension ContainerValues {
+    /// A notice's field ruled in tomato, as what was typed in it didn't work.
+    @Entry fileprivate var isNoticeFieldWrong = false
+    /// Shown in a notice as it is, not in a field's well.
+    @Entry fileprivate var isNoticeBare = false
+}
+
+extension View {
+    func noticeFieldWrong(_ wrong: Bool) -> some View { containerValue(\.isNoticeFieldWrong, wrong) }
+
+    func noticeBare() -> some View { containerValue(\.isNoticeBare, true) }
+}
+
 /// A board with a cloth edge that says what kind of notice it is, over its words, its fields and its buttons.
 private struct NoticeCard<Fields: View, Actions: View>: View {
     let title: Text
@@ -76,12 +89,21 @@ private struct NoticeCard<Fields: View, Actions: View>: View {
                     if !fields.isEmpty {
                         VStack(spacing: Space.x2) {
                             ForEach(fields) { field in
-                                field
-                                    .textFieldStyle(.plain)
-                                    .foregroundStyle(Color.ink)
-                                    .padding(.horizontal, Space.x3)
-                                    .frame(minHeight: 44)
-                                    .well(in: RoundedRectangle.plate)
+                                if field.containerValues.isNoticeBare {
+                                    field
+                                } else {
+                                    field
+                                        .textFieldStyle(.plain)
+                                        .foregroundStyle(Color.ink)
+                                        .padding(.horizontal, Space.x3)
+                                        .frame(minHeight: 44)
+                                        .well(in: RoundedRectangle.plate)
+                                        .overlay {
+                                            if field.containerValues.isNoticeFieldWrong {
+                                                RoundedRectangle.plate.strokeBorder(Color.destructiveCloth, lineWidth: 1.5)
+                                            }
+                                        }
+                                }
                             }
                         }
                         .padding(.top, Space.x3)

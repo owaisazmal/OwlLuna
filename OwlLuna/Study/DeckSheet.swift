@@ -13,10 +13,13 @@ struct DeckSheet: View {
     @Environment(FlashcardLibrary.self) private var library
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     @State private var draft: CardDraft?
     @State private var reviewing: ReviewDeck?
     @State private var isMaking = false
     @State private var failure: String?
+    @State private var changes = LibraryChangeCenter()
 
     private var notebook: UUID { session.document.id }
     private var cards: [Flashcard] { library.cards(in: notebook) }
@@ -50,6 +53,13 @@ struct DeckSheet: View {
                 }
             }
         }
+        .overlay(alignment: .bottom) { slip }
+        .task(id: changes.current?.id) {
+            guard changes.current != nil, !voiceOver else { return }
+            try? await Task.sleep(for: .seconds(6))
+            if !Task.isCancelled { changes.dismiss() }
+        }
+        .onChange(of: draft != nil || reviewing != nil) { _, covered in if covered { changes.dismiss() } }
         .presentationBackground(Color.surface)
         .sheet(item: $draft) { draft in CardComposer(notebook: notebook, draft: draft).presentationCornerRadius(Radius.sheet) }
         .fullScreenCover(item: $reviewing) { deck in
@@ -69,6 +79,24 @@ struct DeckSheet: View {
         reviewing = ReviewDeck(due: library.due(in: [notebook]), all: library.all(in: [notebook]))
     }
 
+    /// The slip's Undo puts the card back in its place, with its schedule.
+    private func delete(_ card: Flashcard) {
+        let index = cards.firstIndex { $0.id == card.id } ?? 0, notebook = notebook, library = library
+        library.remove([card.id], from: notebook)
+        changes.post(String(localized: "Deleted a flashcard"), symbol: "trash") { library.restore(card, at: index, in: notebook) }
+    }
+
+    private var slip: some View {
+        ZStack {
+            if let change = changes.current {
+                LibrarySlipView(change: change) { changes.dismiss() }
+                    .padding(.bottom, Space.x4)
+                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(Motion.adaptive(Motion.standard, reduceMotion: reduceMotion), value: changes.current?.id)
+    }
+
     // MARK: The cards
 
     private func list(_ cards: [Flashcard], tapes: Int) -> some View {
@@ -85,7 +113,7 @@ struct DeckSheet: View {
                     }
                     .ledgerSwipe {
                         if canChange {
-                            Button(role: .destructive) { library.remove([card.id], from: notebook) } label: { Label("Delete", systemImage: "trash") }
+                            Button(role: .destructive) { delete(card) } label: { Label("Delete", systemImage: "trash") }
                         }
                     }
                     .heldMenu(Text("Flashcard")) {
@@ -96,7 +124,7 @@ struct DeckSheet: View {
                             } label: { Label("Open Its Page", systemImage: "book") }
                         }
                         if canChange {
-                            Button(role: .destructive) { library.remove([card.id], from: notebook) } label: { Label("Delete Flashcard", systemImage: "trash") }
+                            Button(role: .destructive) { delete(card) } label: { Label("Delete Flashcard", systemImage: "trash") }
                         }
                     }
                 }

@@ -107,7 +107,12 @@ final class ShapeSnapTests: XCTestCase {
 
         let arc = (0...40).map { CGPoint(x: 200 + 150 * cos(CGFloat($0) / 40 * .pi), y: 300 - 150 * sin(CGFloat($0) / 40 * .pi)) }
         XCTAssertNil(ShapeRecognizer.recognize(arc), "a curve stays as it was drawn")
-        let scribble = (0...120).map { CGPoint(x: 100 + CGFloat($0) * 2 + 40 * sin(CGFloat($0) * 0.9), y: 200 + 60 * sin(CGFloat($0) * 0.37) + 30 * cos(CGFloat($0) * 1.3)) }
+        let scribble = (0...120).map { step -> CGPoint in
+            let t = CGFloat(step)
+            let x: CGFloat = 100 + t * 2 + 40 * sin(t * 0.9)
+            let y: CGFloat = 200 + 60 * sin(t * 0.37) + 30 * cos(t * 1.3)
+            return CGPoint(x: x, y: y)
+        }
         XCTAssertNil(ShapeRecognizer.recognize(scribble))
         XCTAssertNil(ShapeRecognizer.recognize(along([CGPoint(x: 100, y: 100), CGPoint(x: 110, y: 104)])), "a dot or a tick is too small to be a shape")
         XCTAssertNil(ShapeRecognizer.recognize([]))

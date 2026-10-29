@@ -1,4 +1,5 @@
 import UIKit
+import PDFKit
 import SwiftData
 import Observation
 import os
@@ -136,12 +137,13 @@ final class LibraryStore {
                                         folder: folder, startsWithBoard: true)
     }
 
+    /// A notebook of a PDF's pages. A locked PDF is opened with what `password` gives and kept without its lock.
     @discardableResult
-    func importPDF(from url: URL, folder: FolderRecord?) async throws -> UUID {
+    func importPDF(from url: URL, folder: FolderRecord?, password: PDFImport.Password? = nil,
+                   progress: PDFImport.Progress? = nil) async throws -> UUID {
         try await importPages(folder: folder) { package in
             let file = try await package.importAsset(from: url, ext: "pdf")
-            let assetURL = package.assetURL(file)
-            let pages = try await Task.detached(priority: .userInitiated) { try PDFImport.pages(at: assetURL, file: file) }.value
+            let pages = try await PDFImport.pages(in: package, file: file, password: password, progress: progress)
             return (url.deletingPathExtension().lastPathComponent, pages)
         }
     }
@@ -542,14 +544,49 @@ final class LibraryStore {
         saveFolders(since: before)
     }
 
+    /// A deleted folder as it was, and what it held, so it can be put back.
+    struct DeletedFolder {
+        let entry: FolderEntry
+        let notebooks: [UUID]
+        let folders: [UUID]
+    }
+
     /// Deleting a folder keeps what was in it: its notebooks and its folders move up to the folder it sat in.
-    func deleteFolder(_ folder: FolderRecord) {
+    @discardableResult
+    func deleteFolder(_ folder: FolderRecord) -> DeletedFolder {
         let folders = allFolders(), before = folderEntries()
         let parent = folders.first { $0.id == folder.parentID }
-        move(folder.notebooks ?? [], to: parent)
-        for child in folders where child.parentID == folder.id { child.parentID = parent?.id }
+        let notebooks = folder.notebooks ?? [], children = folders.filter { $0.parentID == folder.id }
+        let deleted = DeletedFolder(entry: folder.entry, notebooks: notebooks.map(\.id), folders: children.map(\.id))
+        move(notebooks, to: parent)
+        for child in children { child.parentID = parent?.id }
         context.delete(folder)
         saveFolders(since: before)
+        return deleted
+    }
+
+    /// Puts a deleted folder back in its place, under the same ID so a sync takes it as the same folder, with what it held.
+    /// One whose parent has gone since goes to the top level, and a folder that can no longer go inside it stays where it is.
+    @discardableResult
+    func restoreFolder(_ deleted: DeletedFolder) -> FolderRecord? {
+        let folders = allFolders(), before = folderEntries()
+        guard !folders.contains(where: { $0.id == deleted.entry.id }) else { return nil }
+        var entry = deleted.entry
+        if !FolderTree(folders: folders).canAddFolder(inside: entry.parentID) { entry.parentID = nil }
+        for folder in folders where folder.sortIndex >= entry.sortIndex { folder.sortIndex += 1 }
+        let restored = FolderRecord(id: entry.id)
+        restored.apply(entry)
+        context.insert(restored)
+        for id in deleted.folders {
+            guard let child = folders.first(where: { $0.id == id }), FolderTree(folders: allFolders()).canMove(id, into: restored.id) else { continue }
+            child.parentID = restored.id
+        }
+        saveFolders(since: before)
+        let notebooks = deleted.notebooks.compactMap(record)
+        // A notebook saved by a newer version was never moved out: its file still names this folder.
+        for notebook in notebooks where notebook.isReadOnly { notebook.folder = restored }
+        move(notebooks, to: restored)
+        return restored
     }
 
     /// Writes are chained so they land in order, with a sync's folder pass among them. Each takes only what changed
@@ -884,15 +921,115 @@ extension LibraryStore {
 }
 
 enum PDFImport {
+    /// Asked for a locked PDF's password, told whether the last one tried was wrong; nil skips the PDF.
+    typealias Password = @MainActor (_ wrong: Bool) async -> String?
+    /// How far through one PDF, from 0 to 1.
+    typealias Progress = @Sendable (Double) -> Void
+
     /// One page per PDF page, sized to its displayed crop box. Refuses locked and empty PDFs.
-    static func pages(at url: URL, file: String) throws -> [NotebookPage] {
+    static func pages(at url: URL, file: String, progress: Progress? = nil) throws -> [NotebookPage] {
         guard let document = CGPDFDocument(url as CFURL) else { throw ImportError.unreadable }
-        if document.isEncrypted && !document.isUnlocked && !document.unlockWithPassword("") { throw ImportError.locked }
-        let pages = (0..<document.numberOfPages).compactMap { index -> NotebookPage? in
+        if isLocked(document) { throw ImportError.locked }
+        let count = document.numberOfPages
+        let pages = (0..<count).compactMap { index -> NotebookPage? in
+            report(index, of: count, to: progress)
             guard let page = document.page(at: index + 1) else { return nil }
             return NotebookPage(background: .pdf(file: file, index: index), paperColor: .white, size: PageRenderer.displaySize(of: page))
         }
         guard !pages.isEmpty else { throw ImportError.empty }
         return pages
+    }
+
+    /// The pages of the PDF kept as `file`. A locked one is asked for its password until it opens, then kept without
+    /// its lock; skipped, or with no one to ask, it is refused.
+    static func pages(in package: NotebookPackage, file: String, password: Password?, progress: Progress?) async throws -> [NotebookPage] {
+        let url = package.assetURL(file)
+        var unlocked = false
+        if try await Task.detached(priority: .userInitiated, operation: { try isLocked(url) }).value {
+            guard let password else { throw ImportError.locked }
+            var wrong = false
+            repeat {
+                guard let typed = await password(wrong) else { throw ImportError.locked }
+                let opening = part(of: progress, from: 0, to: 0.5)
+                wrong = try await Task.detached(priority: .userInitiated) { try !unlock(url, with: typed, progress: opening) }.value
+            } while wrong
+            unlocked = true
+        }
+        let reading = part(of: progress, from: unlocked ? 0.5 : 0, to: 1)
+        return try await Task.detached(priority: .userInitiated) { try pages(at: url, file: file, progress: reading) }.value
+    }
+
+    static func isLocked(_ url: URL) throws -> Bool {
+        guard let document = CGPDFDocument(url as CFURL) else { throw ImportError.unreadable }
+        return isLocked(document)
+    }
+
+    private static func isLocked(_ document: CGPDFDocument) -> Bool {
+        document.isEncrypted && !document.isUnlocked && !document.unlockWithPassword("")
+    }
+
+    /// Opens a locked PDF with `password` and writes it again in its place with no lock, keeping its outline and links.
+    /// False when the password doesn't open it.
+    static func unlock(_ url: URL, with password: String, progress: Progress? = nil) throws -> Bool {
+        guard let locked = PDFDocument(url: url) else { throw ImportError.unreadable }
+        guard locked.unlock(withPassword: password) else { return false }
+        // PDFKit writes an unlocked document locked again; a new document of its pages has no lock.
+        let open = PDFDocument()
+        for index in 0..<locked.pageCount {
+            report(index, of: locked.pageCount, to: progress)
+            guard let page = locked.page(at: index)?.copy() as? PDFPage else { throw ImportError.unreadable }
+            open.insert(page, at: index)
+        }
+        for index in 0..<open.pageCount {
+            guard let page = open.page(at: index), let originals = locked.page(at: index)?.annotations else { continue }
+            for (original, copied) in zip(originals, page.annotations) {
+                guard let destination = moved(original.destination, from: locked, to: open), let link = copied.copy() as? PDFAnnotation else { continue }
+                page.removeAnnotation(copied)
+                link.destination = destination
+                page.addAnnotation(link)
+            }
+        }
+        open.documentAttributes = locked.documentAttributes
+        if let outline = locked.outlineRoot { open.outlineRoot = copy(outline, from: locked, to: open) }
+        let written = url.deletingLastPathComponent().appending(path: "\(UUID().uuidString).pdf")
+        defer { try? FileManager.default.removeItem(at: written) }
+        guard open.write(to: written), let check = CGPDFDocument(written as CFURL), !check.isEncrypted else { throw ImportError.unreadable }
+        _ = try FileManager.default.replaceItemAt(url, withItemAt: written)
+        return true
+    }
+
+    /// The same place in `target`, for a destination in `source`, whose pages it has in the same order.
+    private static func moved(_ destination: PDFDestination?, from source: PDFDocument, to target: PDFDocument) -> PDFDestination? {
+        guard let destination, let page = destination.page, page.document === source,
+              let to = target.page(at: source.index(for: page)) else { return nil }
+        let moved = PDFDestination(page: to, at: destination.point)
+        moved.zoom = destination.zoom
+        return moved
+    }
+
+    private static func copy(_ outline: PDFOutline, from source: PDFDocument, to target: PDFDocument) -> PDFOutline {
+        let copied = PDFOutline()
+        copied.label = outline.label
+        copied.isOpen = outline.isOpen
+        if let destination = moved(outline.destination, from: source, to: target) {
+            copied.destination = destination
+        } else if !(outline.action is PDFActionGoTo) {
+            copied.action = outline.action
+        }
+        for index in 0..<outline.numberOfChildren {
+            if let child = outline.child(at: index) { copied.insertChild(copy(child, from: source, to: target), at: copied.numberOfChildren) }
+        }
+        return copied
+    }
+
+    /// About a hundred calls over `count` steps, not one a step.
+    private static func report(_ index: Int, of count: Int, to progress: Progress?) {
+        guard let progress, (index + 1) % max(count / 100, 1) == 0 else { return }
+        progress(Double(index + 1) / Double(count))
+    }
+
+    private static func part(of progress: Progress?, from start: Double, to end: Double) -> Progress? {
+        guard let progress else { return nil }
+        return { @Sendable value in progress(start + value * (end - start)) }
     }
 }

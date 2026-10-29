@@ -115,6 +115,18 @@ final class LibraryChangeCenter {
                 })
     }
 
+    /// Undo puts the folder back where it was, holding the notebooks and folders it held.
+    func deleteFolder(_ folder: FolderRecord, in store: LibraryStore, undoManager: UndoManager?) {
+        let id = folder.id, deletion = FolderDeletion()
+        perform(String(localized: "Deleted the folder “\(folder.name)”"), symbol: "folder.badge.minus", undoManager: undoManager,
+                action: String(localized: "Delete Folder"), apply: { deletion.deleted = store.deleteFolder(folder) },
+                undo: { [weak store] in if let deleted = deletion.deleted { store?.restoreFolder(deleted) } },
+                redo: { [weak store] in
+                    guard let store, let folder = Self.folder(id, in: store) else { return }
+                    deletion.deleted = store.deleteFolder(folder)
+                })
+    }
+
     private static func folder(_ id: UUID?, in store: LibraryStore) -> FolderRecord? {
         guard let id else { return nil }
         return try? store.context.fetch(FetchDescriptor<FolderRecord>(predicate: #Predicate { $0.id == id })).first
@@ -125,20 +137,26 @@ final class LibraryChangeCenter {
                          apply: @escaping @MainActor ([NotebookRecord]) -> Void, inverse: @escaping @MainActor ([NotebookRecord]) -> Void) {
         let records = includingReadOnly ? records : records.filter { !$0.isReadOnly }
         guard !records.isEmpty else { return }
-        let text = message(records)
         let ids = records.map(\.id)
+        perform(message(records), symbol: symbol, isTrash: isTrash, undoManager: undoManager, action: action, apply: { apply(records) },
+                undo: { [weak store] in if let store { inverse(ids.compactMap(store.record)) } },
+                redo: { [weak store] in if let store { apply(ids.compactMap(store.record)) } })
+    }
+
+    private func perform(_ text: String, symbol: String, isTrash: Bool = false, undoManager: UndoManager?, action: String, apply: () -> Void,
+                         undo: @escaping @MainActor () -> Void, redo: @escaping @MainActor () -> Void) {
         let token = UndoToken(undoManager: undoManager)
-        apply(records)
-        if let undoManager { register(ids, token: token, in: store, undoManager: undoManager, action: action, undo: inverse, redo: apply) }
-        post(text, symbol: symbol, isTrash: isTrash) { [weak self, weak store, weak undoManager] in
-            guard let store, !token.isUndone else { return }
+        apply()
+        if let undoManager { register(token: token, undoManager: undoManager, action: action, undo: undo, redo: redo) }
+        post(text, symbol: symbol, isTrash: isTrash) { [weak self, weak undoManager] in
+            guard !token.isUndone else { return }
             if let undoManager, !token.isBuried, undoManager.canUndo {
                 undoManager.undo()
             } else {
                 undoManager?.removeAllActions(withTarget: token)
                 token.isUndone = true
                 self?.dismiss()
-                inverse(ids.compactMap(store.record))
+                undo()
             }
         }
     }
@@ -165,17 +183,22 @@ final class LibraryChangeCenter {
     }
 
     /// Undo registers the redo, which registers the undo again, as NotebookDocument's page operations do.
-    private func register(_ ids: [UUID], token: UndoToken, in store: LibraryStore, undoManager: UndoManager, action: String,
-                          undo: @escaping @MainActor ([NotebookRecord]) -> Void, redo: @escaping @MainActor ([NotebookRecord]) -> Void) {
-        undoManager.registerUndo(withTarget: token) { [weak self, weak store, weak undoManager, token] _ in
+    private func register(token: UndoToken, undoManager: UndoManager, action: String,
+                          undo: @escaping @MainActor () -> Void, redo: @escaping @MainActor () -> Void) {
+        undoManager.registerUndo(withTarget: token) { [weak self, weak undoManager, token] _ in
             self?.dismiss()
             token.isUndone.toggle()
-            guard let store else { return }
-            undo(ids.compactMap(store.record))
+            undo()
             guard let self, let undoManager else { return }
-            self.register(ids, token: token, in: store, undoManager: undoManager, action: action, undo: redo, redo: undo)
+            self.register(token: token, undoManager: undoManager, action: action, undo: redo, redo: undo)
         }
         undoManager.setActionName(action)
+    }
+
+    /// What the last delete of a folder took away, which its undo puts back.
+    @MainActor
+    private final class FolderDeletion {
+        var deleted: LibraryStore.DeletedFolder?
     }
 }
 

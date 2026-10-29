@@ -35,6 +35,25 @@ enum Motion {
     static func adaptive(_ animation: Animation, reduceMotion: Bool) -> Animation {
         reduceMotion ? .easeInOut(duration: 0.18) : animation
     }
+
+    /// UIKit's side of `adaptive`: with Reduce Motion a scroll doesn't slide, `layer` cross-fades instead. Returns
+    /// whether to animate the scroll.
+    @MainActor
+    static func slides(_ animated: Bool, fading layer: CALayer) -> Bool {
+        guard animated, UIAccessibility.isReduceMotionEnabled else { return animated }
+        crossFade(layer)
+        return false
+    }
+
+    /// The short cross-fade, added to a layer just before it changes.
+    @MainActor
+    static func crossFade(_ layer: CALayer) {
+        let fade = CATransition()
+        fade.type = .fade
+        fade.duration = 0.18
+        fade.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        layer.add(fade, forKey: "crossFade")
+    }
 }
 
 extension Color {

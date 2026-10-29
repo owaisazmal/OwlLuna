@@ -540,8 +540,7 @@ final class Toolbox {
     func setShapesOut(_ out: Bool) {
         guard out != (shape != nil) else { return }
         guard out else { return shape = nil }
-        let pens = shelf.usable
-        if pen == nil, let id = (pens.first { $0.id == lastPen } ?? pens.first)?.id { take(.pen(id)) }
+        takePen()
         isRulerActive = false
         shape = lastShape
     }
@@ -578,6 +577,12 @@ final class Toolbox {
     /// The Pencil's switch to the tool that was in hand before this one.
     func switchPrevious() {
         if let tool = memory.previous { take(tool) }
+    }
+
+    /// Takes up the pen last in hand, or the first on the shelf, unless a pen is in hand already.
+    func takePen() {
+        let pens = shelf.usable
+        if pen == nil, let id = (pens.first { $0.id == lastPen } ?? pens.first)?.id { take(.pen(id)) }
     }
 
     private func post() {

@@ -175,6 +175,65 @@ final class FlashcardTests: XCTestCase {
         XCTAssertEqual(Set(left.removed.keys), Set(cards.map(\.id)), "what is left says they were deleted, so another iPad's copy doesn't bring them back")
     }
 
+    func testADeletedCardPutBackKeepsItsPlaceItsScheduleAndItsClipping() async throws {
+        let root = temporaryRoot(self)
+        let manifest = try await makeNotebook(root)
+        let library = FlashcardLibrary(root: root)
+        await library.load()
+        let clipped = try await library.saveClipping(UIGraphicsImageRenderer(size: CGSize(width: 8, height: 8)).image { _ in }, in: manifest.id)
+        var two = card("Two", "2")
+        two.back.image = clipped
+        library.add([card("One", "1"), two, card("Three", "3")], to: manifest.id)
+        let graded = try XCTUnwrap(library.grade(two.id, in: manifest.id, .easy, now: monday, calendar: calendar))
+        await library.flush()
+        let clipping = library.imageURL(clipped, in: manifest.id)
+        try FileManager.default.setAttributes([.modificationDate: Date.now.addingTimeInterval(-3600)], ofItemAtPath: clipping.path(percentEncoded: false))
+
+        library.remove([two.id], from: manifest.id)
+        await library.flush()
+        XCTAssertEqual(CardFiles.read(root.package(manifest.id)).cards.map(\.front.text), ["One", "Three"])
+        XCTAssertTrue(FileManager.default.fileExists(atPath: clipping.path(percentEncoded: false)), "a clipping its card has only just let go is kept a while")
+
+        library.restore(graded, at: 1, in: manifest.id)
+        await library.flush()
+        let deck = CardFiles.read(root.package(manifest.id))
+        XCTAssertEqual(deck.cards.map(\.front.text), ["One", "Two", "Three"], "back in its place, though the file still says it was deleted")
+        var expected = graded
+        expected.changedAt = deck.cards[1].changedAt
+        XCTAssertEqual(deck.cards[1], expected, "with its schedule")
+        XCTAssertNotNil(deck.removed[two.id])
+        let elsewhere = CardFiles.Deck(removed: deck.removed).merged(with: deck)
+        XCTAssertTrue(elsewhere.cards.contains { $0.id == two.id }, "an iPad that saw the delete takes it back too")
+        let reread = FlashcardLibrary(root: root)
+        await reread.load()
+        XCTAssertEqual(reread.cards(in: manifest.id).map(\.front.text), ["One", "Two", "Three"])
+        let image = await reread.image(clipped, in: manifest.id)
+        XCTAssertNotNil(image)
+    }
+
+    func testTheLastCardPutBackInTheSameSecondItWasDeletedStays() async throws {
+        let root = temporaryRoot(self)
+        let manifest = try await makeNotebook(root)
+        let library = FlashcardLibrary(root: root)
+        await library.load()
+        let clipped = try await library.saveClipping(UIGraphicsImageRenderer(size: CGSize(width: 8, height: 8)).image { _ in }, in: manifest.id)
+        var only = card("Only", "1")
+        only.front.image = clipped
+        library.add([only], to: manifest.id)
+        await library.flush()
+        let now = Date.now
+
+        library.remove([only.id], from: manifest.id, now: now)
+        await library.flush()
+        XCTAssertTrue(FileManager.default.fileExists(atPath: library.imageURL(clipped, in: manifest.id).path(percentEncoded: false)),
+                      "an empty deck keeps the clipping of the card just deleted")
+        library.restore(only, at: 0, in: manifest.id, now: now)
+        library.restore(only, at: 0, in: manifest.id, now: now)
+        await library.flush()
+        XCTAssertEqual(library.cards(in: manifest.id).map(\.id), [only.id], "put back once")
+        XCTAssertEqual(CardFiles.read(root.package(manifest.id)).cards.map(\.id), [only.id], "a delete never wins over the card put back after it")
+    }
+
     func testTwoCopiesOfADeckAreSettledCardByCard() {
         let base = [card("One", "1"), card("Two", "2"), card("Three", "3"), card("Four", "4")]
         let minute = monday.addingTimeInterval(60)

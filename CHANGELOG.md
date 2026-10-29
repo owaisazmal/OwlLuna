@@ -6,6 +6,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- A password-protected PDF now opens with its password. Import it or insert it and OwlLuna asks for the password, again if it's wrong, or you can skip it. The notebook keeps the PDF without its lock, so it opens, exports and syncs like any other, and the password isn't kept.
+- Importing a large PDF, or several, shows how far it has got at the foot of the shelf.
+
+### Fixed
+
+- Importing several PDFs no longer stops at the first one that fails. The rest still come in, and one notice says which didn't and why.
+- Deleting a folder can now be undone. Undo or ⌘Z brings it back in its place, with its colour and the notebooks and folders it held.
+- Deleting a flashcard from a deck can now be undone. Undo brings it back in its place, with its schedule.
+- With VoiceOver, swiping up or down on a selected picture, sticker or text box's Resize and rotate handle now makes it larger or smaller, in the same shape and on the page, and says its new size. A selected item also has actions to move it, rotate it, and bring it forward or send it back. Each step is one Undo.
+- With a keyboard, the arrow keys nudge a selected item, or ink selected with Select Ink, a point at a time, or ten with Shift. Each press is one Undo, and the arrows still belong to a text box you're typing in. ⌘1, ⌘2 and ⌘3 take up the pen you last used, the eraser and the lasso, and are listed when you hold ⌘.
+- With Reduce Motion on, going to another page, scrolling with the keyboard and Find's jumps cross-fade instead of sliding, and the whiteboard's fade uses the same short cross-fade.
+
 ## [1.0.0-build.4] - 2026-10-28
 
 ### Added

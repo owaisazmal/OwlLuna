@@ -17,6 +17,11 @@ final class PageItemView: UIView {
     var onActivate: ((UUID) -> Void)?
     /// Ticks a line of a checklist, or takes its tick off, for VoiceOver. False when the page can't be changed now.
     var onTick: ((UUID, Int) -> Bool)?
+    /// Moving, turning and layering the item while it is selected, for VoiceOver.
+    var arrangeActions: [UIAccessibilityCustomAction] = [] {
+        didSet { accessibilityCustomActions = ticks + arrangeActions }
+    }
+    private var ticks: [UIAccessibilityCustomAction] = []
 
     init(item: PageItem, assets: URL) {
         self.item = item
@@ -78,7 +83,8 @@ final class PageItemView: UIView {
         accessibilityHint = String(localized: "Touch and hold to move or resize")
         accessibilityTraits = .image
         accessibilityValue = nil
-        accessibilityCustomActions = nil
+        ticks = []
+        defer { accessibilityCustomActions = ticks + arrangeActions }
         isAccessibilityElement = true
         if item.assetFile == nil {
             picture.contents = nil
@@ -108,7 +114,7 @@ final class PageItemView: UIView {
             let lines = box.lines.enumerated().filter { TextBox.isItem($0.element) }
             accessibilityLabel = lines.map { box.checked.contains($0.offset) ? String(localized: "\($0.element), ticked") : $0.element }
                 .joined(separator: "\n")
-            accessibilityCustomActions = lines.map { line, text in
+            ticks = lines.map { line, text in
                 let name = box.checked.contains(line) ? String(localized: "Untick \(text)") : String(localized: "Tick \(text)")
                 return UIAccessibilityCustomAction(name: name) { [weak self] _ in
                     guard let self, let onTick = self.onTick else { return false }

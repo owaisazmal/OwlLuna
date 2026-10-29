@@ -16,6 +16,8 @@ final class ItemSelectionView: UIView, UIGestureRecognizerDelegate {
     var onChange: ((PageItem, _ final: Bool) -> Void)?
     /// Where it was tapped, in page points from the item's top left.
     var onTap: ((CGPoint) -> Void)?
+    /// Brings the item a step forward or back among the page's items; false when it can go no further.
+    var onLayer: ((_ forward: Bool) -> Bool)?
     /// While its text is being typed the outline stays and the handles step aside.
     var isEditing = false {
         didSet {
@@ -26,7 +28,7 @@ final class ItemSelectionView: UIView, UIGestureRecognizerDelegate {
 
     private let outline = CAShapeLayer()
     private let underline = CAShapeLayer()
-    private let handle = UIView()
+    private let handle = Handle()
     private let knob = UIImageView()
     private let grips = Side.allCases.map { SideGrip(side: $0) }
     private var base: PageItem?
@@ -67,7 +69,9 @@ final class ItemSelectionView: UIView, UIGestureRecognizerDelegate {
         handle.addGestureRecognizer(handlePan)
         handle.isAccessibilityElement = true
         handle.accessibilityLabel = String(localized: "Resize and rotate")
+        handle.accessibilityHint = String(localized: "Swipe up or down to make it larger or smaller.")
         handle.accessibilityTraits = .adjustable
+        handle.onStep = { [weak self] larger in self?.apply(.resize(larger: larger)) }
         (recognizers[0] as? UIPanGestureRecognizer)?.maximumNumberOfTouches = 1
         handlePan.maximumNumberOfTouches = 1
         for recognizer in recognizers {
@@ -109,6 +113,8 @@ final class ItemSelectionView: UIView, UIGestureRecognizerDelegate {
         let hasGrip = item.text != nil || item.tape != nil, squeezes = item.assetFile != nil
         handle.center = CGPoint(x: hasGrip ? bounds.minX + outset / 2 : bounds.maxX - outset / 2, y: bounds.maxY - outset / 2)
         handle.isHidden = isEditing
+        handle.accessibilityValue = item.spokenSize
+        handle.accessibilityCustomActions = arrangeActions
         for grip in grips {
             let across = grip.side == .top || grip.side == .bottom
             // A picture's grips stand only where they are clear of the corner handle.
@@ -253,6 +259,42 @@ final class ItemSelectionView: UIView, UIGestureRecognizerDelegate {
         report(stretched(base, side: side, by: outwards / max(scale, 0.01)), state: gesture.state)
     }
 
+    /// A step from VoiceOver or the keyboard, as one undo step. Returns the item as it now is, or nil when it couldn't
+    /// go further or a gesture is changing it.
+    @discardableResult
+    func apply(_ step: ItemStep) -> PageItem? {
+        guard base == nil, !isEditing else { return nil }
+        let changed = step.applied(to: item, page: pageSize)
+        guard changed != item else { return nil }
+        onChange?(changed, true)
+        return changed
+    }
+
+    /// VoiceOver's actions on the selection, which the selected item offers too. Tape lies over the ink, so it has no
+    /// place among the others to move to.
+    var arrangeActions: [UIAccessibilityCustomAction] { item.tape == nil ? steps + layers : steps }
+
+    private lazy var steps: [UIAccessibilityCustomAction] = {
+        let move = ItemStep.spokenMove
+        let moves = [(String(localized: "Move Up"), CGSize(width: 0, height: -move)), (String(localized: "Move Down"), CGSize(width: 0, height: move)),
+                     (String(localized: "Move Left"), CGSize(width: -move, height: 0)), (String(localized: "Move Right"), CGSize(width: move, height: 0))]
+        let turns = [(String(localized: "Rotate Left"), false), (String(localized: "Rotate Right"), true)]
+        return moves.map { name, offset in spoken(name, .move(offset), saying: \.spokenPlace) }
+            + turns.map { name, clockwise in spoken(name, .turn(clockwise: clockwise), saying: \.spokenTurn) }
+    }()
+
+    private lazy var layers = [(String(localized: "Bring Forward"), true), (String(localized: "Send Backward"), false)].map { name, forward in
+        UIAccessibilityCustomAction(name: name) { [weak self] _ in self?.onLayer?(forward) ?? false }
+    }
+
+    private func spoken(_ name: String, _ step: ItemStep, saying words: KeyPath<PageItem, String>) -> UIAccessibilityCustomAction {
+        UIAccessibilityCustomAction(name: name) { [weak self] _ in
+            guard let changed = self?.apply(step) else { return false }
+            UIAccessibility.post(notification: .announcement, argument: changed[keyPath: words])
+            return true
+        }
+    }
+
     /// VoiceOver's swipes on a grip: a tenth wider or taller, or narrower or shorter, as one undo step.
     private func step(_ side: Side, by direction: CGFloat) {
         guard base == nil else { return }
@@ -289,6 +331,13 @@ final class ItemSelectionView: UIView, UIGestureRecognizerDelegate {
         }
         return item.resized(to: size, holding: held)
     }
+}
+
+/// The corner handle. VoiceOver hears the item's size and swipes it a tenth larger or smaller at a time.
+private final class Handle: UIView {
+    var onStep: ((_ larger: Bool) -> Void)?
+    override func accessibilityIncrement() { onStep?(true) }
+    override func accessibilityDecrement() { onStep?(false) }
 }
 
 /// A grip on one side of the selection. VoiceOver hears the width or height it changes and swipes it a tenth at a time.

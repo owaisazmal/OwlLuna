@@ -295,7 +295,7 @@ struct LibrarySidebar: View {
         } label: { Label("Spine Colour", systemImage: "paintpalette") }
         Button(role: .destructive) {
             if scope == .folder(folder.id) { scope = .all }
-            store.deleteFolder(folder)
+            changes.deleteFolder(folder, in: store, undoManager: undoManager)
         } label: { Label("Delete Folder", systemImage: "trash") }
     }
 }

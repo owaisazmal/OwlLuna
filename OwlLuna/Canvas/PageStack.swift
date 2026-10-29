@@ -110,6 +110,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     private var zoomAdvance: DispatchWorkItem?
     private var zoomReachedBand = false
     private var selectionView: ItemSelectionView?
+    /// The selected item's view, while it offers VoiceOver the selection's actions.
+    private weak var arrangedItemView: PageItemView?
     private var cropView: ItemCropView?
     private var linkTitles = LinkTitles()
     private var textView: UITextView?
@@ -468,7 +470,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         guard !isModalShowing else { return [] }
         // While typing, every key belongs to the text box.
         guard textView == nil else { return [UIKeyCommand(title: String(localized: "Done"), action: #selector(finishTyping), input: UIKeyCommand.inputEscape)] }
-        let commands = [
+        var commands = [
             UIKeyCommand(title: String(localized: "Next Page"), action: #selector(nextPage), input: UIKeyCommand.inputPageDown),
             UIKeyCommand(title: String(localized: "Previous Page"), action: #selector(previousPage), input: UIKeyCommand.inputPageUp),
             UIKeyCommand(title: String(localized: "Scroll Down"), action: #selector(lineDown), input: UIKeyCommand.inputDownArrow),
@@ -482,6 +484,14 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             UIKeyCommand(title: isSolo ? String(localized: "Actual Size") : String(localized: "Fit Width"), action: #selector(fitWidth), input: "0", modifierFlags: .command),
             UIKeyCommand(title: isSolo ? String(localized: "Show Everything") : String(localized: "Fit Page"), action: #selector(fitWholePage), input: "9", modifierFlags: .command),
         ]
+        // While something is selected the arrows move it, a point or ten with Shift, instead of the page.
+        let arrows = [(UIKeyCommand.inputUpArrow, String(localized: "Move Up")), (UIKeyCommand.inputDownArrow, String(localized: "Move Down")),
+                      (UIKeyCommand.inputLeftArrow, String(localized: "Move Left")), (UIKeyCommand.inputRightArrow, String(localized: "Move Right"))]
+        let nudges = !canNudge ? [] : arrows.flatMap { input, title in
+            [UIKeyCommand(title: title, action: #selector(nudge), input: input),
+             UIKeyCommand(title: title, action: #selector(nudge), input: input, modifierFlags: .shift)]
+        }
+        if canNudge { commands.removeAll { $0.action == #selector(lineDown) || $0.action == #selector(lineUp) } }
         let presenting = !isPresenting ? [] : [
             UIKeyCommand(title: String(localized: "Next Page"), action: #selector(nextPage), input: UIKeyCommand.inputRightArrow),
             UIKeyCommand(title: String(localized: "Previous Page"), action: #selector(previousPage), input: UIKeyCommand.inputLeftArrow),
@@ -494,8 +504,23 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             UIKeyCommand(action: #selector(deleteSelectedItem), input: "\u{8}"),
             UIKeyCommand(title: String(localized: "Done"), action: #selector(clearSelection), input: UIKeyCommand.inputEscape),
         ]
-        for command in commands + presenting + selected { command.wantsPriorityOverSystemBehavior = true }
-        return commands + presenting + selected
+        for command in commands + nudges + presenting + selected { command.wantsPriorityOverSystemBehavior = true }
+        return commands + nudges + presenting + selected
+    }
+
+    /// Something the arrows can move: a selected item that isn't being cropped, or ink the lasso caught.
+    private var canNudge: Bool {
+        !isPresenting && !document.isReadOnly && (session.selection != nil && cropView == nil || inkLasso != nil && !inkSelection.isEmpty)
+    }
+
+    /// One undo step per press.
+    @objc private func nudge(_ command: UIKeyCommand) {
+        guard let input = command.input, let offset = ItemStep.nudge(input, shift: command.modifierFlags.contains(.shift)) else { return }
+        if session.selection != nil {
+            selectionView?.apply(.move(offset))
+        } else {
+            moveInkSelection(by: offset, copying: false)
+        }
     }
 
     @objc private func nextPage() { session.step(1) }
@@ -691,7 +716,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         let animated = animated && !isSolo
         closeBoard()
         let target = clamped(CGPoint(x: scrollView.contentOffset.x, y: pageTopOffset(index)))
-        let moves = animated && abs(target.y - scrollView.contentOffset.y) > 0.5
+        let moves = Motion.slides(animated && abs(target.y - scrollView.contentOffset.y) > 0.5, fading: scrollView.layer)
         pendingPage = moves ? index : nil
         scrollView.setContentOffset(target, animated: moves)
         if !moves { updateWindow() }
@@ -706,6 +731,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         let offset = scrollView.contentOffset
         let visible = scrollView.bounds.inset(by: scrollView.adjustedContentInset).height
         let target = clamped(CGPoint(x: offset.x, y: offset.y + viewportFraction * visible))
+        let animated = Motion.slides(animated && target != offset, fading: scrollView.layer)
         scrollView.setContentOffset(target, animated: animated)
         if !animated { updateWindow() }
     }
@@ -1353,6 +1379,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         guard !isLocked, !document.isReadOnly, let (slot, item) = selectedItem() else {
             discardTextEditor()
             endCrop(keeping: true)
+            offerArrangeActions(on: nil)
             selectionView?.removeFromSuperview()
             selectionView = nil
             if session.selection != nil { session.selection = nil }
@@ -1370,7 +1397,9 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         if !view.isChanging { view.show(item) }
         view.onChange = { [weak self] item, final in self?.selectedItemChanged(item, final: final) }
         view.onTap = { [weak self] point in self?.tappedSelection(at: point) }
+        view.onLayer = { [weak self] forward in self?.layer(forward: forward) ?? false }
         selectionView = view
+        offerArrangeActions(on: slot.itemViews[item.id])
         if let cropView, cropView.item != item || cropView.superview !== slot { endCrop(keeping: false) }
         view.isHidden = cropView != nil
         if let cropView {
@@ -1378,6 +1407,22 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             slot.bringSubviewToFront(cropView)
         }
         layoutTextEditor()
+    }
+
+    /// The selected item offers VoiceOver the selection's actions, and the one selected before gives them up.
+    private func offerArrangeActions(on itemView: PageItemView?) {
+        guard itemView !== arrangedItemView else { return }
+        arrangedItemView?.arrangeActions = []
+        itemView?.arrangeActions = selectionView?.arrangeActions ?? []
+        arrangedItemView = itemView
+    }
+
+    /// Bring Forward or Send Backward from VoiceOver; false when the item is already in front or at the back.
+    private func layer(forward: Bool) -> Bool {
+        guard let (slot, item) = selectedItem(), let index = slot.page.items.firstIndex(where: { $0.id == item.id }),
+              slot.page.items.indices.contains(index + (forward ? 1 : -1)) else { return false }
+        session.moveSelection(forward: forward)
+        return true
     }
 
     // MARK: Cropping a picture
@@ -1754,7 +1799,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     private func revealTextEditor() {
         guard let textView, let slot = textView.superview else { return }
-        scrollView.scrollRectToVisible(scrollView.convert(textView.frame, from: slot).insetBy(dx: 0, dy: -24), animated: true)
+        scrollView.scrollRectToVisible(scrollView.convert(textView.frame, from: slot).insetBy(dx: 0, dy: -24), animated: !UIAccessibility.isReduceMotionEnabled)
     }
 
     // MARK: Dropping and pasting pictures
@@ -1934,10 +1979,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         if inkLasso != nil { setInkSelection([:]) }
         scrollView.setContentOffset(scrollView.contentOffset, animated: false)
         if lastBounds != .zero, view.window != nil {
-            let fade = CATransition()
-            fade.type = .fade
-            fade.duration = 0.18
-            scrollView.layer.add(fade, forKey: "board")
+            Motion.crossFade(scrollView.layer)
         }
         for slot in Array(slots.keys) { removeSlot(slot) }
         soloID = id
@@ -2539,7 +2581,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         guard !visible.insetBy(dx: 8, dy: min(margin, max((visible.height - target.height) / 2, 0))).contains(target) else { return }
         let x = visible.minX <= target.minX && target.maxX <= visible.maxX ? scrollView.contentOffset.x : target.midX - area.midX
         let offset = clamped(CGPoint(x: x, y: target.midY - area.midY))
-        let moves = abs(offset.y - scrollView.contentOffset.y) + abs(offset.x - scrollView.contentOffset.x) > 0.5
+        let moves = Motion.slides(abs(offset.y - scrollView.contentOffset.y) + abs(offset.x - scrollView.contentOffset.x) > 0.5, fading: scrollView.layer)
         pendingPage = moves ? index : nil
         scrollView.setContentOffset(offset, animated: moves)
     }

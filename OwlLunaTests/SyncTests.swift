@@ -2644,6 +2644,48 @@ final class SyncTests: XCTestCase {
         try await sync(b)
         XCTAssertEqual(folderNames(b), ["Art", "Biology", "Labs", "Science"])
     }
+
+    @MainActor
+    func testAFolderPutBackAfterADeleteIsBackOnTheOtherDeviceWithItsNotebook() async throws {
+        let onA = try device(a), onB = try device(b)
+        let science = try XCTUnwrap(onA.createFolder(name: "Science", cloth: .jade))
+        let physics = try XCTUnwrap(onA.createFolder(name: "Physics", cloth: .moss, parent: science))
+        let labs = try XCTUnwrap(onA.createFolder(name: "Labs", cloth: .rose, parent: physics))
+        let physicsID = physics.id, mechanics = try await makeNotebook("Mechanics", on: a)
+        onA.index(mechanics)
+        onA.move([try XCTUnwrap(onA.record(mechanics.id))], to: physics)
+        await onA.finishWritingShelves()
+        try await pass(onA)
+        try await pass(onB)
+        XCTAssertEqual(onB.folderTree().path(of: labs.id), "Science › Physics › Labs")
+
+        // Put back before a pass, the other device never sees it go.
+        var deleted = onA.deleteFolder(physics)
+        onA.restoreFolder(deleted)
+        await onA.finishWritingShelves()
+        try await pass(onA)
+        try await pass(onB)
+        XCTAssertEqual(onB.folderTree().path(of: labs.id), "Science › Physics › Labs")
+
+        deleted = onA.deleteFolder(try folder(physicsID, in: onA))
+        await onA.finishWritingShelves()
+        try await pass(onA)
+        try await pass(onB)
+        XCTAssertEqual(onB.folderTree().path(of: labs.id), "Science › Labs", "the delete reaches the other device")
+        XCTAssertEqual(onB.record(mechanics.id)?.folder?.id, science.id)
+
+        onA.restoreFolder(deleted)
+        await onA.finishWritingShelves()
+        try await pass(onA)
+        try await pass(onB)
+        for store in [onA, onB] {
+            XCTAssertEqual(store.folderTree().path(of: labs.id), "Science › Physics › Labs", "and so does putting it back, as the same folder")
+            XCTAssertEqual(try folder(physicsID, in: store).clothRaw, ClothColor.moss.rawValue)
+            XCTAssertEqual(store.record(mechanics.id)?.folder?.id, physicsID, "with its notebook in it")
+        }
+        let report = try await sync(a)
+        XCTAssertFalse(report.foldersChanged, "and the two lists agree")
+    }
 }
 
 /// Stands for another process holding a synced notebook, which won't let it be written.

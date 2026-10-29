@@ -90,6 +90,7 @@ fileprivate struct EditorContent: View {
     @State private var showingPages = false
     @State private var showingRecordings = false
     @State private var importingPDF = false
+    @State private var pdfImport: PDFImportRun?
     @State private var showingPhotoPicker = false
     @State fileprivate var photoItem: PhotosPickerItem?
     @State private var export: ExportJob?
@@ -237,6 +238,7 @@ fileprivate struct EditorContent: View {
                     if session.mode != .writing {
                         Button("Done") { enter(.writing) }.keyboardShortcut(shortcut(.escape, [], always: true))
                     }
+                    ToolShortcuts(session: session, isActive: isActivePane && !isPresentingModal)
                 }
                 .hidden()
                 .accessibilityHidden(true)
@@ -360,8 +362,10 @@ fileprivate struct EditorContent: View {
         .sheet(item: $export) { job in ExportSheet(job: job).presentationCornerRadius(Radius.sheet) }
         .sheet(item: $editingCover) { record in CoverEditorView(record: record).presentationCornerRadius(Radius.sheet) }
         .fileImporter(isPresented: $importingPDF, allowedContentTypes: [.pdf]) { result in
-            let position = session.currentPage + 1
-            document.perform { await insertPDF(result, at: position) }
+            insertPDF(result, at: session.currentPage + 1)
+        }
+        .overlay(alignment: .top) {
+            if let pdfImport { PDFImportStatus(run: pdfImport, edge: .top) { self.pdfImport = nil }.id(ObjectIdentifier(pdfImport)) }
         }
         .photosPicker(isPresented: $showingPhotoPicker, selection: $photoItem, matching: .images)
         .fullScreenCover(isPresented: $scanning) {
@@ -1356,13 +1360,25 @@ fileprivate struct EditorContent: View {
 
     // MARK: Import
 
-    private func insertPDF(_ result: Result<URL, Error>, at position: Int) async {
+    /// A locked PDF is asked for its password, and one that doesn't come in leaves nothing in the notebook.
+    private func insertPDF(_ result: Result<URL, Error>, at position: Int) {
         do {
-            let url = try result.get()
-            let file = try await document.package.importAsset(from: url, ext: "pdf")
-            let assetURL = document.package.assetURL(file)
-            let pages = try await Task.detached(priority: .userInitiated) { try PDFImport.pages(at: assetURL, file: file) }.value
-            session.insert(pages, at: position, actionName: String(localized: "Insert PDF"))
+            let url = try result.get(), package = document.package, session = session
+            let run = pdfImport.flatMap { $0.isFinished ? nil : $0 } ?? PDFImportRun()
+            pdfImport = run
+            document.perform {
+                run.add([url]) { url, password, progress in
+                    let file = try await package.importAsset(from: url, ext: "pdf")
+                    do {
+                        let pages = try await PDFImport.pages(in: package, file: file, password: password, progress: progress)
+                        session.insert(pages, at: position, actionName: String(localized: "Insert PDF"))
+                    } catch {
+                        try? FileManager.default.removeItem(at: package.assetURL(file))
+                        throw error
+                    }
+                }
+                await run.finish()
+            }
         } catch {
             errorMessage = error.localizedDescription
         }

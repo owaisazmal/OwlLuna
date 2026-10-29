@@ -50,6 +50,7 @@ struct ShelfView: View {
     @State private var isSelecting = false
     @State private var selection: Set<UUID> = []
     @State private var importingPDF = false
+    @State private var pdfImport: PDFImportRun?
     @State private var scanning = false
     @State private var renaming: NotebookRecord?
     @State private var renameText = ""
@@ -186,7 +187,7 @@ struct ShelfView: View {
         .toolbar { toolbar(visible) }
         .toolbar { if isSelecting { selectionBar(visible) } }
         .fileImporter(isPresented: $importingPDF, allowedContentTypes: [.pdf], allowsMultipleSelection: true) { result in
-            Task { await importPDFs(result) }
+            importPDFs(result)
         }
         .fullScreenCover(isPresented: $scanning) {
             DocumentScanner { images in
@@ -835,14 +836,17 @@ struct ShelfView: View {
     }
 
     private var slip: some View {
-        ZStack {
-            if let change = changes.current {
-                LibrarySlipView(change: change) { changes.dismiss() }
-                    .padding(.bottom, Space.x4)
-                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
+        VStack(spacing: 0) {
+            if let pdfImport { PDFImportStatus(run: pdfImport) { self.pdfImport = nil }.id(ObjectIdentifier(pdfImport)) }
+            ZStack {
+                if let change = changes.current {
+                    LibrarySlipView(change: change) { changes.dismiss() }
+                        .padding(.bottom, Space.x4)
+                        .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
+                }
             }
+            .animation(Motion.adaptive(Motion.standard, reduceMotion: reduceMotion), value: changes.current?.id)
         }
-        .animation(Motion.adaptive(Motion.standard, reduceMotion: reduceMotion), value: changes.current?.id)
     }
 
     @ViewBuilder
@@ -899,9 +903,16 @@ struct ShelfView: View {
         }
     }
 
-    private func importPDFs(_ result: Result<[URL], Error>) async {
+    /// Each PDF comes in on its own, after any still coming in, and into the folder on show when it was chosen.
+    private func importPDFs(_ result: Result<[URL], Error>) {
         do {
-            for url in try result.get() { _ = try await store.importPDF(from: url, folder: folder) }
+            let urls = try result.get(), folder = folder, store = store
+            guard !urls.isEmpty else { return }
+            let run = pdfImport.flatMap { $0.isFinished ? nil : $0 } ?? PDFImportRun()
+            pdfImport = run
+            run.add(urls) { url, password, progress in
+                try await store.importPDF(from: url, folder: folder, password: password, progress: progress)
+            }
         } catch {
             errorMessage = error.localizedDescription
         }

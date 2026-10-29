@@ -75,17 +75,16 @@ enum CardFiles {
         }
         let removed = Dictionary(uniqueKeysWithValues: deck.removed.map { ($0.key.uuidString, FlashcardFile.second($0.value)) })
         try encoder.encode(FlashcardFile(cards: deck.cards, removed: removed.isEmpty ? nil : removed)).write(to: url, options: .atomic)
-        guard !deck.cards.isEmpty else {
-            try? fileManager.removeItem(at: directory(in: package))
-            return
-        }
-        let kept = deck.clippings
-        // A clipping is written before the card that names it, so only ones left over for a while are cleared.
+        let kept = deck.clippings, folder = directory(in: package)
+        // A clipping is written before the card that names it, and a deleted card may be put back, so only ones left over for a while are cleared.
         let stale = Date.now.addingTimeInterval(-600)
-        for image in (try? fileManager.contentsOfDirectory(at: directory(in: package), includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+        for image in (try? fileManager.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
         where !kept.contains(image.lastPathComponent) {
             let written = image.contentModificationDate ?? .distantPast
             if written < stale { try? fileManager.removeItem(at: image) }
+        }
+        if deck.cards.isEmpty, (try? fileManager.contentsOfDirectory(atPath: folder.path(percentEncoded: false)))?.isEmpty == true {
+            try? fileManager.removeItem(at: folder)
         }
     }
 
@@ -94,7 +93,12 @@ enum CardFiles {
         let current = read(package)
         guard !current.isReadOnly else { throw PackageError.readOnly }
         let merged = deck.merged(with: current)
-        if merged != current { try write(merged, to: package) }
+        guard merged != current else { return }
+        // A clipping no card names any more counts as left over from now, so an undone delete still finds it.
+        for name in current.clippings.subtracting(merged.clippings) {
+            try? FileManager.default.setAttributes([.modificationDate: Date.now], ofItemAtPath: imageURL(name, in: package).path(percentEncoded: false))
+        }
+        try write(merged, to: package)
     }
 
     /// Gives every card in a copied notebook an ID of its own, so the copy's cards are never taken for the original's.
@@ -290,6 +294,18 @@ final class FlashcardLibrary {
         decks[notebook]?.removeAll { ids.contains($0.id) }
         if decks[notebook]?.isEmpty == true { decks[notebook] = nil }
         for id in ids { removals[notebook, default: [:]][id] = FlashcardFile.second(now) }
+        save(notebook)
+    }
+
+    /// Puts a deleted card back at `index`, as it was. It is stamped after its delete, so the delete gives way to it on every iPad.
+    func restore(_ card: Flashcard, at index: Int, in notebook: UUID, now: Date = .now) {
+        guard canChange(notebook), decks[notebook]?.contains(where: { $0.id == card.id }) != true else { return }
+        var card = card
+        let deleted = removals[notebook]?[card.id] ?? .distantPast
+        card.changedAt = max(FlashcardFile.second(now), deleted.addingTimeInterval(1))
+        var cards = decks[notebook] ?? []
+        cards.insert(card, at: min(max(index, 0), cards.count))
+        decks[notebook] = cards
         save(notebook)
     }
 
