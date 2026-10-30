@@ -2940,6 +2940,28 @@
         }
       }
     },
+    "One finger writes. Scroll and zoom with two fingers." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Finger schreibt. Mit zwei Fingern scrollst und zoomst du."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un dedo escribe. Desplázate y haz zoom con dos dedos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un doigt écrit. Faites défiler et zoomez avec deux doigts."
+          }
+        }
+      }
+    },
     "OwlLuna can't use the camera" : {
       "localizations" : {
         "de" : {

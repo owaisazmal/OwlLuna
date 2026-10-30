@@ -2157,12 +2157,16 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         laserGesture.allowedTouchTypes = fingersPoint ? Self.scrollTouchTypes + [pencil] : [pencil]
     }
 
-    /// A finger dragged with a pen in hand where only the Pencil draws: the first time, the editor says why nothing was drawn.
+    /// A finger dragged with a pen in hand: the first time, the editor says why nothing was drawn where only the Pencil
+    /// draws, or on an iPhone, where it drew, how to scroll.
     private func fingerDragged() {
         guard session.mode == .writing || session.mode == .focus, !isLocked, !document.isReadOnly, session.selection == nil, cropView == nil,
-              textView == nil, zoomTarget == nil, !toolbox.isRulerActive, FingerDrawHint.isAllowed,
-              FingerDrawHint.take(input: session.drawingInput, penInHand: toolbox.pen != nil) else { return }
-        document.noteOnlyPencilDraws()
+              textView == nil, zoomTarget == nil, !toolbox.isRulerActive, FingerDrawHint.isAllowed else { return }
+        if FingerDrawHint.take(input: session.drawingInput, penInHand: toolbox.pen != nil) {
+            document.noteOnlyPencilDraws()
+        } else if FingerDrawHint.takeScroll(fingersDraw: fingersDraw, isPhone: Device.isPhone, penInHand: toolbox.pen != nil) {
+            document.noteTwoFingersScroll()
+        }
     }
 
     /// This editor's pane was touched while another had the keyboard: key commands and undo come here now.
@@ -3142,12 +3146,14 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         pendingPage = nil
         dropLaser()
+        if fingersDraw { document.dismissNotices(.twoFingersScroll) }
     }
 
     func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) {
         pendingPage = nil
         dropLaser()
         addPageCard.isHidden = true
+        if fingersDraw { document.dismissNotices(.twoFingersScroll) }
     }
 
     func scrollViewDidZoom(_ scrollView: UIScrollView) {

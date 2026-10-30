@@ -44,6 +44,7 @@ enum FingerDrawHint {
         guard LaunchOptions.usesTestStorage else { return true }
         guard LaunchOptions.arguments.contains("-freshFingerDrawHint") else { return false }
         UserDefaults.standard.removeObject(forKey: SettingsKey.fingerDrawHintSeen)
+        UserDefaults.standard.removeObject(forKey: SettingsKey.twoFingerScrollHintSeen)
         #endif
         return true
     }()
@@ -55,10 +56,18 @@ enum FingerDrawHint {
         return true
     }
 
-    /// Whoever has a Pencil on the pages knows it draws, so the notice isn't needed. The first touch is told, for an
-    /// iPhone that has drawn with fingers until now.
+    /// On an iPhone, where a finger draws, the first stroke it makes says that two fingers scroll. Once per install.
+    static func takeScroll(fingersDraw: Bool, isPhone: Bool, penInHand: Bool, defaults: UserDefaults = .standard) -> Bool {
+        guard isPhone, fingersDraw, penInHand, !defaults.bool(forKey: SettingsKey.twoFingerScrollHintSeen) else { return false }
+        defaults.set(true, forKey: SettingsKey.twoFingerScrollHintSeen)
+        return true
+    }
+
+    /// Whoever has a Pencil on the pages knows it draws, and scrolls with one finger, so neither notice is needed. The
+    /// first touch is told, for an iPhone that has drawn with fingers until now.
     static func pencilTouched(defaults: UserDefaults = .standard) {
         if !defaults.bool(forKey: SettingsKey.fingerDrawHintSeen) { defaults.set(true, forKey: SettingsKey.fingerDrawHintSeen) }
+        if !defaults.bool(forKey: SettingsKey.twoFingerScrollHintSeen) { defaults.set(true, forKey: SettingsKey.twoFingerScrollHintSeen) }
         if !defaults.bool(forKey: SettingsKey.pencilSeen) {
             defaults.set(true, forKey: SettingsKey.pencilSeen)
             NotificationCenter.default.post(name: .owlLunaPencilSeen, object: nil)
@@ -80,6 +89,7 @@ enum SettingsKey {
     static let dailyJournalID = "dailyJournalID"
     static let whiteboardTipSeen = "whiteboardTipSeen"
     static let fingerDrawHintSeen = "fingerDrawHintSeen"
+    static let twoFingerScrollHintSeen = "twoFingerScrollHintSeen"
     /// A Pencil has touched the pages on this device.
     static let pencilSeen = "pencilSeen"
     static let dailyJournalPromptHidden = "dailyJournalPromptHidden"

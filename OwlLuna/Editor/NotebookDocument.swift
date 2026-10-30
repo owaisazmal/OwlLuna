@@ -10,7 +10,7 @@ protocol InkObserver: AnyObject {
 }
 
 struct DocumentNotice: Identifiable, Hashable, Sendable {
-    enum Kind: Sendable { case quarantined, recovered, readOnly, unreadablePages, saveFailed, newerVersion, keptCopy, recordingStopped, onlyPencilDraws }
+    enum Kind: Sendable { case quarantined, recovered, readOnly, unreadablePages, saveFailed, newerVersion, keptCopy, recordingStopped, onlyPencilDraws, twoFingersScroll }
     let id = UUID()
     let kind: Kind
     let message: String
@@ -628,6 +628,11 @@ final class NotebookDocument {
     /// A finger dragged on a page and drew nothing, because only the Pencil draws.
     func noteOnlyPencilDraws() {
         noteOnce(.onlyPencilDraws, String(localized: "Only Apple Pencil draws right now."))
+    }
+
+    /// A finger drew on an iPhone's page, where one finger writes and two scroll.
+    func noteTwoFingersScroll() {
+        noteOnce(.twoFingersScroll, String(localized: "One finger writes. Scroll and zoom with two fingers."))
     }
 
     /// Another device wrote in the notebook since, and so did this one: Keep Both, or closing it, keeps both.

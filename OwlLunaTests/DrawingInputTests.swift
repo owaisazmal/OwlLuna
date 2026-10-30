@@ -1,7 +1,7 @@
 import XCTest
 @testable import OwlLuna
 
-/// What draws at first, and the notice for a finger that drags where only the Pencil draws.
+/// What draws at first, the notice for a finger that drags where only the Pencil draws, and the iPhone's for two-finger scrolling.
 final class DrawingInputTests: XCTestCase {
     private func ownSettings() throws -> UserDefaults {
         let suite = "owlluna-tests-\(UUID().uuidString)"
@@ -44,6 +44,17 @@ final class DrawingInputTests: XCTestCase {
         let defaults = try ownSettings()
         FingerDrawHint.pencilTouched(defaults: defaults)
         XCTAssertFalse(FingerDrawHint.take(input: .pencilOnly, penInHand: true, defaults: defaults))
+        XCTAssertFalse(FingerDrawHint.takeScroll(fingersDraw: true, isPhone: true, penInHand: true, defaults: defaults), "one finger scrolls now")
+    }
+
+    func testAnIPhoneSaysOnceThatTwoFingersScroll() throws {
+        let defaults = try ownSettings()
+        XCTAssertFalse(FingerDrawHint.takeScroll(fingersDraw: true, isPhone: false, penInHand: true, defaults: defaults), "an iPad has its own notice")
+        XCTAssertFalse(FingerDrawHint.takeScroll(fingersDraw: false, isPhone: true, penInHand: true, defaults: defaults), "one finger scrolls")
+        XCTAssertFalse(FingerDrawHint.takeScroll(fingersDraw: true, isPhone: true, penInHand: false, defaults: defaults), "the eraser or the lasso is in hand")
+        XCTAssertTrue(FingerDrawHint.takeScroll(fingersDraw: true, isPhone: true, penInHand: true, defaults: defaults))
+        XCTAssertFalse(FingerDrawHint.takeScroll(fingersDraw: true, isPhone: true, penInHand: true, defaults: defaults), "once")
+        XCTAssertFalse(defaults.bool(forKey: SettingsKey.fingerDrawHintSeen), "the iPad's notice is still to come")
     }
 
     func testOnlyOneFingerDraggedAloneCounts() {

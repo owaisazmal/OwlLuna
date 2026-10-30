@@ -124,6 +124,7 @@ final class EditorSession {
             UserDefaults.standard.set(drawingInput.rawValue, forKey: SettingsKey.drawingInput)
             canvas?.setDrawingPolicy(drawingInput.policy)
             if drawingInput != .pencilOnly { document.dismissNotices(.onlyPencilDraws) }
+            if drawingInput == .pencilOnly { document.dismissNotices(.twoFingersScroll) }
         }
     }
     /// Once a Pencil touches an iPhone's pages only the Pencil draws, as on an iPad, unless a choice was made before.
