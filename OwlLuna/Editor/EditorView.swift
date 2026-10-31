@@ -508,7 +508,7 @@ fileprivate struct EditorContent: View {
     private func makeCardFromInk() {
         document.perform {
             guard let clipping = await session.inkClipping() else { return }
-            cardDraft = CardDraft(pageID: clipping.pageID, answer: clipping.image)
+            cardDraft = CardDraft(pageID: clipping.pageID, answer: clipping.image, answerText: clipping.text)
         }
     }
 

@@ -250,10 +250,11 @@ struct LibrarySidebar: View {
                     Image(systemName: "chevron.down")
                         .font(.footnote.weight(.semibold))
                         .rotationEffect(.degrees(folded ? -90 : 0))
-                        .frame(width: 28, height: 28)
+                        .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
+                .padding(-8)
                 .foregroundStyle(RowInk(resting: .textSecondary))
                 .accessibilityHidden(true)
             }

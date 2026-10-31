@@ -52,6 +52,31 @@ enum CardClipping {
                 image(of: page, ink: ink, assets: assets, region: region, lifted: [tape.id], revealed: tape))
     }
 
+    /// The words of a tape card's sides, read from the answer: on the question, those under the tape are one blank.
+    static func tapeText(_ tape: PageItem, on page: NotebookPage, answer: UIImage) -> (front: String?, back: String?) {
+        let region = region(around: tape, on: page)
+        return tapeText(PageWords.words(in: NotebookFind.read(answer) ?? [], size: region.size), tape: tape, region: region)
+    }
+
+    /// `words` lie in `region`, measured from its corner.
+    static func tapeText(_ words: [PageWords.Word], tape: PageItem, region: CGRect) -> (front: String?, back: String?) {
+        let read = words.map { $0.text.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        guard !read.isEmpty else { return (nil, nil) }
+        let toTape = tape.placement.inverted(), strip = CGRect(origin: .zero, size: tape.size)
+        var front: [String] = [], hiding = false
+        for word in words {
+            let text = word.text.trimmingCharacters(in: .whitespaces)
+            guard !text.isEmpty else { continue }
+            let dx = word.end.x - word.start.x, dy = word.end.y - word.start.y, length = max(hypot(dx, dy), 0.001)
+            let middle = CGPoint(x: region.minX + (word.start.x + word.end.x) / 2 + dy / length * word.height / 2,
+                                 y: region.minY + (word.start.y + word.end.y) / 2 - dx / length * word.height / 2)
+            let hidden = strip.contains(middle.applying(toTape))
+            if !hidden { front.append(text) } else if !hiding { front.append(String(localized: "card.blank", defaultValue: "blank")) }
+            hiding = hidden
+        }
+        return (front.joined(separator: " "), read.joined(separator: " "))
+    }
+
     /// Selected handwriting on its own paper, one page's piece under another.
     static func inkImage(_ pieces: [(page: NotebookPage, ink: PKDrawing)], assets: URL) -> UIImage? {
         let cuts = pieces.prefix(3).compactMap { piece -> UIImage? in

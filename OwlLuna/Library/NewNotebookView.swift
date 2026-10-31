@@ -419,8 +419,7 @@ struct CoverStyleOptions: View {
             SwatchRow(items: ClothColor.allCases, selection: $cloth, label: \.displayName) { Circle().fill($0.color) }
         case .print:
             header("Inks")
-            SwatchRow(items: Array(RisoInk.pairs.indices), selection: $inkPair,
-                      label: { "\(RisoInk.pairs[$0].0.displayName) and \(RisoInk.pairs[$0].1.displayName)" }) { index in
+            SwatchRow(items: Array(RisoInk.pairs.indices), selection: $inkPair, label: { RisoInk.name(of: RisoInk.pairs[$0]) }) { index in
                 Circle().fill(LinearGradient(stops: [.init(color: Color(hex: RisoInk.pairs[index].0.hex), location: 0.5),
                                                     .init(color: Color(hex: RisoInk.pairs[index].1.hex), location: 0.5)],
                                             startPoint: .topLeading, endPoint: .bottomTrailing))
@@ -441,6 +440,8 @@ struct SwatchRow<Item: Hashable, Swatch: View>: View {
     @ViewBuilder let swatch: (Item) -> Swatch
 
     var body: some View {
+        // Each button is a 44 pt target laid out at the size it's drawn, so the row keeps its spacing.
+        let target = max(size + 6, 44)
         FlowLayout(spacing: Space.x2) {
             ForEach(items, id: \.self) { item in
                 Button { selection = item } label: {
@@ -448,8 +449,11 @@ struct SwatchRow<Item: Hashable, Swatch: View>: View {
                         .frame(width: size, height: size)
                         .padding(3)
                         .overlay { if item == selection { Circle().strokeBorder(Color.accentColor, lineWidth: 2.5) } }
+                        .frame(width: target, height: target)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .padding(-(target - size - 6) / 2)
                 .accessibilityLabel(label(item))
                 .accessibilityAddTraits(item == selection ? [.isButton, .isSelected] : .isButton)
             }

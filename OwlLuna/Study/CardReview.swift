@@ -204,8 +204,7 @@ struct CardReview: View {
     private func spoken(_ card: Flashcard) -> String {
         let side = session.isRevealed ? card.back : card.front
         let name = session.isRevealed ? String(localized: "Answer") : String(localized: "Question")
-        let words = side.text.isEmpty ? String(localized: "A clipping from the page") : side.text
-        return "\(name). \(words)"
+        return "\(name). \(side.spoken)"
     }
 
     // MARK: Answers

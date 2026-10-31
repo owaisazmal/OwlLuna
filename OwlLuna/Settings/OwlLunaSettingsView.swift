@@ -435,7 +435,7 @@ private struct Colophon: View {
                 .accessibilityAddTraits(.isImage)
             VStack(spacing: Space.x1) {
                 Text(verbatim: "OwlLuna").displayFont(28, relativeTo: .title)
-                Text(verbatim: "\(String(localized: "Version")) \(version)").metaStyle()
+                Text("Version \(version)").metaStyle()
             }
             .accessibilityElement(children: .combine)
             Text("OwlLuna is free and open source. No ads, no subscriptions, no tracking. Your notes stay on your iPad, and in your own iCloud if you turn sync on.")

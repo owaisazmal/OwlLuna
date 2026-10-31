@@ -26,6 +26,15 @@ final class NewNotebookTests: XCTestCase {
         XCTAssertEqual(NotebookStarter.plain.notebookTitle, "Untitled Notebook")
     }
 
+    func testAPairOfInksIsJoinedInTheLanguageItIsSaidIn() throws {
+        XCTAssertEqual(RisoInk.name(of: RisoInk.pairs[0]), "Teal and Riso blue")
+        for (code, pair) in [("es", "Verde azulado y Azul riso"), ("fr", "Bleu canard et Bleu riso"), ("de", "Petrol und Riso-Blau")] {
+            let bundle = try XCTUnwrap(Bundle.main.path(forResource: code, ofType: "lproj").flatMap(Bundle.init(path:)), code)
+            let teal = String(localized: "Teal", bundle: bundle), blue = String(localized: "Riso blue", bundle: bundle)
+            XCTAssertEqual(String(localized: "\(teal) and \(blue)", bundle: bundle, locale: Locale(identifier: code)), pair)
+        }
+    }
+
     func testPlainFollowsTheSettingsDefaults() {
         let defaults = UserDefaults.standard
         let saved = [SettingsKey.defaultTemplate, SettingsKey.defaultPaperColor].map { ($0, defaults.object(forKey: $0)) }

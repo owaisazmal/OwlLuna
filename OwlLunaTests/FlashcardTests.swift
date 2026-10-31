@@ -389,6 +389,64 @@ final class FlashcardTests: XCTestCase {
         XCTAssertGreaterThan(try pixel(back, at: onOther).r, 100, "other strips stay where they are, so only this answer is given away")
     }
 
+    func testATapeCardIsReadSoItCanBeStudiedByEar() async throws {
+        let root = temporaryRoot(self), id = UUID()
+        let package = NotebookPackage(root: root, id: id)
+        let font = UIFont.systemFont(ofSize: 20), origin = CGPoint(x: 140, y: 120)
+        func width(_ text: String) -> CGFloat { (text as NSString).size(withAttributes: [.font: font]).width }
+        let pdf = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: PageSize.letter.points)).pdfData { context in
+            context.beginPage()
+            ("The capital of France is Paris" as NSString).draw(at: origin, withAttributes: [.font: font])
+        }
+        let file = try await package.writeAsset(pdf, ext: "pdf")
+        var page = NotebookPage(background: .pdf(file: file, index: 0), paperColor: .white, size: PageSize.letter.points)
+        let tape = PageItem(content: .tape(.mustard), center: CGPoint(x: origin.x + width("The capital of ") + width("France") / 2, y: origin.y + font.lineHeight / 2),
+                            size: CGSize(width: width("France") + 8, height: font.lineHeight + 6))
+        page.items = [tape]
+        try await package.create(NotebookManifest(id: id, title: "Geography", defaults: paper, pages: [page]))
+        XCTAssertTrue(CardClipping.region(around: tape, on: page).contains(CGRect(origin: origin, size: CGSize(width: width("The capital of France is Paris"), height: font.lineHeight))))
+        let document = try await NotebookDocument.open(id, root: root)
+        let library = FlashcardLibrary(root: root)
+        await library.load()
+
+        let made = try await EditorSession(document: document).makeCard(from: tape, on: document.pages[0], in: library)
+        let question = try XCTUnwrap(made.front.imageText), answer = try XCTUnwrap(made.back.imageText)
+        XCTAssertTrue(answer.contains("France") && answer.contains("Paris"), answer)
+        XCTAssertTrue(question.contains("blank") && question.contains("Paris"), question)
+        XCTAssertFalse(question.contains("France"), "the question doesn't give the answer away")
+        XCTAssertEqual(made.front.spoken, question)
+        XCTAssertEqual(library.cards(in: id).first?.back.imageText, answer, "kept with the card")
+    }
+
+    func testTheWordsUnderTheTapeAreOneBlankOnTheQuestion() {
+        var tape = PageItem(content: .tape(.mustard), center: CGPoint(x: 280, y: 200), size: CGSize(width: 100, height: 30))
+        let region = CGRect(x: 100, y: 100, width: 400, height: 200)
+        func word(_ text: String, _ from: CGFloat, _ to: CGFloat, foot: CGFloat = 210) -> PageWords.Word {
+            PageWords.Word(text: text, start: CGPoint(x: from - region.minX, y: foot - region.minY), end: CGPoint(x: to - region.minX, y: foot - region.minY), height: 20)
+        }
+        let words = [word("Mitochondria ", 100, 180), word("make ", 185, 225), word("ATP ", 235, 270), word("for ", 275, 300), word("the ", 335, 360),
+                     word("cell", 365, 400), word("in ", 340, 355, foot: 250), word("respiration", 360, 420, foot: 250)]
+        let read = CardClipping.tapeText(words, tape: tape, region: region)
+        XCTAssertEqual(read.front, "Mitochondria make blank the cell in respiration")
+        XCTAssertEqual(read.back, "Mitochondria make ATP for the cell in respiration")
+        tape.rotation = .pi / 2
+        XCTAssertEqual(CardClipping.tapeText(words, tape: tape, region: region).front, "Mitochondria make ATP blank the cell in respiration",
+                       "a turned strip hides what is under it as it lies")
+        XCTAssertNil(CardClipping.tapeText([], tape: tape, region: region).front)
+    }
+
+    func testASideThatIsAPictureIsSaidAsTheWordsInIt() throws {
+        XCTAssertEqual(CardSide(text: "Paris").spoken, "Paris")
+        XCTAssertEqual(CardSide(image: "a.png").spoken, "A clipping from the page", "nothing could be read from it")
+        XCTAssertEqual(CardSide(image: "a.png", imageText: "The capital of blank is Paris").spoken, "The capital of blank is Paris")
+        XCTAssertEqual(CardSide(text: "Which city?", image: "a.png", imageText: "Paris").spoken, "Which city?\nParis")
+
+        let older = try JSONDecoder().decode(CardSide.self, from: Data(#"{"text":"","image":"a.png"}"#.utf8))
+        XCTAssertEqual(older, CardSide(image: "a.png"), "cards made before still read")
+        let side = CardSide(image: "a.png", imageText: "Paris")
+        XCTAssertEqual(try JSONDecoder().decode(CardSide.self, from: JSONEncoder().encode(side)), side)
+    }
+
     func testSelectedInkIsCutOutOnItsOwnPaper() throws {
         var page = PageDefaults(template: .blank, paperColor: .chalkboard, pageSize: .letter).newPage()
         page.items = [PageItem(content: .tape(.mustard), center: CGPoint(x: 200, y: 200), size: CGSize(width: 240, height: 40))]
@@ -406,12 +464,14 @@ final class FlashcardTests: XCTestCase {
         let manifest = try await makeNotebook(root)
         let library = FlashcardLibrary(root: root)
         await library.load()
-        var draft = CardDraft(pageID: manifest.pages[0].id, answer: UIGraphicsImageRenderer(size: CGSize(width: 20, height: 10)).image { _ in })
+        var draft = CardDraft(pageID: manifest.pages[0].id, answer: UIGraphicsImageRenderer(size: CGSize(width: 20, height: 10)).image { _ in },
+                              answerText: "Osmosis")
         XCTAssertFalse(draft.isComplete, "a card needs a question as well")
         draft.front.text = "  What is drawn?  "
         let saved = try await library.save(draft, in: manifest.id)
         XCTAssertEqual(saved.front.text, "What is drawn?")
         XCTAssertNotNil(saved.back.image)
+        XCTAssertEqual(saved.back.imageText, "Osmosis")
         let clipping = await library.image(saved.back.image, in: manifest.id)
         XCTAssertNotNil(clipping)
 
@@ -422,6 +482,7 @@ final class FlashcardTests: XCTestCase {
         let changed = try await library.save(edit, in: manifest.id)
         XCTAssertEqual(changed.id, saved.id)
         XCTAssertEqual(changed.front.image, saved.back.image)
+        XCTAssertEqual(changed.front.imageText, "Osmosis", "the clipping's words go with it")
         XCTAssertEqual(changed.due, graded.due)
         XCTAssertEqual(library.cards(in: manifest.id).count, 1)
     }

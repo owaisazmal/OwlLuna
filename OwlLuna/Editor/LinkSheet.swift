@@ -87,7 +87,7 @@ private struct LinkPagePicker: View {
             .disabled(isCurrent)
             .accessibilityLabel(Text(isCurrent ? "Page \(index + 1), this page" : "Page \(index + 1)"))
             .accessibilityValue(Text(page.bookmark.flatMap { $0.isEmpty ? nil : $0 } ?? ""))
-            .accessibilityHint(Text(isCurrent ? "" : "Links to this page"))
+            .accessibilityHint(isCurrent ? Text(verbatim: "") : Text("Links to this page"))
             .accessibilityIdentifier("link.page.\(index + 1)")
             .id(page.id)
         }

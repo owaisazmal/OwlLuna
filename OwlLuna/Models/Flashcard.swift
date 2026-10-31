@@ -5,18 +5,31 @@ struct CardSide: Codable, Equatable, Sendable {
     var text = ""
     /// A PNG in the notebook's `cards/` folder.
     var image: String?
+    /// The words read from the clipping when it was cut. Older cards have none.
+    var imageText: String?
 
     var isEmpty: Bool { text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && image == nil }
 
-    init(text: String = "", image: String? = nil) {
+    init(text: String = "", image: String? = nil, imageText: String? = nil) {
         self.text = text
         self.image = image
+        self.imageText = imageText
     }
 
     init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         text = try values.decodeIfPresent(String.self, forKey: .text) ?? ""
         image = try values.decodeIfPresent(String.self, forKey: .image)
+        imageText = try values.decodeIfPresent(String.self, forKey: .imageText)
+    }
+
+    /// What VoiceOver says for the side: its own words, then what its clipping reads as.
+    var spoken: String {
+        let words = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard image != nil else { return words }
+        let read = imageText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if read.isEmpty { return words.isEmpty ? String(localized: "A clipping from the page") : words }
+        return words.isEmpty ? read : "\(words)\n\(read)"
     }
 }
 

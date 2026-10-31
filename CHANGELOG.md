@@ -25,6 +25,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - With VoiceOver, swiping up or down on a selected picture, sticker or text box's Resize and rotate handle now makes it larger or smaller, in the same shape and on the page, and says its new size. A selected item also has actions to move it, rotate it, and bring it forward or send it back. Each step is one Undo.
 - With a keyboard, the arrow keys nudge a selected item, or ink selected with Select Ink, a point at a time, or ten with Shift. Each press is one Undo, and the arrows still belong to a text box you're typing in. ⌘1, ⌘2 and ⌘3 take up the pen you last used, the eraser and the lasso, and are listed when you hold ⌘.
 - With Reduce Motion on, going to another page, scrolling with the keyboard and Find's jumps cross-fade instead of sliding, and the whiteboard's fade uses the same short cross-fade.
+- With VoiceOver, a flashcard made from study tape or handwriting now says the words in its clipping instead of only "A clipping from the page". On a tape card's question, the words under the tape are said as "blank". Cards made before keep the old words.
+- VoiceOver names a pair of print inks in the app's language, so Spanish says "Verde azulado y Azul riso" rather than "and".
+- The cloth and ink swatches in New Notebook and Change Cover, and the sidebar's arrow that folds a folder, are easier to tap. They look the same.
+- The version line in Settings is one translated phrase, and a notebook tab being dragged has its type's name in French, German and Spanish too.
 
 ## [1.0.0-build.4] - 2026-10-28
 

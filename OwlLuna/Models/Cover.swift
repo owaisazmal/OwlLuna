@@ -83,6 +83,10 @@ enum RisoInk: String, CaseIterable, Identifiable, Sendable {
 
     static let paperStock: UInt32 = 0xF7F4EC
 
+    static func name(of pair: (RisoInk, RisoInk)) -> String {
+        String(localized: "\(pair.0.displayName) and \(pair.1.displayName)")
+    }
+
     static let pairs: [(RisoInk, RisoInk)] = [
         (.teal, .blue), (.pink, .yellow), (.blue, .yellow), (.teal, .pink), (.black, .pink), (.blue, .pink),
     ]
