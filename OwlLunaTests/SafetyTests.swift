@@ -616,12 +616,21 @@ final class LibraryStoreSafetyTests: XCTestCase {
         let manifest = try await makeNotebook(store)
         let record = try XCTUnwrap(store.record(manifest.id))
         let registry = DocumentRegistry.shared
+        guard registry.startWriting(manifest.id) else { return XCTFail("Could not hold the notebook open") }
+        var writeHeld = true
+        defer { if writeHeld { registry.doneWriting(manifest.id) } }
         store.setFavorite(true, for: [record])
-        // Main-actor jobs run in turn, so by now the favourite is being written.
         await Task.yield()
         let opening = Task { try await registry.open(manifest.id, root: root, scene: nil) { _ in } }
-        while !registry.isOpening(manifest.id) { await Task.yield() }
+        defer { opening.cancel() }
+        let deadline = Date().addingTimeInterval(5)
+        while !registry.isOpening(manifest.id), Date() < deadline { try await Task.sleep(for: .milliseconds(10)) }
+        guard registry.isOpening(manifest.id) else {
+            return XCTFail("The notebook did not begin opening")
+        }
         store.setLocked(true, for: [record])
+        registry.doneWriting(manifest.id)
+        writeHeld = false
         let document = try await opening.value
         defer { registry.unregister(manifest.id, document: document) }
         XCTAssertTrue(document.manifest.library.isFavorite, "the open waits for a write under way")

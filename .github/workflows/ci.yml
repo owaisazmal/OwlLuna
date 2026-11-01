@@ -163,6 +163,7 @@ jobs:
 
       - name: Unit tests
         if: steps.build.outcome == 'success'
+        timeout-minutes: 40
         run: |
           set -o pipefail
           xcodebuild test-without-building \
@@ -171,12 +172,12 @@ jobs:
             -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
             -only-testing:OwlLunaTests \
             -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 600 \
             -resultBundlePath "$RUNNER_TEMP/Unit.xcresult" \
-            2>&1 | tee "$RUNNER_TEMP/test.log" \
-            | xcbeautify --renderer github-actions
+            2>&1 | tee "$RUNNER_TEMP/test.log"
 
       - name: UI smoke test
-        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        if: ${{ success() && steps.build.outcome == 'success' }}
         timeout-minutes: 30
         run: |
           set -o pipefail
