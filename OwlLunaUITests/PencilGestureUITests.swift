@@ -18,6 +18,16 @@ final class PencilGestureUITests: XCTestCase {
         app.launch()
         let notebook = app.buttons["notebook.Physics II 3"]
         XCTAssertTrue(notebook.waitForExistence(timeout: 30))
+        let settings = app.buttons["Settings"].firstMatch
+        if !settings.isHittable { app.buttons["ToggleSidebar"].firstMatch.tap() }
+        settings.tap()
+        let scribble = app.switches["settings.pencil.scribble"]
+        for _ in 0..<6 where !scribble.exists || !scribble.isHittable { app.swipeUp() }
+        XCTAssertTrue(scribble.waitForExistence(timeout: 5))
+        XCTAssertEqual(scribble.value as? String, "0", "scribble erasing starts off")
+        scribble.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        XCTAssertEqual(scribble.value as? String, "1", "the gesture can be enabled explicitly")
+        app.buttons["Done"].firstMatch.tap()
         notebook.tap()
         let canvas = app.descendants(matching: .any)["page.canvas.1"]
         XCTAssertTrue(canvas.waitForExistence(timeout: 20))

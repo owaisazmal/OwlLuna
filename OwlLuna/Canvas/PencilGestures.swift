@@ -90,7 +90,7 @@ enum LoopRecognizer {
 
 /// Scribble to erase and circle and hold to select: the two recognisers applied to PencilKit strokes.
 enum PencilGestures {
-    static var scribbleErases: Bool { UserDefaults.standard.bool(forKey: SettingsKey.scribbleErases, default: true) }
+    static var scribbleErases: Bool { UserDefaults.standard.bool(forKey: SettingsKey.scribbleErases, default: false) }
     static var circleSelects: Bool { UserDefaults.standard.bool(forKey: SettingsKey.circleSelects, default: true) }
 
     /// `-fakePencilGestures` lets a UI test, which can only drag in straight lines, stand in for both gestures:

@@ -16,7 +16,7 @@ struct OwlLunaSettingsView: View {
     @AppStorage(SettingsKey.showsOnThisDay) private var showsOnThisDay = true
     @AppStorage(SettingsKey.snapsShapes) private var snapsShapes = true
     @AppStorage(SettingsKey.snapsHighlighter) private var snapsHighlighter = true
-    @AppStorage(SettingsKey.scribbleErases) private var scribbleErases = true
+    @AppStorage(SettingsKey.scribbleErases) private var scribbleErases = false
     @AppStorage(SettingsKey.circleSelects) private var circleSelects = true
     @AppStorage(SettingsKey.pencilDoubleTap) private var pencilDoubleTap: PencilAction = .system
     @AppStorage(SettingsKey.pencilSqueeze) private var pencilSqueeze: PencilAction = .system
@@ -178,8 +178,8 @@ struct OwlLunaSettingsView: View {
     /// Without a Pencil the same gestures are drawn with a finger, and there is nothing to double-tap or squeeze.
     private var pencilSection: some View {
         SettingsSection(hasPencil ? "Apple Pencil" : "Drawing", note: !hasPencil
-                        ? "Draw a line, arrow, circle, rectangle or triangle and hold still before lifting to straighten it, or draw a loop round ink and hold still to select it. Scribble back and forth over ink with a pen to erase it; Undo brings it back. A highlighter drawn along a line of a PDF's text is laid straight over that line."
-                        : "Draw a line, arrow, circle, rectangle or triangle and hold still before lifting to straighten it, or draw a loop round ink and hold still to select it. Scribble back and forth over ink with a pen to erase it; Undo brings it back. A highlighter drawn along a line of a PDF's text is laid straight over that line. For Double-Tap and Squeeze, “System Setting” follows Settings › Apple Pencil.") {
+                        ? "Draw a line, arrow, circle, rectangle or triangle and hold still before lifting to straighten it, or draw a loop round ink and hold still to select it. When Scribble to Erase is enabled, scribble back and forth over ink with a pen to erase it; Undo brings it back. A highlighter drawn along a line of a PDF's text is laid straight over that line."
+                        : "Draw a line, arrow, circle, rectangle or triangle and hold still before lifting to straighten it, or draw a loop round ink and hold still to select it. When Scribble to Erase is enabled, scribble back and forth over ink with a pen to erase it; Undo brings it back. A highlighter drawn along a line of a PDF's text is laid straight over that line. For Double-Tap and Squeeze, “System Setting” follows Settings › Apple Pencil.") {
             Toggle("Straighten Shapes", isOn: $snapsShapes).settingsRow()
             Toggle("Snap Highlighter to PDF Text", isOn: $snapsHighlighter).settingsRow()
             Toggle("Circle and Hold to Select", isOn: $circleSelects)

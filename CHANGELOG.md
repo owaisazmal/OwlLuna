@@ -19,6 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Scribble to Erase is now off by default, so drawing over ink does not unexpectedly erase it. It can be turned on in Settings › Apple Pencil; an existing saved choice is kept.
 - Imported files now coordinate with their storage provider before being copied. Unreadable PDFs give a more specific explanation, and a PDF with an unreadable page is refused instead of imported with missing pages.
 - Imported PDF highlights, annotations and filled forms now appear on the page and in exports. Web links and links to imported pages work in the notebook and exported PDFs.
 - Importing several PDFs no longer stops at the first one that fails. The rest still come in, and one notice says which didn't and why.

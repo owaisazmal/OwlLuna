@@ -200,7 +200,7 @@ Expect: one action each time, never the system's picker or palette: the eraser a
 
 ### Scribble and loop
 
-Only test strokes have been recognised so far. Turn on Settings › Apple Pencil › Scribble to Erase and Circle and Hold to Select.
+Only test strokes have been recognised so far. Scribble to Erase is off by default. Before turning it on, draw repeated narrow, tilted oval loops over earlier ink, lifting and starting again several times: all the ink should stay. Check that the regular eraser still removes ink and Undo restores it. Then turn on Settings › Apple Pencil › Scribble to Erase and Circle and Hold to Select for the checks below.
 
 1. Scribble back and forth about six times over a word. Do it on 20 words, undoing each.
 2. Loop round two words, hold half a second, lift and drag. Do it 20 times. Then loop once more and tap Undo in the bar.

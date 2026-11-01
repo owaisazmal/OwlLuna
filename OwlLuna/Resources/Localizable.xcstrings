@@ -2147,24 +2147,24 @@
         }
       }
     },
-    "Draw a line, arrow, circle, rectangle or triangle and hold still before lifting to straighten it, or draw a loop round ink and hold still to select it. Scribble back and forth over ink with a pen to erase it; Undo brings it back. A highlighter drawn along a line of a PDF's text is laid straight over that line." : {
+    "Draw a line, arrow, circle, rectangle or triangle and hold still before lifting to straighten it, or draw a loop round ink and hold still to select it. When Scribble to Erase is enabled, scribble back and forth over ink with a pen to erase it; Undo brings it back. A highlighter drawn along a line of a PDF's text is laid straight over that line." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zeichne eine Linie, einen Pfeil, einen Kreis, ein Rechteck oder ein Dreieck und halte vor dem Abheben still, um die Form zu begradigen, oder zeichne eine Schlaufe um Tinte und halte still, um sie auszuwählen. Kritzle mit einem Stift über Tinte hin und her, um sie zu löschen; „Widerrufen“ bringt sie zurück. Ein Textmarker, der entlang einer Textzeile eines PDFs gezogen wird, legt sich gerade über diese Zeile."
+            "value" : "Zeichne eine Linie, einen Pfeil, einen Kreis, ein Rechteck oder ein Dreieck und halte vor dem Abheben still, um die Form zu begradigen, oder zeichne eine Schlaufe um Tinte und halte still, um sie auszuwählen. Wenn das Löschen durch Kritzeln aktiviert ist, kritzle mit einem Stift über Tinte hin und her, um sie zu löschen; „Widerrufen“ bringt sie zurück. Ein Textmarker, der entlang einer Textzeile eines PDFs gezogen wird, legt sich gerade über diese Zeile."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dibuja una línea, una flecha, un círculo, un rectángulo o un triángulo y mantén el lápiz quieto antes de levantarlo para enderezarlo, o dibuja un lazo alrededor de la tinta y mantenlo quieto para seleccionarla. Garabatea de un lado a otro sobre la tinta con un bolígrafo para borrarla; Deshacer la recupera. Un resaltador trazado a lo largo de una línea de texto de un PDF se coloca recto sobre esa línea."
+            "value" : "Dibuja una línea, una flecha, un círculo, un rectángulo o un triángulo y mantén el lápiz quieto antes de levantarlo para enderezarlo, o dibuja un lazo alrededor de la tinta y mantenlo quieto para seleccionarla. Cuando el borrado con garabatos esté activado, garabatea de un lado a otro sobre la tinta con un bolígrafo para borrarla; Deshacer la recupera. Un resaltador trazado a lo largo de una línea de texto de un PDF se coloca recto sobre esa línea."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tracez une ligne, une flèche, un cercle, un rectangle ou un triangle et restez immobile avant de lever le crayon pour le redresser, ou tracez une boucle autour de l’encre et restez immobile pour la sélectionner. Gribouillez en va-et-vient sur l’encre avec un stylo pour l’effacer ; Annuler la rétablit. Un surligneur tracé le long d’une ligne de texte d’un PDF se pose bien droit sur cette ligne."
+            "value" : "Tracez une ligne, une flèche, un cercle, un rectangle ou un triangle et restez immobile avant de lever le crayon pour le redresser, ou tracez une boucle autour de l’encre et restez immobile pour la sélectionner. Lorsque l’effacement par gribouillage est activé, gribouillez en va-et-vient sur l’encre avec un stylo pour l’effacer ; Annuler la rétablit. Un surligneur tracé le long d’une ligne de texte d’un PDF se pose bien droit sur cette ligne."
           }
         }
       }
@@ -14823,24 +14823,24 @@
         }
       }
     },
-    "Draw a line, arrow, circle, rectangle or triangle and hold still before lifting to straighten it, or draw a loop round ink and hold still to select it. Scribble back and forth over ink with a pen to erase it; Undo brings it back. A highlighter drawn along a line of a PDF's text is laid straight over that line. For Double-Tap and Squeeze, “System Setting” follows Settings › Apple Pencil." : {
+    "Draw a line, arrow, circle, rectangle or triangle and hold still before lifting to straighten it, or draw a loop round ink and hold still to select it. When Scribble to Erase is enabled, scribble back and forth over ink with a pen to erase it; Undo brings it back. A highlighter drawn along a line of a PDF's text is laid straight over that line. For Double-Tap and Squeeze, “System Setting” follows Settings › Apple Pencil." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zeichne eine Linie, einen Pfeil, einen Kreis, ein Rechteck oder ein Dreieck und halte vor dem Abheben still, um die Form zu begradigen, oder zeichne eine Schlaufe um Tinte und halte still, um sie auszuwählen. Kritzle mit einem Stift über Tinte hin und her, um sie zu löschen; „Widerrufen“ bringt sie zurück. Ein Textmarker, der entlang einer Textzeile eines PDFs gezogen wird, legt sich gerade über diese Zeile. Für Doppeltippen und Drücken folgt „Systemeinstellung“ den Einstellungen › Apple Pencil."
+            "value" : "Zeichne eine Linie, einen Pfeil, einen Kreis, ein Rechteck oder ein Dreieck und halte vor dem Abheben still, um die Form zu begradigen, oder zeichne eine Schlaufe um Tinte und halte still, um sie auszuwählen. Wenn das Löschen durch Kritzeln aktiviert ist, kritzle mit einem Stift über Tinte hin und her, um sie zu löschen; „Widerrufen“ bringt sie zurück. Ein Textmarker, der entlang einer Textzeile eines PDFs gezogen wird, legt sich gerade über diese Zeile. Für Doppeltippen und Drücken folgt „Systemeinstellung“ den Einstellungen › Apple Pencil."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dibuja una línea, una flecha, un círculo, un rectángulo o un triángulo y mantén el lápiz quieto antes de levantarlo para enderezarlo, o dibuja un lazo alrededor de la tinta y mantenlo quieto para seleccionarla. Garabatea de un lado a otro sobre la tinta con un bolígrafo para borrarla; Deshacer la recupera. Un resaltador trazado a lo largo de una línea de texto de un PDF se coloca recto sobre esa línea. Para Doble toque y Apretar, «Ajuste del sistema» sigue Ajustes › Apple Pencil."
+            "value" : "Dibuja una línea, una flecha, un círculo, un rectángulo o un triángulo y mantén el lápiz quieto antes de levantarlo para enderezarlo, o dibuja un lazo alrededor de la tinta y mantenlo quieto para seleccionarla. Cuando el borrado con garabatos esté activado, garabatea de un lado a otro sobre la tinta con un bolígrafo para borrarla; Deshacer la recupera. Un resaltador trazado a lo largo de una línea de texto de un PDF se coloca recto sobre esa línea. Para Doble toque y Apretar, «Ajuste del sistema» sigue Ajustes › Apple Pencil."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tracez une ligne, une flèche, un cercle, un rectangle ou un triangle et restez immobile avant de lever le crayon pour le redresser, ou tracez une boucle autour de l’encre et restez immobile pour la sélectionner. Gribouillez en va-et-vient sur l’encre avec un stylo pour l’effacer ; Annuler la rétablit. Un surligneur tracé le long d’une ligne de texte d’un PDF se pose bien droit sur cette ligne. Pour Toucher deux fois et Presser, « Réglage système » suit Réglages › Apple Pencil."
+            "value" : "Tracez une ligne, une flèche, un cercle, un rectangle ou un triangle et restez immobile avant de lever le crayon pour le redresser, ou tracez une boucle autour de l’encre et restez immobile pour la sélectionner. Lorsque l’effacement par gribouillage est activé, gribouillez en va-et-vient sur l’encre avec un stylo pour l’effacer ; Annuler la rétablit. Un surligneur tracé le long d’une ligne de texte d’un PDF se pose bien droit sur cette ligne. Pour Toucher deux fois et Presser, « Réglage système » suit Réglages › Apple Pencil."
           }
         }
       }

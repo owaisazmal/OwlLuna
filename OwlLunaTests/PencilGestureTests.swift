@@ -5,6 +5,12 @@ import PencilKit
 /// Scribble to erase, circle and hold to select, and what a double-tap of the Pencil does.
 @MainActor
 final class PencilGestureTests: XCTestCase {
+    private func setScribbleErasing(_ enabled: Bool?) {
+        let saved = UserDefaults.standard.object(forKey: SettingsKey.scribbleErases)
+        addTeardownBlock { UserDefaults.standard.set(saved, forKey: SettingsKey.scribbleErases) }
+        UserDefaults.standard.set(enabled, forKey: SettingsKey.scribbleErases)
+    }
+
     private func along(_ corners: [CGPoint], spacing: CGFloat = 4) -> [CGPoint] {
         var points: [CGPoint] = []
         for (a, b) in zip(corners, corners.dropFirst()) {
@@ -28,6 +34,13 @@ final class PencilGestureTests: XCTestCase {
 
     private func ring(centre: CGPoint, radius: CGFloat, turns: CGFloat = 1.03) -> [CGPoint] {
         curve(90) { CGPoint(x: centre.x + radius * cos($0 * turns * 2 * .pi), y: centre.y + radius * sin($0 * turns * 2 * .pi)) }
+    }
+
+    /// Narrow oval doodles like the recording, with a little drift on each lap.
+    private func coils(turns: CGFloat = 5.2) -> [CGPoint] {
+        curve(500) { t in
+            CGPoint(x: 160 + 55 * cos(t * turns * 2 * .pi) + 3 * t, y: 112 + 12 * sin(t * turns * 2 * .pi) + 2 * t)
+        }
     }
 
     private func pen(_ points: [CGPoint], ink: PKInkingTool.InkType = .pen) -> PKStroke {
@@ -121,7 +134,43 @@ final class PencilGestureTests: XCTestCase {
         XCTAssertFalse(PencilGestures.writes(PKInkingTool(.crayon)))
         XCTAssertFalse(PencilGestures.writes(PKEraserTool(.vector)))
         XCTAssertFalse(PencilGestures.writes(PKLassoTool()))
-        XCTAssertTrue(PencilGestures.scribbleErases && PencilGestures.circleSelects, "both are on until they are turned off")
+        XCTAssertTrue(PencilGestures.circleSelects, "circle and hold remains on until it is turned off")
+    }
+
+    func testScribbleErasingIsOptInAndHonorsSavedPreferences() {
+        setScribbleErasing(nil)
+        XCTAssertFalse(PencilGestures.scribbleErases, "an unset preference must not erase a drawing gesture")
+        UserDefaults.standard.set(true, forKey: SettingsKey.scribbleErases)
+        XCTAssertTrue(PencilGestures.scribbleErases, "an existing opt-in is preserved")
+        UserDefaults.standard.set(false, forKey: SettingsKey.scribbleErases)
+        XCTAssertFalse(PencilGestures.scribbleErases, "an explicit opt-out is preserved")
+    }
+
+    func testOvalDoodlesStayOnTheCanvasAndUndoRedoWithScribbleErasingOff() async throws {
+        setScribbleErasing(nil)
+        let turn = { (point: CGPoint) in ShapeRecognizer.rotate(point, about: CGPoint(x: 160, y: 112), by: -1.1) }
+        let earlier = pen(coils(turns: 1.8).map(turn))
+        let doodle = pen(coils().map(turn))
+        XCTAssertNotNil(PencilGestures.erasing(doodle, from: PKDrawing(strokes: [earlier])),
+                        "this oval pattern would trigger the optional erase recognizer")
+        let open = try await OpenPage.open(self, ink: [earlier])
+        await open.draw(doodle)
+        XCTAssertEqual(open.ink.count, 2, "the earlier oval and the new doodle both remain in the document")
+        XCTAssertEqual(open.canvas.drawing.strokes.count, 2)
+        XCTAssertNotEqual(open.document.undoManager.undoActionName, "Scribble Erase")
+        open.document.undoManager.undo()
+        await pause(0.2)
+        XCTAssertEqual(open.ink.count, 1)
+        XCTAssertEqual(open.canvas.drawing.strokes.count, 1)
+        open.document.undoManager.redo()
+        await pause(0.2)
+        XCTAssertEqual(open.ink.count, 2)
+        XCTAssertEqual(open.canvas.drawing.strokes.count, 2)
+
+        UserDefaults.standard.set(false, forKey: SettingsKey.scribbleErases)
+        await open.draw(doodle)
+        XCTAssertEqual(open.ink.count, 3, "explicitly turning the gesture off also keeps the ink")
+        XCTAssertEqual(open.canvas.drawing.strokes.count, 3)
     }
 
     func testALoopRoundInkSelectsItAndAnEmptyOneIsLeftToBecomeACircle() throws {
@@ -171,6 +220,7 @@ final class PencilGestureTests: XCTestCase {
 
     /// The stroke-end path on a real canvas: the scribble never reaches the document, and one undo brings the ink back.
     func testAScribbleOnTheCanvasErasesAsOneUndoStepAndALoopStartsASelection() async throws {
+        setScribbleErasing(true)
         let open = try await OpenPage.open(self, ink: written)
         let (document, session, controller, canvas, page) = (open.document, open.session, open.controller, open.canvas, open.page)
         XCTAssertEqual(canvas.drawing.strokes.count, 3)
