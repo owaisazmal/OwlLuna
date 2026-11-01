@@ -63,13 +63,18 @@ struct NotebookPage: Sendable, Hashable, Identifiable {
         return copy
     }
 
+    static let pdfThumbnailPrefix = "pdf-marks-"
+
     /// Names a thumbnail by the page's ink and by how the page looks, so a template or paper change isn't served stale.
-    var thumbnailKey: String { "\(inkHash?.prefix(12) ?? "blank")-\(appearanceKey)" }
+    var thumbnailKey: String {
+        let version: String = if case .pdf = background { Self.pdfThumbnailPrefix } else { "" }
+        return "\(version)\(inkHash?.prefix(12) ?? "blank")-\(appearanceKey)"
+    }
 
     var appearanceKey: String {
         let backgroundKey = switch background {
         case .template(let raw): "t:\(raw)"
-        case .pdf(let file, let index): "p:\(file)#\(index)"
+        case .pdf(let file, let index): "p:\(file)#\(index)|marks"
         case .image(let file): "i:\(file)"
         case .unknown(let raw): "u:" + ((try? raw.serialized(pretty: false)).map { String(decoding: $0, as: UTF8.self) } ?? "")
         }

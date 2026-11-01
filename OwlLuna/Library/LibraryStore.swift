@@ -926,37 +926,39 @@ enum PDFImport {
     /// How far through one PDF, from 0 to 1.
     typealias Progress = @Sendable (Double) -> Void
 
-    /// One page per PDF page, sized to its displayed crop box. Refuses locked and empty PDFs.
+    /// One page per PDF page, sized to its displayed crop box, with the PDF's links on it. Refuses locked and empty PDFs.
     static func pages(at url: URL, file: String, progress: Progress? = nil) throws -> [NotebookPage] {
         guard let document = CGPDFDocument(url as CFURL) else { throw ImportError.unreadable }
         if isLocked(document) { throw ImportError.locked }
-        let count = document.numberOfPages
-        let pages = (0..<count).compactMap { index -> NotebookPage? in
-            report(index, of: count, to: progress)
+        var pages = (0..<document.numberOfPages).compactMap { index -> NotebookPage? in
             guard let page = document.page(at: index + 1) else { return nil }
             return NotebookPage(background: .pdf(file: file, index: index), paperColor: .white, size: PageRenderer.displaySize(of: page))
         }
         guard !pages.isEmpty else { throw ImportError.empty }
+        addLinks(to: &pages, from: url, file: file, progress: progress)
         return pages
     }
 
     /// The pages of the PDF kept as `file`. A locked one is asked for its password until it opens, then kept without
     /// its lock; skipped, or with no one to ask, it is refused.
     static func pages(in package: NotebookPackage, file: String, password: Password?, progress: Progress?) async throws -> [NotebookPage] {
-        let url = package.assetURL(file)
-        var unlocked = false
-        if try await Task.detached(priority: .userInitiated, operation: { try isLocked(url) }).value {
-            guard let password else { throw ImportError.locked }
-            var wrong = false
-            repeat {
-                guard let typed = await password(wrong) else { throw ImportError.locked }
-                let opening = part(of: progress, from: 0, to: 0.5)
-                wrong = try await Task.detached(priority: .userInitiated) { try !unlock(url, with: typed, progress: opening) }.value
-            } while wrong
-            unlocked = true
-        }
+        let url = package.assetURL(file), opening = part(of: progress, from: 0, to: 0.5)
+        let unlocked = try await self.password(for: url, asking: password) { try unlock(url, with: $0, progress: opening) } != nil
         let reading = part(of: progress, from: unlocked ? 0.5 : 0, to: 1)
         return try await Task.detached(priority: .userInitiated) { try pages(at: url, file: file, progress: reading) }.value
+    }
+
+    /// The password `opens` takes for a locked PDF, asked for until one works; nil for a PDF that isn't locked.
+    /// Skipped, or with no one to ask, it is refused.
+    static func password(for url: URL, asking password: Password?, opens: @escaping @Sendable (String) throws -> Bool) async throws -> String? {
+        guard try await Task.detached(priority: .userInitiated, operation: { try isLocked(url) }).value else { return nil }
+        guard let password else { throw ImportError.locked }
+        var wrong = false
+        while true {
+            guard let typed = await password(wrong) else { throw ImportError.locked }
+            if try await Task.detached(priority: .userInitiated, operation: { try opens(typed) }).value { return typed }
+            wrong = true
+        }
     }
 
     static func isLocked(_ url: URL) throws -> Bool {
@@ -1023,8 +1025,8 @@ enum PDFImport {
     }
 
     /// About a hundred calls over `count` steps, not one a step.
-    private static func report(_ index: Int, of count: Int, to progress: Progress?) {
-        guard let progress, (index + 1) % max(count / 100, 1) == 0 else { return }
+    static func report(_ index: Int, of count: Int, to progress: Progress?) {
+        guard let progress, (index + 1 == count || (index + 1) % max(count / 100, 1) == 0) else { return }
         progress(Double(index + 1) / Double(count))
     }
 

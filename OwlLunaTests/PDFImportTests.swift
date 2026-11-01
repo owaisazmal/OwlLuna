@@ -148,9 +148,9 @@ final class PDFImportTests: XCTestCase {
     func testReadingALongPDFSaysHowFarItHasGot() throws {
         final class Seen: @unchecked Sendable { var values: [Double] = [] }
         let seen = Seen()
-        let pages = try PDFImport.pages(at: try pdf("Long", pages: 250), file: "long.pdf") { seen.values.append($0) }
-        XCTAssertEqual(pages.count, 250)
-        XCTAssertLessThanOrEqual(seen.values.count, 125, "about a hundred steps, not one a page")
+        let pages = try PDFImport.pages(at: try pdf("Long", pages: 251), file: "long.pdf") { seen.values.append($0) }
+        XCTAssertEqual(pages.count, 251)
+        XCTAssertLessThanOrEqual(seen.values.count, 126, "about a hundred steps, not one a page")
         XCTAssertEqual(seen.values, seen.values.sorted())
         XCTAssertEqual(seen.values.last, 1)
     }

@@ -24,7 +24,7 @@ enum PDFText {
         (text ?? "").unicodeScalars.count(where: CharacterSet.alphanumerics.contains) < 40
     }
 
-    /// The page drawn on white, its long side 2,400 px like a scan's, for the recogniser to read.
+    /// The page drawn on white with what was written on it, its long side 2,400 px like a scan's, for the recogniser to read.
     static func picture(of page: PDFPage) -> UIImage? {
         guard let sheet = page.pageRef else { return nil }
         let shown = PageRenderer.displaySize(of: sheet)
@@ -35,7 +35,7 @@ enum PDFText {
         return UIGraphicsImageRenderer(size: size, format: format).image { context in
             UIColor.white.setFill()
             context.fill(CGRect(origin: .zero, size: size))
-            PageRenderer.drawPDFPage(sheet, in: context.cgContext, size: size)
+            PageRenderer.drawPDFPage(sheet, in: context.cgContext, size: size, marks: PDFMarks.has(sheet) ? .page(page) : nil)
         }
     }
 

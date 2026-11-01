@@ -47,7 +47,7 @@ final class ItemStepTests: XCTestCase {
         XCTAssertEqual(turned.stepped(larger: true, page: page).size.width, 770, accuracy: 0.001, "turned, it is tall and still fits")
     }
 
-    func testATextBoxsWordsGrowWithIt() {
+    func testATextBoxsWordsGrowWithIt() throws {
         let box = TextBox(string: "Shopping\nEggs\nMilk")
         let text = PageItem(content: .text(box), center: CGPoint(x: 300, y: 200), size: CGSize(width: 200, height: box.height(width: 200)))
         let larger = text.stepped(larger: true, page: page)
@@ -59,7 +59,9 @@ final class ItemStepTests: XCTestCase {
         let short = PageItem(content: .text(line), center: CGPoint(x: 300, y: 200), size: CGSize(width: 200, height: line.height(width: 200)))
         XCTAssertLessThan(short.size.height, PageItem.minimumSide)
         XCTAssertEqual(short.stepped(larger: false, page: page), short, "a step down never makes it larger")
-        XCTAssertGreaterThan(short.stepped(larger: true, page: page).size.width, 200)
+        let enlarged = short.stepped(larger: true, page: page)
+        XCTAssertEqual(enlarged.size.width, 220, accuracy: 0.001)
+        XCTAssertEqual(try XCTUnwrap(enlarged.text?.fontSize), line.fontSize * 1.1, accuracy: 0.001)
     }
 
     func testTurningGoesToTheNextFifteenDegrees() {

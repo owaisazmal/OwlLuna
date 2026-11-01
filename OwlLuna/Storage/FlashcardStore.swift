@@ -284,16 +284,23 @@ final class FlashcardLibrary {
     func update(_ card: Flashcard, in notebook: UUID, now: Date = .now) {
         guard canChange(notebook), let index = decks[notebook]?.firstIndex(where: { $0.id == card.id }) else { return }
         var card = card
-        card.changedAt = now
+        let previous = decks[notebook]![index].stamp
+        let deleted = removals[notebook]?[card.id] ?? .distantPast
+        card.changedAt = max(FlashcardFile.second(now), previous.addingTimeInterval(1), deleted.addingTimeInterval(1))
         decks[notebook]?[index] = card
         save(notebook)
     }
 
     func remove(_ ids: Set<UUID>, from notebook: UUID, now: Date = .now) {
-        guard canChange(notebook), decks[notebook] != nil else { return }
+        guard canChange(notebook), let cards = decks[notebook] else { return }
+        let deleting = cards.filter { ids.contains($0.id) }
+        guard !deleting.isEmpty else { return }
+        for card in deleting {
+            let previous = removals[notebook]?[card.id] ?? .distantPast
+            removals[notebook, default: [:]][card.id] = max(FlashcardFile.second(now), card.stamp, previous)
+        }
         decks[notebook]?.removeAll { ids.contains($0.id) }
         if decks[notebook]?.isEmpty == true { decks[notebook] = nil }
-        for id in ids { removals[notebook, default: [:]][id] = FlashcardFile.second(now) }
         save(notebook)
     }
 
@@ -315,7 +322,7 @@ final class FlashcardLibrary {
         guard let card = decks[notebook]?.first(where: { $0.id == id }) else { return nil }
         let next = CardSchedule.graded(card, grade, now: now, calendar: calendar)
         update(next, in: notebook, now: now)
-        return canChange(notebook) ? next : card
+        return decks[notebook]?.first(where: { $0.id == id }) ?? card
     }
 
     /// Keeps a clipping in the notebook, ready to be named by a card.

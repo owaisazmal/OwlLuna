@@ -1,4 +1,5 @@
 import UIKit
+import PDFKit
 import ImageIO
 
 /// Paper the user added from a PDF or a picture. Kept beside the library, as their stickers are, so every notebook can use it.
@@ -62,21 +63,40 @@ enum PaperShelf {
         return CustomPaper(id: String(base.suffix(36)), name: String(base.dropLast(37)), url: url, size: size)
     }
 
-    /// Keeps the first page of a PDF, upright, as a PDF of its own.
+    /// Keeps the first page of a PDF, upright and with what was written on it, as a PDF of its own. The copy has no lock:
+    /// a locked PDF is opened with `password`.
     @discardableResult
-    static func add(pdf source: URL, name: String, to root: StorageRoot) throws -> CustomPaper {
+    static func add(pdf source: URL, name: String, to root: StorageRoot, password: String = "") throws -> CustomPaper {
         let accessing = source.startAccessingSecurityScopedResource()
         defer { if accessing { source.stopAccessingSecurityScopedResource() } }
         guard let document = CGPDFDocument(source as CFURL) else { throw ImportError.unreadable }
-        if document.isEncrypted && !document.isUnlocked && !document.unlockWithPassword("") { throw ImportError.locked }
+        if document.isEncrypted && !document.isUnlocked && !document.unlockWithPassword(password) { throw ImportError.locked }
         guard let page = document.page(at: 1) else { throw ImportError.empty }
         let bounds = CGRect(origin: .zero, size: PageRenderer.displaySize(of: page))
         guard bounds.width >= 1, bounds.height >= 1 else { throw ImportError.empty }
+        let marked = PDFMarks.has(page) ? PDFDocument(url: source) : nil
+        if let marked, marked.isLocked { _ = marked.unlock(withPassword: password) }
         let data = UIGraphicsPDFRenderer(bounds: bounds).pdfData { context in
             context.beginPage()
-            PageRenderer.drawPDFPage(page, in: context.cgContext, size: bounds.size)
+            PageRenderer.drawPDFPage(page, in: context.cgContext, size: bounds.size, marks: marked?.page(at: 0).map { .page($0) })
         }
         return try write(data, name: name, ext: "pdf", to: root)
+    }
+
+    /// The same for a file chosen in Files. A locked PDF is asked for its password until it opens.
+    @discardableResult
+    static func add(file source: URL, to root: StorageRoot, password: PDFImport.Password?) async throws -> CustomPaper {
+        guard source.pathExtension.lowercased() == "pdf" else {
+            return try await Task.detached(priority: .userInitiated) { try add(file: source, to: root) }.value
+        }
+        let accessing = source.startAccessingSecurityScopedResource()
+        defer { if accessing { source.stopAccessingSecurityScopedResource() } }
+        let typed = try await PDFImport.password(for: source, asking: password) { typed in
+            guard let document = CGPDFDocument(source as CFURL) else { throw ImportError.unreadable }
+            return document.unlockWithPassword(typed)
+        }
+        let name = source.deletingPathExtension().lastPathComponent
+        return try await Task.detached(priority: .userInitiated) { try add(pdf: source, name: name, to: root, password: typed ?? "") }.value
     }
 
     /// Keeps a picture upright, at most 2,400 px on its long side.

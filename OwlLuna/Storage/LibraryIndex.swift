@@ -212,7 +212,11 @@ enum LibraryIndex {
         let stamps = await Task.detached(priority: .userInitiated) { manifestStamps(root: root) }.value
         let records = (try? context.fetch(FetchDescriptor<NotebookRecord>())) ?? []
         var byID = Dictionary(records.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        let stale = stamps.filter { id, stamp in full || rescanning.contains(id) || byID[id]?.manifestDate != stamp }.map(\.key)
+        let stale = stamps.filter { id, stamp in
+            let record = byID[id]
+            return full || rescanning.contains(id) || record?.manifestDate != stamp
+                || (record?.firstPageIsPDF == true && record?.firstPageThumbKey?.hasPrefix(NotebookPage.pdfThumbnailPrefix) != true)
+        }.map(\.key)
         let container = context.container
         let scanned = await Task.detached(priority: .userInitiated) { await scan(root: root, ids: stale, comparingWith: container) }.value
 

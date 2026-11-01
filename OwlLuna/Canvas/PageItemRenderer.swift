@@ -26,6 +26,8 @@ enum PageItemRenderer {
             case .text(let box):
                 ctx.scaleBy(x: scale, y: scale)
                 box.draw(in: ctx, rect: CGRect(x: -item.size.width / 2, y: -item.size.height / 2, width: item.size.width, height: item.size.height), onDark: onDark)
+            case .link(let link) where item.isPDFLink:
+                PageLinkArt.drawWash(kind: link.kind, resolved: links?.resolves(link) ?? true, in: ctx, rect: rect)
             case .link(let link):
                 let title = links?.title(for: link) ?? (link.target == nil ? LinkTitles().title(for: link) : link.label.isEmpty ? String(localized: "Page") : link.label)
                 PageLinkArt.draw(title: title, kind: link.kind, resolved: links?.resolves(link) ?? true, in: ctx, rect: rect)

@@ -74,6 +74,23 @@ enum PageLinkArt {
         return CGSize(width: min(max(height + 8 + text + 12, 84), 320), height: height)
     }
 
+    private static func tint(_ kind: PageLink.Kind, resolved: Bool) -> UIColor {
+        guard resolved else { return faded }
+        return switch kind {
+        case .page: ArtPalette.mustard
+        case .notebook: sage
+        case .web: sky
+        }
+    }
+
+    /// A link an imported PDF had, as a faint wash in its tab's colour over the words it is on.
+    static func drawWash(kind: PageLink.Kind, resolved: Bool, in ctx: CGContext, rect: CGRect) {
+        ctx.saveGState()
+        ctx.setFillColor(tint(kind, resolved: resolved).withAlphaComponent(kind == .page && resolved ? 0.22 : 0.38).cgColor)
+        ctx.fill(rect)
+        ctx.restoreGState()
+    }
+
     /// An arrow for a page, a book for another notebook, an arrow leaving the page for the web.
     private static func glyph(_ kind: PageLink.Kind, in tab: CGRect, unit: CGFloat, ctx: CGContext) {
         func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: tab.minX + x * unit, y: tab.minY + y * unit) }
@@ -106,12 +123,7 @@ enum PageLinkArt {
         ctx.setFillColor(ArtPalette.cream.cgColor)
         ctx.fill(rect)
         let tab = CGRect(x: rect.minX, y: rect.minY, width: rect.height, height: rect.height)
-        let tint = switch kind {
-        case .page: ArtPalette.mustard
-        case .notebook: sage
-        case .web: sky
-        }
-        ctx.setFillColor((resolved ? tint : faded).cgColor)
+        ctx.setFillColor(tint(kind, resolved: resolved).cgColor)
         ctx.fill(tab)
         ctx.setStrokeColor(ArtPalette.ink.cgColor)
         ctx.setLineWidth((kind == .notebook ? 1.8 : 2.2) * unit)

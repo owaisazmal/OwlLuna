@@ -43,7 +43,8 @@ enum NotebookExporter {
     static func input(for id: UUID, root: StorageRoot) async throws -> Input {
         if let document = DocumentRegistry.shared.document(for: id) { return Input(document: document) }
         let package = NotebookPackage(root: root, id: id)
-        let manifest = try await package.readManifest().manifest
+        let load = try await package.readManifest()
+        let manifest = await PDFImport.linking(load, in: package).manifest
         return Input(title: manifest.title, pages: manifest.pages, inMemoryInk: [:], package: package, recordings: manifest.recordings)
     }
 

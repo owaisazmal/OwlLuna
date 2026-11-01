@@ -87,7 +87,7 @@ enum PageRenderer {
             guard let pdf = pdfs.value(url.path(percentEncoded: false), create: {
                 CGPDFDocument(url as CFURL).map(SharedPDF.init)
             }), let pdfPage = pdf.document.page(at: index + 1) else { return }
-            drawPDFPage(pdfPage, in: ctx, size: size)
+            drawPDFPage(pdfPage, in: ctx, size: size, marks: PDFMarks.has(pdfPage) ? .file(url, index: index) : nil)
         case .image(let file):
             let url = assets.appending(path: file)
             guard let image = images.value(url.path(percentEncoded: false), create: {
@@ -110,13 +110,16 @@ enum PageRenderer {
         return rotation == 90 || rotation == 270 ? CGSize(width: box.height, height: box.width) : box.size
     }
 
-    static func drawPDFPage(_ page: CGPDFPage, in ctx: CGContext, size: CGSize) {
+    /// With `marks`, what another app left on the page is drawn over it: highlights, comments, filled-in forms.
+    static func drawPDFPage(_ page: CGPDFPage, in ctx: CGContext, size: CGSize, marks: PDFMarks.Source? = nil) {
         let box = page.getBoxRect(.cropBox)
         let display = displaySize(of: page)
         let rotation = ((page.rotationAngle % 360) + 360) % 360
         ctx.saveGState()
         ctx.translateBy(x: 0, y: size.height)
         ctx.scaleBy(x: size.width / display.width, y: -size.height / display.height)
+        ctx.clip(to: CGRect(origin: .zero, size: display))
+        ctx.saveGState()
         switch rotation {
         case 90:
             ctx.translateBy(x: 0, y: display.height)
@@ -134,6 +137,8 @@ enum PageRenderer {
         ctx.clip(to: box)
         ctx.interpolationQuality = .high
         ctx.drawPDFPage(page)
+        ctx.restoreGState()
+        if let marks { PDFMarks.draw(marks, in: ctx) }
         ctx.restoreGState()
     }
 

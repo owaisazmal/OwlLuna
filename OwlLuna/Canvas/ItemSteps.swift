@@ -62,7 +62,16 @@ extension PageItem {
         var factor = larger ? ItemStep.growth : 1 / ItemStep.growth
         if larger { factor = max(min(factor, page.width / max(box.width, 1), page.height / max(box.height, 1)), 1) }
         guard factor != 1 else { return self }
-        var copy = scaled(by: factor, limit: .greatestFiniteMagnitude)
+        var copy: PageItem
+        if larger, case .text(var box) = content, size.height < Self.minimumSide {
+            copy = self
+            box.fontSize = min(box.fontSize * factor, TextBox.fontSizes.upperBound)
+            copy.content = .text(box)
+            copy.size.width *= factor
+            copy.size.height = box.height(width: copy.size.width)
+        } else {
+            copy = scaled(by: factor, limit: .greatestFiniteMagnitude)
+        }
         // A box already under a fingertip's size is only ever scaled up, so a step down leaves it.
         guard larger == (copy.size.width > size.width) else { return self }
         let room = CGRect(origin: .zero, size: page).union(box), grown = copy.boundingBox

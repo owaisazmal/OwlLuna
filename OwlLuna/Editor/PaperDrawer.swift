@@ -388,14 +388,15 @@ private struct OwnPaperSection: View {
     @State private var renaming: CustomPaper?
     @State private var newName = ""
     @State private var failure: String?
+    @State private var unlocking = PDFPasswordRequest()
 
     var body: some View {
         content
             .task { await reload() }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.pdf, .image]) { result in
                 guard case .success(let url) = result else { return }
-                let root = own.root
-                Task { await add { try PaperShelf.add(file: url, to: root) } }
+                let root = own.root, unlocking = unlocking, name = url.deletingPathExtension().lastPathComponent
+                Task { await add { try await PaperShelf.add(file: url, to: root) { wrong in await unlocking.ask(name, wrong: wrong) } } }
             }
             .photosPicker(isPresented: $pickingPhoto, selection: $photo, matching: .images)
             .onChange(of: photo) { _, item in
@@ -409,6 +410,7 @@ private struct OwnPaperSection: View {
                 Button("Save") { if let renaming { rename(renaming, to: newName) } }
             }
             .notice("Something went wrong", message: $failure)
+            .pdfPasswordNotice(unlocking, message: Text("Type its password to use it as paper."))
     }
 
     @ViewBuilder
@@ -559,18 +561,19 @@ private struct OwnPaperSection: View {
             return
         }
         let root = own.root, name = String(localized: "Photo \(Date.now.formatted(date: .abbreviated, time: .omitted))")
-        await add { try PaperShelf.add(image: data, name: name, to: root) }
+        await add { try await Task.detached(priority: .userInitiated) { try PaperShelf.add(image: data, name: name, to: root) }.value }
     }
 
-    /// A new paper is put to use at once, as picking it would.
-    private func add(_ make: @escaping @Sendable () throws -> CustomPaper) async {
+    /// A new paper is put to use at once, as picking it would. A locked PDF whose password was skipped is let go quietly.
+    private func add(_ make: () async throws -> CustomPaper) async {
         isAdding = true
         defer { isAdding = false }
         do {
-            let paper = try await Task.detached(priority: .userInitiated) { try make() }.value
+            let paper = try await make()
             await reload()
             AccessibilityNotification.Announcement(String(localized: "Paper added")).post()
             try await own.onPick(paper)
+        } catch ImportError.locked {
         } catch {
             failure = error.localizedDescription
         }

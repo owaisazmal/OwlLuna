@@ -150,7 +150,7 @@ final class NotebookDocument {
     static func open(_ id: UUID, root: StorageRoot) async throws -> NotebookDocument {
         let package = NotebookPackage(root: root, id: id)
         let read = try await package.readManifest()
-        let load = await package.adoptUnfinishedRecordings(read)
+        let load = await PDFImport.linking(await package.adoptUnfinishedRecordings(read), in: package)
         return NotebookDocument(package: package, load: load)
     }
 

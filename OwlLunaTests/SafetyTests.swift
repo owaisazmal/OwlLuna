@@ -415,6 +415,16 @@ final class StorageSafetyTests: XCTestCase {
         page.inkHash = "0123456789abcdef"
         XCTAssertNotEqual(page.thumbnailKey, charcoal)
     }
+
+    func testPDFThumbnailsReplaceThoseCachedBeforeMarksWereDrawn() {
+        var page = NotebookPage(background: .pdf(file: "sheet.pdf", index: 0), paperColor: .white, size: PageSize.letter.points)
+        let oldAppearance = "p:sheet.pdf#0|\(page.paperColorRaw)|\(Int(page.size.width))x\(Int(page.size.height))"
+        let oldKey = String(String(fnv1a(oldAppearance), radix: 16).prefix(8))
+        XCTAssertNotEqual(page.appearanceKey, oldKey)
+        XCTAssertTrue(page.thumbnailKey.hasPrefix(NotebookPage.pdfThumbnailPrefix))
+        page.paperID = "custom-paper"
+        XCTAssertNotEqual(page.appearanceKey, oldKey)
+    }
 }
 
 final class ManifestSafetyTests: XCTestCase {

@@ -185,6 +185,7 @@ final class FlashcardTests: XCTestCase {
         two.back.image = clipped
         library.add([card("One", "1"), two, card("Three", "3")], to: manifest.id)
         let graded = try XCTUnwrap(library.grade(two.id, in: manifest.id, .easy, now: monday, calendar: calendar))
+        XCTAssertEqual(graded, library.cards(in: manifest.id).first { $0.id == two.id })
         await library.flush()
         let clipping = library.imageURL(clipped, in: manifest.id)
         try FileManager.default.setAttributes([.modificationDate: Date.now.addingTimeInterval(-3600)], ofItemAtPath: clipping.path(percentEncoded: false))
@@ -232,6 +233,45 @@ final class FlashcardTests: XCTestCase {
         await library.flush()
         XCTAssertEqual(library.cards(in: manifest.id).map(\.id), [only.id], "put back once")
         XCTAssertEqual(CardFiles.read(root.package(manifest.id)).cards.map(\.id), [only.id], "a delete never wins over the card put back after it")
+    }
+
+    func testDeletingAgainImmediatelyAfterUndoStaysDeleted() async throws {
+        let root = temporaryRoot(self)
+        let manifest = try await makeNotebook(root)
+        let library = FlashcardLibrary(root: root)
+        await library.load()
+        let only = card("Only", "1"), now = Date.now
+        library.add([only], to: manifest.id)
+        library.remove([only.id], from: manifest.id, now: now)
+        library.restore(only, at: 0, in: manifest.id, now: now)
+        library.remove([only.id], from: manifest.id, now: now)
+        await library.flush()
+
+        let deck = CardFiles.read(root.package(manifest.id))
+        XCTAssertTrue(deck.cards.isEmpty)
+        XCTAssertNotNil(deck.removed[only.id])
+        let reread = FlashcardLibrary(root: root)
+        await reread.load()
+        XCTAssertTrue(reread.cards(in: manifest.id).isEmpty)
+    }
+
+    func testEditingImmediatelyAfterUndoKeepsTheCardAndItsChanges() async throws {
+        let root = temporaryRoot(self)
+        let manifest = try await makeNotebook(root)
+        let library = FlashcardLibrary(root: root)
+        await library.load()
+        let only = card("Only", "1"), now = Date.now
+        library.add([only], to: manifest.id)
+        library.remove([only.id], from: manifest.id, now: now)
+        library.restore(only, at: 0, in: manifest.id, now: now)
+        var edited = try XCTUnwrap(library.cards(in: manifest.id).first)
+        edited.front.text = "Edited"
+        library.update(edited, in: manifest.id, now: now)
+        await library.flush()
+
+        let reread = FlashcardLibrary(root: root)
+        await reread.load()
+        XCTAssertEqual(reread.cards(in: manifest.id).map(\.front.text), ["Edited"])
     }
 
     func testTwoCopiesOfADeckAreSettledCardByCard() {

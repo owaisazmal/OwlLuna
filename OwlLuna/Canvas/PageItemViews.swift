@@ -163,6 +163,8 @@ final class PageItemView: UIView {
             let scale = rect.width / max(item.size.width, 1)
             ctx.scaleBy(x: scale, y: scale)
             box.draw(in: ctx, rect: CGRect(origin: .zero, size: item.size), onDark: onDark)
+        case .link(let link) where item.isPDFLink:
+            PageLinkArt.drawWash(kind: link.kind, resolved: linkResolved, in: ctx, rect: rect)
         case .link(let link):
             PageLinkArt.draw(title: linkTitle, kind: link.kind, resolved: linkResolved, in: ctx, rect: rect)
         case .tape(let color):

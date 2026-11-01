@@ -135,6 +135,19 @@ final class PaperShelfTests: XCTestCase {
         XCTAssertEqual(PaperShelf.list(root), [], "only whole papers named with an ID are listed")
     }
 
+    func testProtectedPaperAsksAgainAndKeepsAnUnlockedCopy() async throws {
+        let root = temporaryRoot(self)
+        let source = try pdf([PageSize.letter.points], password: "owl")
+        var attempts: [Bool] = []
+        let paper = try await PaperShelf.add(file: source, to: root) { wrong in
+            attempts.append(wrong)
+            return wrong ? "owl" : "wrong"
+        }
+        XCTAssertEqual(attempts, [false, true])
+        XCTAssertFalse(try PDFImport.isLocked(paper.url))
+        XCTAssertEqual(paper.size, PageSize.letter.points)
+    }
+
     // MARK: In a notebook
 
     func testAPageOnYourOwnPaperKeepsOneCopyInTheNotebook() async throws {

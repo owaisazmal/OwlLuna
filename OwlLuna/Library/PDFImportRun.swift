@@ -24,24 +24,20 @@ final class PDFImportRun {
         }
     }
 
-    /// A locked PDF waiting for its password, and whether the last one tried didn't open it.
-    struct Asking: Equatable {
-        let name: String
-        let wrong: Bool
-    }
+    typealias Asking = PDFPasswordRequest.Asking
 
     private(set) var names: [String] = []
     /// How many have come in or been missed.
     private(set) var done = 0
     /// How far through the one coming in now, from 0 to 1.
     private(set) var current = 0.0
-    private(set) var asking: Asking?
+    let password = PDFPasswordRequest()
     private(set) var missed: [Missed] = []
     private(set) var isFinished = false
     @ObservationIgnored private var waiting: [(url: URL, bring: Bring)] = []
     @ObservationIgnored private var running: Task<Void, Never>?
-    @ObservationIgnored private var answering: CheckedContinuation<String?, Never>?
 
+    var asking: Asking? { password.asking }
     var fraction: Double { min((Double(done) + current) / Double(max(names.count, 1)), 1) }
     var name: String? { names.indices.contains(done) ? names[done] : nil }
     /// Once it's over, whether something didn't come in other than what was skipped.
@@ -60,20 +56,15 @@ final class PDFImportRun {
         while let running { await running.value }
     }
 
-    /// The password typed for the locked PDF, or nil to skip it. It goes to that PDF and is kept nowhere.
-    func answer(_ password: String?) {
-        asking = nil
-        let waiting = answering
-        answering = nil
-        waiting?.resume(returning: password)
-    }
+    /// The password typed for the locked PDF, or nil to skip it.
+    func answer(_ typed: String?) { password.answer(typed) }
 
     private func work() async {
         while done < waiting.count {
             let index = done, item = waiting[index], name = names[index]
             current = 0
             do {
-                try await item.bring(item.url, { [weak self] wrong in await self?.ask(name, wrong: wrong) },
+                try await item.bring(item.url, { [weak self] wrong in await self?.password.ask(name, wrong: wrong) },
                                      { [weak self] value in Task { @MainActor in self?.advance(index, to: value) } })
             } catch {
                 missed.append(Missed(name: name, error: error))
@@ -83,13 +74,6 @@ final class PDFImportRun {
         current = 0
         isFinished = true
         running = nil
-    }
-
-    private func ask(_ name: String, wrong: Bool) async -> String? {
-        await withCheckedContinuation { continuation in
-            answering = continuation
-            asking = Asking(name: name, wrong: wrong)
-        }
     }
 
     private func advance(_ index: Int, to value: Double) {
@@ -106,7 +90,6 @@ struct PDFImportStatus: View {
     var edge: VerticalEdge = .bottom
     let onEnd: () -> Void
     @State private var shown = false
-    @State private var password = ""
 
     private static let most = 8
 
@@ -135,18 +118,7 @@ struct PDFImportStatus: View {
                 .accessibilityIdentifier("pdfImport.progress")
             }
         }
-        .notice(Text("“\(run.asking?.name ?? "")” is locked"), isPresented: Binding(get: { run.asking != nil }, set: { _ in }),
-                message: run.asking?.wrong == true ? Text("That password didn't work. Try again.").foregroundStyle(Color.tomato)
-                                                   : Text("Type its password to import it.")) {
-            SecureField("Password", text: $password)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .noticeFieldWrong(run.asking?.wrong == true)
-                .accessibilityIdentifier("pdfImport.password")
-        } actions: {
-            Button("Skip", role: .cancel) { answer(nil) }
-            Button("Unlock") { answer(password) }
-        }
+        .pdfPasswordNotice(run.password, message: Text("Type its password to import it."))
         .notice(missedTitle, isPresented: Binding(get: { run.hasNews }, set: { if !$0 { onEnd() } }), message: missedMessage) {
             if run.names.count > 1 { missedRows }
         } actions: {
@@ -157,15 +129,6 @@ struct PDFImportStatus: View {
             shown = true
         }
         .onChange(of: run.isFinished, initial: true) { _, finished in if finished, !run.hasNews { onEnd() } }
-        .onChange(of: run.asking?.wrong) { _, wrong in
-            if wrong == true { AccessibilityNotification.Announcement(String(localized: "That password didn't work. Try again.")).post() }
-        }
-        .onDisappear { if run.asking != nil { answer(nil) } }
-    }
-
-    private func answer(_ typed: String?) {
-        run.answer(typed)
-        password = ""
     }
 
     private var missedTitle: Text {
@@ -207,5 +170,72 @@ struct PDFImportStatus: View {
         }
         .noticeBare()
         .accessibilityIdentifier("pdfImport.missed")
+    }
+}
+
+/// A locked PDF waiting for its password. What is typed goes to that PDF and is kept nowhere.
+@MainActor
+@Observable
+final class PDFPasswordRequest {
+    /// The PDF's name, and whether the last password tried didn't open it.
+    struct Asking: Equatable {
+        let name: String
+        let wrong: Bool
+    }
+
+    private(set) var asking: Asking?
+    @ObservationIgnored private var answering: CheckedContinuation<String?, Never>?
+
+    /// The password typed, or nil when it's skipped.
+    func ask(_ name: String, wrong: Bool) async -> String? {
+        answer(nil)
+        return await withCheckedContinuation { continuation in
+            answering = continuation
+            asking = Asking(name: name, wrong: wrong)
+        }
+    }
+
+    func answer(_ password: String?) {
+        asking = nil
+        let waiting = answering
+        answering = nil
+        waiting?.resume(returning: password)
+    }
+}
+
+extension View {
+    /// Asks for a locked PDF's password in a notice: Skip, or Unlock. After a wrong one the field is ruled tomato and says so.
+    func pdfPasswordNotice(_ request: PDFPasswordRequest, message: Text) -> some View {
+        modifier(PDFPasswordNotice(request: request, message: message))
+    }
+}
+
+private struct PDFPasswordNotice: ViewModifier {
+    let request: PDFPasswordRequest
+    let message: Text
+    @State private var password = ""
+
+    func body(content: Content) -> some View {
+        content
+            .notice(Text("“\(request.asking?.name ?? "")” is locked"), isPresented: Binding(get: { request.asking != nil }, set: { _ in }),
+                    message: request.asking?.wrong == true ? Text("That password didn't work. Try again.").foregroundStyle(Color.tomato) : message) {
+                SecureField("Password", text: $password)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .noticeFieldWrong(request.asking?.wrong == true)
+                    .accessibilityIdentifier("pdfImport.password")
+            } actions: {
+                Button("Skip", role: .cancel) { answer(nil) }
+                Button("Unlock") { answer(password) }
+            }
+            .onChange(of: request.asking?.wrong) { _, wrong in
+                if wrong == true { AccessibilityNotification.Announcement(String(localized: "That password didn't work. Try again.")).post() }
+            }
+            .onDisappear { if request.asking != nil { answer(nil) } }
+    }
+
+    private func answer(_ typed: String?) {
+        request.answer(typed)
+        password = ""
     }
 }

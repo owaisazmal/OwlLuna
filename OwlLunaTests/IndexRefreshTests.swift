@@ -88,6 +88,22 @@ final class IndexRefreshTests: XCTestCase {
         XCTAssertEqual(read, [])
     }
 
+    func testOldPDFCoverKeysAreRefreshedOnceWithoutManifestChanges() async throws {
+        let root = temporaryRoot(self), store = launch(root)
+        let ids = try await makeNotebooks(["PDF", "Other"], in: store)
+        let package = NotebookPackage(root: root, id: ids[0])
+        _ = try await package.updateManifest { $0.pages[0].background = .pdf(file: "sheet.pdf", index: 0) }
+        await LibraryIndex.refresh(root: root, context: store.context)
+        let record = try XCTUnwrap(store.record(ids[0]))
+        let currentKey = try XCTUnwrap(record.firstPageThumbKey)
+        record.firstPageThumbKey = "blank-oldkey"
+        let read = await LibraryIndex.refresh(root: root, context: store.context)
+        XCTAssertEqual(read, [ids[0]])
+        XCTAssertEqual(record.firstPageThumbKey, currentKey)
+        let again = await LibraryIndex.refresh(root: root, context: store.context)
+        XCTAssertEqual(again, [])
+    }
+
     func testANotebookChangedOnDiskIsReadAgain() async throws {
         let root = temporaryRoot(self)
         let store = launch(root)
