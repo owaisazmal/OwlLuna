@@ -156,6 +156,9 @@ enum LaunchOptions {
     /// UI-test libraries never reach the widgets, Spotlight or iCloud.
     static let usesTestStorage = value("-storageRoot") != nil
 
+    /// Accessibility audits can take longer than the slip's dismissal timer.
+    static let keepsUndoVisible = usesTestStorage && arguments.contains("-keepUndoVisible")
+
     /// `-storageRoot <name>` keeps UI tests in their own folder; `-resetStorage` empties it first.
     static let storageRoot: StorageRoot = {
         guard let name = value("-storageRoot") else { return .live }
@@ -181,6 +184,7 @@ enum LaunchOptions {
     }
     #else
     static let usesTestStorage = false
+    static let keepsUndoVisible = false
     static let storageRoot = StorageRoot.live
     static func forgetSavedSettings() {}
     #endif

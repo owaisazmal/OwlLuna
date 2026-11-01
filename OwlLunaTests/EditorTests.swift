@@ -213,12 +213,27 @@ final class PDFRoundTripV2Tests: XCTestCase {
         let manifest = NotebookManifest(id: id, title: "Bio: Cells", defaults: PageDefaults(template: .dotted, paperColor: .ivory, pageSize: .a4), pages: pages)
         try await package.create(manifest)
         _ = try await package.write(SaveSnapshot(manifest: manifest, ink: [pages[1].id: PKDrawing(strokes: [stroke(from: CGPoint(x: 50, y: 50), to: CGPoint(x: 300, y: 60))])]))
-        let url = try await NotebookExporter.export(.init(title: "Bio: Cells", pages: pages, inMemoryInk: [:], package: package)) { _ in }
+        // This checks the original PDF text and saved ink, not OCR of the synthetic line.
+        // Handwriting recognition has its own coverage in PDFExportTests.
+        var options = NotebookExporter.Options()
+        options.searchable = false
+        let url = try await NotebookExporter.export(.init(title: "Bio: Cells", pages: pages, inMemoryInk: [:], package: package), options: options) { _ in }
         let document = try XCTUnwrap(PDFDocument(url: url))
         XCTAssertEqual(url.lastPathComponent, "Bio- Cells.pdf")
         XCTAssertEqual(document.pageCount, 2)
         XCTAssertEqual(document.page(at: 1)?.bounds(for: .mediaBox).size.width ?? 0, 595.28, accuracy: 0.1)
         XCTAssertTrue(document.page(at: 0)?.string?.contains("Mitochondria") ?? false, "the original PDF text stays selectable")
+
+        let inkPage = try XCTUnwrap(CGPDFDocument(url as CFURL)?.page(at: 2))
+        var pixel: [UInt8] = [255]
+        try pixel.withUnsafeMutableBytes { buffer in
+            let context = try XCTUnwrap(CGContext(data: buffer.baseAddress, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 1,
+                                                space: CGColorSpaceCreateDeviceGray(), bitmapInfo: 0))
+            // Sample the middle of the saved stroke, in the PDF's bottom-left coordinates.
+            context.translateBy(x: -175, y: -(inkPage.getBoxRect(.mediaBox).height - 55))
+            context.drawPDFPage(inkPage)
+        }
+        XCTAssertLessThan(pixel[0], 100, "the saved ink is visible on the exported page")
     }
 
     func testExportCanBeCancelled() async throws {

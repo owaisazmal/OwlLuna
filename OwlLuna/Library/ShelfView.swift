@@ -253,7 +253,7 @@ struct ShelfView: View {
         }
         .overlay(alignment: .bottom) { slip }
         .task(id: changes.current?.id) {
-            guard changes.current != nil, !voiceOver else { return }
+            guard changes.current != nil, !voiceOver, !LaunchOptions.keepsUndoVisible else { return }
             try? await Task.sleep(for: .seconds(6))
             if !Task.isCancelled { changes.dismiss() }
         }
@@ -344,6 +344,7 @@ struct ShelfView: View {
                 .padding(.vertical, Space.x6)
         }
         .scrollDismissesKeyboard(.immediately)
+        .accessibilityIdentifier("library.scroll")
         .onScrollGeometryChange(for: Bool.self) { $0.contentOffset.y + $0.contentInsets.top > 56 } action: { showsBarTitle = $1 }
     }
 

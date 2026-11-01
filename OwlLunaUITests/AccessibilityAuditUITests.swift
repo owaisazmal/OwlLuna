@@ -43,7 +43,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         empty.terminate()
 
         let app = XCUIApplication()
-        app.launchArguments = ["-storageRoot", "audit", "-resetStorage", "-seedLibrary", "6", "-seedLongPDF", "-seedJournal", "-indexSeed", "-seedActivity", "-seedReplay", "-seedHandwriting", "-fakeTranscript", "-fakeTranslate", "-fakeCalendar", "-fakeScan", "-fakeUnlockOnce", "-drawingInput", "anyInput"] + extra
+        app.launchArguments = ["-storageRoot", "audit", "-resetStorage", "-keepUndoVisible", "-seedLibrary", "6", "-seedLongPDF", "-seedJournal", "-indexSeed", "-seedActivity", "-seedReplay", "-seedHandwriting", "-fakeTranscript", "-fakeTranslate", "-fakeCalendar", "-fakeScan", "-fakeUnlockOnce", "-drawingInput", "anyInput"] + extra
         app.launch()
         let textbook = app.buttons["notebook.Textbook"]
         XCTAssertTrue(textbook.waitForExistence(timeout: 90))
@@ -101,6 +101,35 @@ final class AccessibilityAuditUITests: XCTestCase {
         func sidebar(_ title: String) -> XCUIElement {
             app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch
         }
+
+        func openNotebookMenu(_ notebook: XCUIElement, item: String) -> Bool {
+            // Audits can scroll the library, and a large-text row may only be partly visible.
+            let library = app.scrollViews["library.scroll"]
+            var isVisible = false
+            for _ in 0..<15 {
+                let visible = library.frame.intersection(app.windows.firstMatch.frame).insetBy(dx: 0, dy: 30)
+                if notebook.exists, notebook.isHittable, visible.contains(notebook.frame) {
+                    isVisible = true
+                    break
+                }
+                if notebook.exists, notebook.frame.minY < visible.minY { library.swipeDown() }
+                else { library.swipeUp() }
+            }
+            guard isVisible else {
+                XCTFail("Notebook is not visible: \(notebook.identifier)")
+                return false
+            }
+            notebook.waitUntilStill()
+            let action = app.buttons[item].firstMatch
+            notebook.press(forDuration: 1.2)
+            if !action.waitForExistence(timeout: 5) { notebook.press(forDuration: 1.5) }
+            guard action.waitForExistence(timeout: 5) else {
+                XCTFail("Notebook menu did not open: \(item)")
+                return false
+            }
+            action.tap()
+            return true
+        }
         sidebar("Recently deleted").tap()
         sleep(1)
         try check("recently deleted")
@@ -115,19 +144,19 @@ final class AccessibilityAuditUITests: XCTestCase {
 
         let biology = app.buttons["notebook.Cell Biology 1"]
         XCTAssertTrue(biology.waitForExistence(timeout: 10))
-        biology.press(forDuration: 1.2)
-        if !app.buttons["Delete"].firstMatch.waitForExistence(timeout: 5) { biology.press(forDuration: 1.5) }
-        app.buttons["Delete"].firstMatch.tap()
+        guard openNotebookMenu(biology, item: "Delete") else { return }
         XCTAssertTrue(app.buttons["Undo"].waitForExistence(timeout: 5))
         // Pressing the notebook scrolled the library to it, and scrolled, the audit places the header where it stood at the top.
-        app.swipeDown(velocity: .fast)
-        app.swipeDown(velocity: .fast)
+        app.scrollViews["library.scroll"].swipeDown(velocity: .fast)
+        app.scrollViews["library.scroll"].swipeDown(velocity: .fast)
         sleep(1)
         try check("library undo slip", overlay: app.buttons["Undo"])
-        if app.buttons["Undo"].exists {
-            app.buttons["Undo"].tap()
-            XCTAssertTrue(biology.waitForExistence(timeout: 5), "Undo puts the notebook back")
+        guard app.buttons["Undo"].exists else {
+            XCTFail("Undo must stay visible until the accessibility audit finishes")
+            return
         }
+        app.buttons["Undo"].tap()
+        XCTAssertTrue(biology.waitForExistence(timeout: 5), "Undo puts the notebook back")
 
         app.buttons["New"].firstMatch.tap()
         XCTAssertTrue(app.textFields["Title"].waitForExistence(timeout: 30))
@@ -147,10 +176,7 @@ final class AccessibilityAuditUITests: XCTestCase {
                                   "Report a Problem or Request a Feature", "OwlLuna is free and open source"])
         app.buttons["Done"].firstMatch.tap()
 
-        textbook.press(forDuration: 1.2)
-        let changeCover = app.buttons["Change Cover…"].firstMatch
-        XCTAssertTrue(changeCover.waitForExistence(timeout: 5))
-        changeCover.tap()
+        guard openNotebookMenu(textbook, item: "Change Cover…") else { return }
         XCTAssertTrue(app.navigationBars["Change Cover"].waitForExistence(timeout: 10))
         sleep(1)
         try checkSheet("change cover", scrolling: app.scrollViews.firstMatch)
