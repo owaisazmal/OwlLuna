@@ -29,12 +29,129 @@ final class PDFImportTests: XCTestCase {
         return url
     }
 
+    private func pdf(_ name: String, objects: [String]) throws -> URL {
+        let url = temporaryRoot(self).url.appending(path: "\(name).pdf")
+        var contents = "%PDF-1.4\n", offsets: [Int] = []
+        for (index, object) in objects.enumerated() {
+            offsets.append(contents.utf8.count)
+            contents += "\(index + 1) 0 obj\n\(object)\nendobj\n"
+        }
+        let xref = contents.utf8.count
+        contents += "xref\n0 \(objects.count + 1)\n0000000000 65535 f \n"
+        for offset in offsets { contents += String(format: "%010d 00000 n \n", offset) }
+        contents += "trailer\n<< /Size \(objects.count + 1) /Root 1 0 R >>\nstartxref\n\(xref)\n%%EOF\n"
+        try Data(contents.utf8).write(to: url)
+        return url
+    }
+
     private func importing(_ urls: [URL], into store: LibraryStore) -> PDFImportRun {
         let run = PDFImportRun()
         run.add(urls) { url, password, progress in
             try await store.importPDF(from: url, folder: nil, password: password, progress: progress)
         }
         return run
+    }
+
+    private func assertNoImportRemains(in store: LibraryStore, file: StaticString = #filePath, line: UInt = #line) throws {
+        XCTAssertEqual(try store.context.fetchCount(FetchDescriptor<NotebookRecord>()), 0, file: file, line: line)
+        XCTAssertEqual(store.root.packageIDs(), [], file: file, line: line)
+        let arriving = store.root.arriving
+        if FileManager.default.fileExists(atPath: arriving.path(percentEncoded: false)) {
+            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: arriving.path(percentEncoded: false)), [], file: file, line: line)
+        }
+    }
+
+    func testMalformedAndZeroBytePDFsLeaveNoNotebookOrStagingFiles() async throws {
+        let store = try makeStore()
+        for bytes in [Data(), Data("not a pdf".utf8)] {
+            let source = temporaryRoot(self).url.appending(path: "Unreadable.pdf")
+            try bytes.write(to: source)
+            do {
+                try await store.importPDF(from: source, folder: nil)
+                XCTFail("an unreadable PDF must fail")
+            } catch {
+                XCTAssertEqual(error as? ImportError, .invalidPDF)
+            }
+            try assertNoImportRemains(in: store)
+            XCTAssertEqual(try Data(contentsOf: source), bytes, "the source is never changed")
+        }
+    }
+
+    func testMissingPDFDoesNotStopTheNextImportOrLeaveStagingFiles() async throws {
+        let store = try makeStore()
+        let missing = temporaryRoot(self).url.appending(path: "Moved.pdf")
+        let run = importing([missing, try pdf("Available", pages: 1)], into: store)
+        await run.finish()
+        XCTAssertEqual(run.missed.map(\.name), ["Moved"])
+        XCTAssertNil(run.missed.first?.error as? ImportError, "a file access failure retains its underlying error")
+        let records = try store.context.fetch(FetchDescriptor<NotebookRecord>())
+        XCTAssertEqual(records.map(\.title), ["Available"])
+        XCTAssertEqual(Set(store.root.packageIDs()), Set(records.map(\.id)))
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: store.root.arriving.path(percentEncoded: false)), [])
+    }
+
+    func testPDFWithNoPagesLeavesNoNotebookOrStagingFiles() async throws {
+        let store = try makeStore()
+        // UIGraphicsPDFRenderer supplies a blank page even when beginPage is never called.
+        let source = try pdf("Empty", objects: ["<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [] /Count 0 >>"])
+        // Core Graphics rejects an empty page tree before the importer can enumerate its pages.
+        XCTAssertNil(CGPDFDocument(source as CFURL))
+        do {
+            try await store.importPDF(from: source, folder: nil)
+            XCTFail("a PDF with no pages must fail")
+        } catch {
+            XCTAssertEqual(error as? ImportError, .invalidPDF)
+        }
+        try assertNoImportRemains(in: store)
+    }
+
+    func testAnUnreadablePageRefusesTheWholePDFInsteadOfDroppingThePage() async throws {
+        let store = try makeStore()
+        // A readable catalog and first page, but the second page points to a missing object.
+        let source = try pdf("Missing page", objects: ["<< /Type /Catalog /Pages 2 0 R >>",
+                       "<< /Type /Pages /Kids [3 0 R 99 0 R] /Count 2 >>",
+                       "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>"])
+        let document = try XCTUnwrap(CGPDFDocument(source as CFURL))
+        XCTAssertEqual(document.numberOfPages, 2)
+        XCTAssertNotNil(document.page(at: 1))
+        XCTAssertNil(document.page(at: 2))
+
+        do {
+            try await store.importPDF(from: source, folder: nil)
+            XCTFail("a partial notebook must not look like a successful import")
+        } catch {
+            XCTAssertEqual(error as? ImportError, .invalidPDF)
+        }
+        try assertNoImportRemains(in: store)
+    }
+
+    func testSkippingAfterAWrongPasswordLeavesNoNotebookAndPreservesTheSource() async throws {
+        let store = try makeStore()
+        let source = try pdf("Protected", pages: 2, password: "owl")
+        let original = try Data(contentsOf: source)
+        let run = importing([source], into: store)
+        let answers = answering(run, with: ["wrong", nil])
+        await run.finish()
+        let asked = await answers.value
+        XCTAssertEqual(asked.map(\.wrong), [false, true])
+        XCTAssertEqual(run.missed.map(\.wasSkipped), [true])
+        XCTAssertFalse(run.hasNews)
+        try assertNoImportRemains(in: store)
+        XCTAssertEqual(try Data(contentsOf: source), original)
+        XCTAssertTrue(try PDFImport.isLocked(source))
+    }
+
+    func testImportCoordinatesWithPendingSourceChangesBeforeCopying() async throws {
+        let store = try makeStore()
+        let source = try pdf("Shared", pages: 1)
+        let updated = try Data(contentsOf: pdf("Updated", pages: 2))
+        let presenter = PendingPDFPresenter(url: source, pending: updated)
+        NSFileCoordinator.addFilePresenter(presenter)
+        defer { NSFileCoordinator.removeFilePresenter(presenter) }
+
+        let id = try await store.importPDF(from: source, folder: nil)
+        let manifest = try await NotebookPackage(root: store.root, id: id).readManifest().manifest
+        XCTAssertEqual(manifest.pages.count, 2, "coordination asks the presenter to save before copying")
     }
 
     /// Answers each password asked for in turn, and gives back what was asked.
@@ -108,6 +225,7 @@ final class PDFImportTests: XCTestCase {
         } catch {
             XCTAssertEqual(error as? ImportError, .locked)
         }
+        try assertNoImportRemains(in: store)
     }
 
     func testAnUnlockedPDFHasNoLockAndKeepsItsOutlineAndLinks() throws {
@@ -153,5 +271,28 @@ final class PDFImportTests: XCTestCase {
         XCTAssertLessThanOrEqual(seen.values.count, 126, "about a hundred steps, not one a page")
         XCTAssertEqual(seen.values, seen.values.sorted())
         XCTAssertEqual(seen.values.last, 1)
+    }
+}
+
+/// A document owner with changes that have not reached disk yet.
+private final class PendingPDFPresenter: NSObject, NSFilePresenter, @unchecked Sendable {
+    let presentedItemURL: URL?
+    let presentedItemOperationQueue: OperationQueue = {
+        let queue = OperationQueue()
+        queue.maxConcurrentOperationCount = 1
+        return queue
+    }()
+    private let pending: Data
+
+    init(url: URL, pending: Data) {
+        presentedItemURL = url
+        self.pending = pending
+    }
+
+    func savePresentedItemChanges(completionHandler: @escaping ((any Error)?) -> Void) {
+        do {
+            try pending.write(to: XCTUnwrap(presentedItemURL), options: .atomic)
+            completionHandler(nil)
+        } catch { completionHandler(error) }
     }
 }

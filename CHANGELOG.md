@@ -19,6 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Imported files now coordinate with their storage provider before being copied. Unreadable PDFs give a more specific explanation, and a PDF with an unreadable page is refused instead of imported with missing pages.
 - Imported PDF highlights, annotations and filled forms now appear on the page and in exports. Web links and links to imported pages work in the notebook and exported PDFs.
 - Importing several PDFs no longer stops at the first one that fails. The rest still come in, and one notice says which didn't and why.
 - Deleting a folder can now be undone. Undo or ⌘Z brings it back in its place, with its colour and the notebooks and folders it held.

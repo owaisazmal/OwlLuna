@@ -5,11 +5,12 @@ import Observation
 import os
 
 enum ImportError: LocalizedError {
-    case unreadable, locked, empty
+    case unreadable, invalidPDF, locked, empty
 
     var errorDescription: String? {
         switch self {
         case .unreadable: String(localized: "The file couldn't be read.")
+        case .invalidPDF: String(localized: "This PDF couldn't be read. It may be damaged or use an unsupported format. Try opening it in Files or exporting a new PDF.")
         case .locked: String(localized: "This PDF is password protected. Unlock it in Files or Preview, then import it again.")
         case .empty: String(localized: "The file doesn't contain any pages.")
         }
@@ -928,10 +929,10 @@ enum PDFImport {
 
     /// One page per PDF page, sized to its displayed crop box, with the PDF's links on it. Refuses locked and empty PDFs.
     static func pages(at url: URL, file: String, progress: Progress? = nil) throws -> [NotebookPage] {
-        guard let document = CGPDFDocument(url as CFURL) else { throw ImportError.unreadable }
+        guard let document = CGPDFDocument(url as CFURL) else { throw ImportError.invalidPDF }
         if isLocked(document) { throw ImportError.locked }
-        var pages = (0..<document.numberOfPages).compactMap { index -> NotebookPage? in
-            guard let page = document.page(at: index + 1) else { return nil }
+        var pages = try (0..<document.numberOfPages).map { index -> NotebookPage in
+            guard let page = document.page(at: index + 1) else { throw ImportError.invalidPDF }
             return NotebookPage(background: .pdf(file: file, index: index), paperColor: .white, size: PageRenderer.displaySize(of: page))
         }
         guard !pages.isEmpty else { throw ImportError.empty }
@@ -962,7 +963,7 @@ enum PDFImport {
     }
 
     static func isLocked(_ url: URL) throws -> Bool {
-        guard let document = CGPDFDocument(url as CFURL) else { throw ImportError.unreadable }
+        guard let document = CGPDFDocument(url as CFURL) else { throw ImportError.invalidPDF }
         return isLocked(document)
     }
 
@@ -973,7 +974,7 @@ enum PDFImport {
     /// Opens a locked PDF with `password` and writes it again in its place with no lock, keeping its outline and links.
     /// False when the password doesn't open it.
     static func unlock(_ url: URL, with password: String, progress: Progress? = nil) throws -> Bool {
-        guard let locked = PDFDocument(url: url) else { throw ImportError.unreadable }
+        guard let locked = PDFDocument(url: url) else { throw ImportError.invalidPDF }
         guard locked.unlock(withPassword: password) else { return false }
         // PDFKit writes an unlocked document locked again; a new document of its pages has no lock.
         let open = PDFDocument()

@@ -321,9 +321,20 @@ actor NotebookPackage {
     func importAsset(from source: URL, ext: String) throws -> String {
         try makeDirectories()
         let name = "\(UUID().uuidString).\(ext)"
+        let destination = assetURL(name)
         let accessing = source.startAccessingSecurityScopedResource()
         defer { if accessing { source.stopAccessingSecurityScopedResource() } }
-        try FileManager.default.copyItem(at: source, to: assetURL(name))
+        // File providers may need to download or finish writing the selection before it can be copied.
+        var coordinationError: NSError?
+        var copyError: Error?
+        NSFileCoordinator().coordinate(readingItemAt: source, options: [], error: &coordinationError) { granted in
+            do { try FileManager.default.copyItem(at: granted, to: destination) }
+            catch { copyError = error }
+        }
+        if let error = (coordinationError as Error?) ?? copyError {
+            try? FileManager.default.removeItem(at: destination)
+            throw error
+        }
         return name
     }
 

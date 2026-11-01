@@ -31686,6 +31686,28 @@
         }
       }
     },
+    "This PDF couldn't be read. It may be damaged or use an unsupported format. Try opening it in Files or exporting a new PDF." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses PDF konnte nicht gelesen werden. Es ist möglicherweise beschädigt oder verwendet ein nicht unterstütztes Format. Versuche, es in Dateien zu öffnen oder ein neues PDF zu exportieren."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo leer este PDF. Puede estar dañado o usar un formato no compatible. Intenta abrirlo en Archivos o exportar un nuevo PDF."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce PDF n’a pas pu être lu. Il est peut-être endommagé ou utilise un format non pris en charge. Essayez de l’ouvrir dans Fichiers ou d’exporter un nouveau PDF."
+          }
+        }
+      }
+    },
     "The file couldn't be read." : {
       "localizations" : {
         "de" : {

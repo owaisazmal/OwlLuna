@@ -17,7 +17,7 @@ final class PDFImportRun {
         var reason: String {
             switch error as? ImportError {
             case .locked: String(localized: "Skipped, it's locked")
-            case .unreadable: String(localized: "Can't be read")
+            case .unreadable, .invalidPDF: String(localized: "Can't be read")
             case .empty: String(localized: "Has no pages")
             case nil: String(localized: "Couldn't be copied")
             }
