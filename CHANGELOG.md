@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.0.0-build.5] - 2026-11-02
+
 ### Added
 
 - A password-protected PDF now opens with its password. Import it or insert it and OwlLuna asks for the password, again if it's wrong, or you can skip it. The notebook keeps the PDF without its lock, so it opens, exports and syncs like any other, and the password isn't kept.
@@ -199,7 +201,8 @@ The first build for TestFlight testers. No accounts, no ads and no tracking.
 
 - The app is now called OwlLuna. Notebooks and backups from before the rename still open.
 
-[Unreleased]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.4...HEAD
+[Unreleased]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.5...HEAD
+[1.0.0-build.5]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.4...v1.0.0-build.5
 [1.0.0-build.4]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.3...v1.0.0-build.4
 [1.0.0-build.3]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.2...v1.0.0-build.3
 [1.0.0-build.2]: https://github.com/owaisazmal/OwlLuna/releases/tag/v1.0.0-build.2
