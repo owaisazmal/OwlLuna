@@ -192,8 +192,9 @@ final class ExportFolderTests: XCTestCase {
         XCTAssertEqual(job.state, .cancelled)
         try await Task.sleep(for: .seconds(1))
         let deadline = Date().addingTimeInterval(20)
-        while exportFolders() != before, Date() < deadline { try await Task.sleep(for: .milliseconds(50)) }
-        XCTAssertEqual(exportFolders(), before)
+        // The launch sweep may remove exports from an earlier run while this one is being cancelled.
+        while !exportFolders().subtracting(before).isEmpty, Date() < deadline { try await Task.sleep(for: .milliseconds(50)) }
+        XCTAssertTrue(exportFolders().subtracting(before).isEmpty, "the cancelled export leaves no new folder")
     }
 
     func testABackupGoesOnceItsShareHasEnded() async throws {

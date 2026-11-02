@@ -57,57 +57,84 @@ enum NotebookExporter {
             let url = directory.appending(path: fileName(input.title, extension: "pdf"))
             try Task.checkCancellation()
 
-            let format = UIGraphicsPDFRendererFormat()
-            format.documentInfo = [kCGPDFContextTitle as String: input.title, kCGPDFContextCreator as String: "OwlLuna"]
-            let renderer = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: input.pages.first?.shownSize ?? PageSize.letter.points), format: format)
-            let assets = input.package.assetsDirectory
-            let count = Double(max(input.pages.count, 1))
-            let outline = outline(for: input.pages, numbers: input.numbers)
-            let links = LinkTitles(pages: input.allPages)
-            let linked = linkedPages(in: input.pages)
-            try PageRenderer.$pictureLimit.withValue(options.pictureLimit) {
-                try renderer.writePDF(to: url) { context in
-                    if let outline { CGPDFContextSetOutline(context.cgContext, outline as CFDictionary) }
-                    for (index, page) in input.pages.enumerated() {
-                        if Task.isCancelled { return }
-                        autoreleasepool {
-                            let unsaved = input.inMemoryInk[page.id]
-                            let ink = unsaved ?? savedInk(page, in: input.package)
-                            // A whiteboard goes out as one sheet, as large as what is on it.
-                            let page = Whiteboard.whole(page, ink: ink)
-                            let bounds = CGRect(origin: .zero, size: page.size)
-                            context.beginPage(withBounds: bounds, pageInfo: [:])
-                            PageRenderer.drawBackground(page, assets: assets, in: context.cgContext, size: page.size, links: links, paper: options.paper)
-                            // Destinations are placed in the PDF's own space, which runs up the page.
-                            if linked.contains(page.id) { context.addDestination(withName: page.id.uuidString, at: CGPoint(x: 0, y: page.size.height)) }
-                            if page.hasItems {
-                                for item in page.items {
-                                    guard let link = item.link else { continue }
-                                    let box = item.boundingBox
-                                    let area = CGRect(x: box.minX, y: page.size.height - box.maxY, width: box.width, height: box.height)
-                                    if let target = link.target {
-                                        if linked.contains(target) { context.setDestinationWithName(target.uuidString, for: area) }
-                                    } else if let url = link.externalURL {
-                                        context.setURL(url, for: area)
-                                    }
-                                }
-                            }
-                            if options.searchable {
-                                PageWords.draw(PageWords.read(page, ink: ink, package: input.package, unsaved: unsaved != nil), in: context.cgContext)
-                            }
-                            if !ink.strokes.isEmpty {
-                                InkVectors.draw(ink, from: page.inkRect, in: context.cgContext, size: page.size, style: inkStyle(for: page, options: options))
-                            }
-                            PageRenderer.drawOverInk(page, assets: assets, in: context.cgContext, size: page.size)
-                        }
-                        let fraction = Double(index + 1) / count
-                        Task { await progress(fraction) }
-                    }
-                }
-            }
+            try await renderPDF(input, to: url, options: options, progress: progress)
             try Task.checkCancellation()
             await progress(1)
             return url
+        }
+    }
+
+    /// Vision waits synchronously for its own work. Keep it off Swift's cooperative pool so exports can't
+    /// stop the tasks they need to finish, or unrelated work such as saving shelves, on a small pool.
+    private static func renderPDF(_ input: Input, to url: URL, options: Options,
+                                  progress: @escaping @Sendable (Double) async -> Void) async throws {
+        let cancelled = OSAllocatedUnfairLock(initialState: false)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+                DispatchQueue.global(qos: .userInitiated).async {
+                    do {
+                        guard !cancelled.withLock({ $0 }) else { throw CancellationError() }
+                        try writePDF(input, to: url, options: options, cancelled: cancelled, progress: progress)
+                        continuation.resume()
+                    } catch {
+                        continuation.resume(throwing: error)
+                    }
+                }
+            }
+        } onCancel: {
+            cancelled.withLock { $0 = true }
+        }
+    }
+
+    private static func writePDF(_ input: Input, to url: URL, options: Options, cancelled: OSAllocatedUnfairLock<Bool>,
+                                 progress: @escaping @Sendable (Double) async -> Void) throws {
+        let format = UIGraphicsPDFRendererFormat()
+        format.documentInfo = [kCGPDFContextTitle as String: input.title, kCGPDFContextCreator as String: "OwlLuna"]
+        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: input.pages.first?.shownSize ?? PageSize.letter.points), format: format)
+        let assets = input.package.assetsDirectory
+        let count = Double(max(input.pages.count, 1))
+        let outline = outline(for: input.pages, numbers: input.numbers)
+        let links = LinkTitles(pages: input.allPages)
+        let linked = linkedPages(in: input.pages)
+        try PageRenderer.$pictureLimit.withValue(options.pictureLimit) {
+            try renderer.writePDF(to: url) { context in
+                if let outline { CGPDFContextSetOutline(context.cgContext, outline as CFDictionary) }
+                for (index, page) in input.pages.enumerated() {
+                    if cancelled.withLock({ $0 }) { return }
+                    autoreleasepool {
+                        let unsaved = input.inMemoryInk[page.id]
+                        let ink = unsaved ?? savedInk(page, in: input.package)
+                        // A whiteboard goes out as one sheet, as large as what is on it.
+                        let page = Whiteboard.whole(page, ink: ink)
+                        let bounds = CGRect(origin: .zero, size: page.size)
+                        context.beginPage(withBounds: bounds, pageInfo: [:])
+                        PageRenderer.drawBackground(page, assets: assets, in: context.cgContext, size: page.size, links: links, paper: options.paper)
+                        // Destinations are placed in the PDF's own space, which runs up the page.
+                        if linked.contains(page.id) { context.addDestination(withName: page.id.uuidString, at: CGPoint(x: 0, y: page.size.height)) }
+                        if page.hasItems {
+                            for item in page.items {
+                                guard let link = item.link else { continue }
+                                let box = item.boundingBox
+                                let area = CGRect(x: box.minX, y: page.size.height - box.maxY, width: box.width, height: box.height)
+                                if let target = link.target {
+                                    if linked.contains(target) { context.setDestinationWithName(target.uuidString, for: area) }
+                                } else if let url = link.externalURL {
+                                    context.setURL(url, for: area)
+                                }
+                            }
+                        }
+                        if options.searchable {
+                            PageWords.draw(PageWords.read(page, ink: ink, package: input.package, unsaved: unsaved != nil), in: context.cgContext)
+                        }
+                        if !ink.strokes.isEmpty {
+                            InkVectors.draw(ink, from: page.inkRect, in: context.cgContext, size: page.size, style: inkStyle(for: page, options: options))
+                        }
+                        PageRenderer.drawOverInk(page, assets: assets, in: context.cgContext, size: page.size)
+                    }
+                    let fraction = Double(index + 1) / count
+                    Task { await progress(fraction) }
+                }
+            }
         }
     }
 

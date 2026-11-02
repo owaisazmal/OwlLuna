@@ -4,7 +4,8 @@ import XCTest
 /// page draws the one picked.
 @MainActor
 final class ShapeStripUITests: XCTestCase {
-    override func setUpWithError() throws {
+    override func setUp() async throws {
+        try await super.setUp()
         continueAfterFailure = false
         XCUIDevice.shared.orientation = .portrait
     }

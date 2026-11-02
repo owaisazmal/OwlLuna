@@ -91,6 +91,7 @@ final class ParityTests: XCTestCase {
         let manifest = try await makeNotebook(root, pages: pages)
         _ = try await NotebookPackage(root: root, id: manifest.id).write(SaveSnapshot(manifest: manifest, ink: [pages[1].id: PKDrawing(strokes: [dot(at: CGPoint(x: 80, y: 80))])]))
         let job = try await ExportJob.forNotebook(manifest.id, root: root)
+        defer { job.close() }
         let deadline = Date().addingTimeInterval(20)
         while case .running = job.state, Date() < deadline { try await Task.sleep(for: .milliseconds(20)) }
         guard case .finished(let urls) = job.state, let url = urls.first else { return XCTFail("export ended as \(job.state)") }
