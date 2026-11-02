@@ -292,7 +292,7 @@ actor PDFTextReader {
     }
 
     /// What the recogniser reads off a page that is a picture of a page, read once. Nil for a page with text of its own.
-    private func picture(_ page: PDFPage, file: URL, index: Int) -> PictureText? {
+    private func picture(_ page: PDFPage, file: URL, index: Int) async -> PictureText? {
         let key = "\(file.path(percentEncoded: false))#\(index)"
         if let read = pictures[key] { return read }
         guard !printed.contains(key) else { return nil }
@@ -300,7 +300,7 @@ actor PDFTextReader {
             printed.insert(key)
             return nil
         }
-        guard let image = PDFText.picture(of: page), let read = NotebookFind.read(image) else { return nil }
+        guard let image = PDFText.picture(of: page), let read = await NotebookFind.readInBackground(image) else { return nil }
         if pictures.count > 12 { pictures.removeAll() }
         let text = PictureText(read)
         pictures[key] = text
@@ -308,13 +308,13 @@ actor PDFTextReader {
     }
 
     /// Reads a page that is a picture of a page ahead of the first touch on it.
-    func prepare(file: URL, index: Int) {
-        if let page = page(file, index) { _ = picture(page, file: file, index: index) }
+    func prepare(file: URL, index: Int) async {
+        if let page = page(file, index) { _ = await picture(page, file: file, index: index) }
     }
 
-    func select(_ request: Request, file: URL, index: Int, pageSize: CGSize) -> TextSelection? {
+    func select(_ request: Request, file: URL, index: Int, pageSize: CGSize) async -> TextSelection? {
         guard let page = page(file, index) else { return nil }
-        if let picture = picture(page, file: file, index: index)?.on(pageSize) {
+        if let picture = await picture(page, file: file, index: index)?.on(pageSize) {
             switch request {
             case .range(let start, let end): return picture.selection(from: start, to: end)
             case .word(let point): return picture.word(at: point)
@@ -330,9 +330,9 @@ actor PDFTextReader {
         }
     }
 
-    func line(under points: [CGPoint], file: URL, index: Int, pageSize: CGSize) -> CGRect? {
+    func line(under points: [CGPoint], file: URL, index: Int, pageSize: CGSize) async -> CGRect? {
         guard let page = page(file, index) else { return nil }
-        if let picture = picture(page, file: file, index: index) { return picture.on(pageSize).line(under: points) }
+        if let picture = await picture(page, file: file, index: index) { return picture.on(pageSize).line(under: points) }
         return PDFText.line(on: page, under: points, pageSize: pageSize)
     }
 }

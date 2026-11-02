@@ -99,6 +99,30 @@ final class ParityTests: XCTestCase {
         XCTAssertEqual(url.lastPathComponent, "Biology.pdf")
     }
 
+    func testRecognitionLeavesExportsAndShelfWritesAbleToFinish() async throws {
+        executionTimeAllowance = 60
+        let store = try makeStore()
+        let page = NotebookPage.template(.grid, color: .white, size: .letter)
+        let manifest = try await makeNotebook(store.root, pages: [page])
+        let package = NotebookPackage(root: store.root, id: manifest.id)
+        let saved = try await package.write(SaveSnapshot(manifest: manifest, ink: [page.id: PKDrawing(strokes: [dot(at: CGPoint(x: 80, y: 80))])]))
+
+        async let indexed = HandwritingIndexer.shared.index(.init(package: package, pages: saved.manifest.pages))
+        let job = try await ExportJob.forNotebook(manifest.id, root: store.root)
+        defer { job.close() }
+        _ = try XCTUnwrap(store.createFolder(name: "Biology", cloth: .moss))
+        await store.finishWritingShelves()
+        _ = await indexed
+        let text = await package.readText(page.id)
+        XCTAssertTrue(text?.hasPrefix(HandwritingIndexer.header(for: saved.manifest.pages[0])) == true)
+        XCTAssertEqual(FolderFile.read(store.root).folders.map(\.name), ["Biology"])
+
+        let deadline = Date().addingTimeInterval(20)
+        while job.state == .running, Date() < deadline { try await Task.sleep(for: .milliseconds(20)) }
+        guard case .finished(let urls) = job.state, let url = urls.first else { return XCTFail("export ended as \(job.state)") }
+        XCTAssertEqual(PDFDocument(url: url)?.pageCount, 1)
+    }
+
     func testInsertedPagesMatchThePageTheyFollowAndDuplicatesReportWhereTheyWent() async throws {
         let root = temporaryRoot(self)
         var styled = NotebookPage.template(.grid, color: .yellow, size: .a5)

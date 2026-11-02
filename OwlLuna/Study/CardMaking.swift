@@ -77,7 +77,7 @@ extension EditorSession {
         let ink = await document.ink(page.id), assets = document.package.assetsDirectory
         let (sides, words) = await Task.detached(priority: .userInitiated) {
             let sides = CardClipping.tapeSides(tape, on: page, ink: ink, assets: assets)
-            return (sides, CardClipping.tapeText(tape, on: page, answer: sides.back))
+            return (sides, await CardClipping.tapeText(tape, on: page, answer: sides.back))
         }.value
         let front = try await library.saveClipping(sides.front, in: document.id)
         let back = try await library.saveClipping(sides.back, in: document.id)
@@ -92,7 +92,7 @@ extension EditorSession {
         guard let pieces = canvas?.selectedInkByPage(), let first = pieces.first else { return nil }
         let pages = pieces.compactMap { piece in document.pages.first { $0.id == piece.pageID }.map { (page: $0, ink: piece.ink) } }
         let assets = document.package.assetsDirectory
-        async let read = Task.detached(priority: .userInitiated) { InkText.recognize(pages.prefix(3).map(\.ink)) }.value
+        async let read = InkText.recognizeInBackground(pages.prefix(3).map(\.ink))
         guard let image = await Task.detached(priority: .userInitiated, operation: { CardClipping.inkImage(pages, assets: assets) }).value else { return nil }
         let text = await read?.trimmingCharacters(in: .whitespacesAndNewlines)
         return (image, text?.isEmpty == false ? text : nil, first.pageID)

@@ -53,9 +53,9 @@ enum CardClipping {
     }
 
     /// The words of a tape card's sides, read from the answer: on the question, those under the tape are one blank.
-    static func tapeText(_ tape: PageItem, on page: NotebookPage, answer: UIImage) -> (front: String?, back: String?) {
+    static func tapeText(_ tape: PageItem, on page: NotebookPage, answer: UIImage) async -> (front: String?, back: String?) {
         let region = region(around: tape, on: page)
-        return tapeText(PageWords.words(in: NotebookFind.read(answer) ?? [], size: region.size), tape: tape, region: region)
+        return tapeText(PageWords.words(in: await NotebookFind.readInBackground(answer) ?? [], size: region.size), tape: tape, region: region)
     }
 
     /// `words` lie in `region`, measured from its corner.

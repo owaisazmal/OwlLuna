@@ -105,6 +105,16 @@ enum NotebookFind {
         }
     }
 
+    /// Vision waits synchronously for its own tasks. Suspend the caller instead of holding a
+    /// cooperative worker, which can otherwise stop recognition and unrelated work on small pools.
+    static func readInBackground(_ image: UIImage) async -> [RecognizedLine]? {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .utility).async {
+                continuation.resume(returning: read(image))
+            }
+        }
+    }
+
     static func read(_ image: UIImage) -> [RecognizedLine]? {
         guard let cgImage = image.cgImage else { return nil }
         let request = VNRecognizeTextRequest()
@@ -180,12 +190,12 @@ actor FindReader {
     private var lines: [String: [RecognizedLine]] = [:]
     private var pdfs: [String: PDFDocument] = [:]
 
-    func inkRects(for search: SearchQuery, page: NotebookPage, ink: PKDrawing, assets: URL) -> FindRects {
+    func inkRects(for search: SearchQuery, page: NotebookPage, ink: PKDrawing, assets: URL) async -> FindRects {
         guard !ink.strokes.isEmpty else { return FindRects() }
         // A whiteboard is read as the part of it that has something on it, and what is found is put back where it lies.
         let piece = Whiteboard.whole(page, ink: ink)
         let key = "ink-\(page.id.uuidString)-\(NotebookFind.fingerprint(ink))" + (piece.cut == nil ? "" : "-\(piece.inkRect)")
-        var found = rects(for: search, key: key, pageSize: piece.size) {
+        var found = await rects(for: search, key: key, pageSize: piece.size) {
             PageRenderer.image(of: piece, ink: ink, assets: assets, width: Whiteboard.readingWidth(for: piece), includeBackground: false)
         }
         guard let cut = piece.cut else { return found }
@@ -193,35 +203,35 @@ actor FindReader {
         return found
     }
 
-    func pictureRects(for search: SearchQuery, file: URL, pageSize: CGSize) -> FindRects {
-        rects(for: search, key: "picture-\(file.lastPathComponent)", pageSize: pageSize) { UIImage(contentsOfFile: file.path(percentEncoded: false)) }
+    func pictureRects(for search: SearchQuery, file: URL, pageSize: CGSize) async -> FindRects {
+        await rects(for: search, key: "picture-\(file.lastPathComponent)", pageSize: pageSize) { UIImage(contentsOfFile: file.path(percentEncoded: false)) }
     }
 
     /// A placed picture is read as it shows, cropped, and what is found is taken through its turn to where it lies.
-    func placedPictureRects(for search: SearchQuery, item: PageItem, assets: URL) -> FindRects {
+    func placedPictureRects(for search: SearchQuery, item: PageItem, assets: URL) async -> FindRects {
         guard let file = item.assetFile, let key = item.readingKey else { return FindRects() }
-        var found = rects(for: search, key: "item-\(key)", pageSize: item.size) {
+        var found = await rects(for: search, key: "item-\(key)", pageSize: item.size) {
             PageItemRenderer.image(file, assets: assets, crop: item.crop, cached: false).map(UIImage.init(cgImage:))
         }
         found.rects = found.rects.map { $0.applying(item.placement) }
         return found
     }
 
-    private func rects(for search: SearchQuery, key: String, pageSize: CGSize, image: () -> UIImage?) -> FindRects {
+    private func rects(for search: SearchQuery, key: String, pageSize: CGSize, image: () -> UIImage?) async -> FindRects {
         if lines[key] == nil {
-            guard let image = image(), let read = NotebookFind.read(image) else { return FindRects() }
+            guard let image = image(), let read = await NotebookFind.readInBackground(image) else { return FindRects() }
             if lines.count > 400 { lines.removeAll() }
             lines[key] = read
         }
         return NotebookFind.rects(for: search, in: lines[key] ?? [], pageSize: pageSize)
     }
 
-    func pdfRects(for search: SearchQuery, file: URL, index: Int, pageSize: CGSize) -> FindRects {
+    func pdfRects(for search: SearchQuery, file: URL, index: Int, pageSize: CGSize) async -> FindRects {
         let key = file.path(percentEncoded: false)
         if pdfs[key] == nil { pdfs[key] = PDFDocument(url: file) }
         guard let page = pdfs[key]?.page(at: index) else { return FindRects() }
         guard PDFText.isPicture(withText: page.string) else { return NotebookFind.pdfRects(for: search, on: page, pageSize: pageSize) }
-        return rects(for: search, key: "pdf-\(file.lastPathComponent)#\(index)", pageSize: pageSize) { PDFText.picture(of: page) }
+        return await rects(for: search, key: "pdf-\(file.lastPathComponent)#\(index)", pageSize: pageSize) { PDFText.picture(of: page) }
     }
 }
 

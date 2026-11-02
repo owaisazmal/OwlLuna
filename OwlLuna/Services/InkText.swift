@@ -3,6 +3,15 @@ import PencilKit
 
 /// Reads selected handwriting as text, on the device, with the recogniser that indexes pages for search.
 enum InkText {
+    /// Recognition can wait on Vision, so it must leave Swift's cooperative workers free.
+    static func recognizeInBackground(_ pieces: [PKDrawing]) async -> String? {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .utility).async {
+                continuation.resume(returning: recognize(pieces))
+            }
+        }
+    }
+
     /// Each piece is the ink picked on one page, top page first. Nil when the recogniser failed.
     static func recognize(_ pieces: [PKDrawing]) -> String? {
         #if DEBUG
@@ -27,7 +36,7 @@ enum InkText {
     @MainActor static func warmUp() {
         guard !isWarm else { return }
         isWarm = true
-        Task.detached(priority: .userInitiated) {
+        DispatchQueue.global(qos: .utility).async {
             let size = CGSize(width: 240, height: 96)
             let words = UIGraphicsImageRenderer(size: size).image { _ in
                 UIColor.white.setFill()

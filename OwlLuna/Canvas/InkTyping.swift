@@ -21,7 +21,11 @@ enum InkTyping {
         let due = ContinuousClock.now + .seconds(rest)
         var texts: [String?] = []
         for piece in pieces {
-            texts.append(await Task.detached(priority: .userInitiated) { read(piece) }.value)
+            texts.append(await withCheckedContinuation { continuation in
+                DispatchQueue.global(qos: .utility).async {
+                    continuation.resume(returning: read(piece))
+                }
+            })
         }
         try? await Task.sleep(until: due, clock: .continuous)
         return texts

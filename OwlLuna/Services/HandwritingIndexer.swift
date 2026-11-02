@@ -1,6 +1,5 @@
 import UIKit
 import PDFKit
-import Vision
 import PencilKit
 import os
 
@@ -80,7 +79,7 @@ actor HandwritingIndexer {
         if page.hasPDFText, case .pdf(let file, let index) = page.background, let sheet = pdf.page(index, of: package.assetURL(file)) {
             let text = sheet.string
             if PDFText.isPicture(withText: text), let picture = PDFText.picture(of: sheet) {
-                guard !Task.isCancelled, let lines = Self.recognizeText(in: picture) else { return }
+                guard !Task.isCancelled, let lines = await Self.recognizeTextInBackground(in: picture) else { return }
                 chunks += lines
             } else if let text {
                 // Stamped before PDF pages were marked: that reading still holds, since the page has text of its own.
@@ -94,7 +93,7 @@ actor HandwritingIndexer {
             }
         }
         if page.hasPicture, case .image(let file) = page.background, let picture = UIImage(contentsOfFile: package.assetURL(file).path(percentEncoded: false)) {
-            guard !Task.isCancelled, let lines = Self.recognizeText(in: picture) else { return }
+            guard !Task.isCancelled, let lines = await Self.recognizeTextInBackground(in: picture) else { return }
             chunks += lines
         }
         guard let placed = await readPlacedPictures(of: page, in: package) else { return }
@@ -105,7 +104,7 @@ actor HandwritingIndexer {
             guard !Task.isCancelled else { return }
             let piece = Whiteboard.whole(page, ink: drawing)
             let image = PageRenderer.image(of: piece, ink: drawing, assets: package.assetsDirectory, width: Whiteboard.readingWidth(for: piece), includeBackground: false)
-            guard !Task.isCancelled, let lines = Self.recognizeText(in: image) else { return }
+            guard !Task.isCancelled, let lines = await Self.recognizeTextInBackground(in: image) else { return }
             chunks += lines
         }
         guard !Task.isCancelled else { return }
@@ -126,7 +125,7 @@ actor HandwritingIndexer {
             } else {
                 guard !Task.isCancelled else { return nil }
                 guard let picture = PageItemRenderer.image(file, assets: package.assetsDirectory, crop: item.crop, cached: false) else { continue }
-                guard let recognized = Self.recognizeText(in: UIImage(cgImage: picture)) else { return nil }
+                guard let recognized = await Self.recognizeTextInBackground(in: UIImage(cgImage: picture)) else { return nil }
                 read[key] = recognized
             }
             lines += read[key] ?? []
@@ -135,15 +134,13 @@ actor HandwritingIndexer {
         return lines
     }
 
+    private nonisolated static func recognizeTextInBackground(in image: UIImage) async -> [String]? {
+        await NotebookFind.readInBackground(image)?.map(\.text.string)
+    }
+
     /// Nil when Vision fails, so the page isn't stamped as read and is tried again next time.
     nonisolated static func recognizeText(in image: UIImage) -> [String]? {
-        guard let cgImage = image.cgImage else { return nil }
-        let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = true
-        request.automaticallyDetectsLanguage = true
-        do { try VNImageRequestHandler(cgImage: cgImage).perform([request]) } catch { return nil }
-        return request.results?.compactMap { $0.topCandidates(1).first?.string } ?? []
+        NotebookFind.read(image)?.map(\.text.string)
     }
 }
 

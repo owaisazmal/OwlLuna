@@ -94,7 +94,7 @@ struct InkTextSheet: View {
         .presentationBackground(Color.surface)
         .task {
             let pieces = ink
-            let found = await Task.detached(priority: .userInitiated) { InkText.recognize(pieces) }.value
+            let found = await InkText.recognizeInBackground(pieces)
             guard let found else { return phase = .failed }
             text = found
             phase = found.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .nothing : .ready
