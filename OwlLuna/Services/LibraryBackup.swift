@@ -13,6 +13,9 @@ extension UTType {
 /// your own stickers and paper, in an Apple Archive. Thumbnails are left out; they are made again when needed.
 enum LibraryBackup {
     static let fileExtension = "owllunabackup"
+    /// Files providers can report a backup as generic data, including after it was saved by this app.
+    /// Let it be selected; restore checks the archive and backup.json before adding anything to the library.
+    static let importContentTypes: [UTType] = [.owlLunaBackup, .legacyBackup, .appleArchive, .data]
     static let infoFile = "backup.json"
     static let currentVersion = 1
 

@@ -271,6 +271,16 @@ Use three printed sheets (small print, a table, a creased page), in good and dim
 
 Expect: the prompt reads "OwlLuna uses the camera to scan paper into your notebooks." Pages go in after the current one, upright, cropped and sharp (up to 2,400 px), and one Undo removes them all. The library scan becomes its own notebook. Search and Find reach printed words. The book stays smooth to write in while its pages are read (each is an "OCR page" signpost).
 
+## Backup and restore
+
+1. Make a notebook with ink and a picture, then Settings › Backup › Back Up Library…. Save to Files, first in On My iPad, then in iCloud Drive. Repeat with a third-party storage provider if one is installed.
+2. Close Settings, reopen it and choose Restore from a Backup…. Each saved backup must be selectable. Restore each one: the existing notebook stays as it is, without an extra copy.
+3. In Files, duplicate a backup and change the copy's extension to `.data`. Restore it too: it must be selectable and recognised by its contents. Try an older `.scribebackup` if one is available.
+4. Change the notebook's ink and restore the original backup. The earlier notebook comes back as a copy beside the edited one, with its picture and ink intact.
+5. Choose a PDF or text file for restore. It reports that the file isn't an OwlLuna backup and leaves the library unchanged.
+
+Expect: backups are never greyed out solely because Files reports a generic type. Repeat after updating an existing installation, and with an iCloud backup that Files has removed from local storage. Keep screenshots of the picker and each restore result, with the storage provider and file extension.
+
 ## Face ID
 
 1. Touch and hold a notebook › Lock…, allowing Face ID.

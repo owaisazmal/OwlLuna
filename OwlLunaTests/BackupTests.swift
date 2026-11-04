@@ -3,6 +3,7 @@ import SwiftData
 import PencilKit
 import AppleArchive
 import System
+import UniformTypeIdentifiers
 @testable import OwlLuna
 
 /// The disk a backup is written to. `filling` lets the first write through, the stream's header, and fails every one after it,
@@ -75,6 +76,35 @@ final class BackupTests: XCTestCase {
         try await package.writeThumbnail(Data([1, 2, 3]), pageID: manifest.pages[0].id, key: "cache")
         store.index(receipt.manifest)
         return receipt.manifest
+    }
+
+    func testTheRestorePickerAcceptsBackupsReportedAsGenericFiles() throws {
+        let unknown = try XCTUnwrap(UTType(filenameExtension: "unregistered-owlluna-backup", conformingTo: .data))
+        for type in [UTType.owlLunaBackup, .legacyBackup, .appleArchive, .data, unknown] {
+            XCTAssertTrue(LibraryBackup.importContentTypes.contains { type.conforms(to: $0) },
+                          "a backup reported as \(type.identifier) must be selectable")
+        }
+        XCTAssertFalse(LibraryBackup.importContentTypes.contains { UTType.folder.conforms(to: $0) })
+    }
+
+    func testABackupSavedAsGenericDataStillRestores() async throws {
+        let store = try makeStore()
+        let notes = try await makeNotebook("Mechanics", in: store)
+        let made = try await store.makeBackup()
+        addTeardownBlock { try? FileManager.default.removeItem(at: made.deletingLastPathComponent()) }
+        let generic = made.deletingLastPathComponent().appending(path: "OwlLuna Backup.data")
+        try FileManager.default.copyItem(at: made, to: generic)
+        let type = try XCTUnwrap(try generic.resourceValues(forKeys: [.contentTypeKey]).contentType)
+        XCTAssertTrue(LibraryBackup.importContentTypes.contains { type.conforms(to: $0) })
+
+        let fresh = try makeStore()
+        let summary = try await fresh.restoreBackup(from: generic)
+        XCTAssertEqual(summary.added, 1)
+        XCTAssertEqual(summary.unreadable, 0)
+        XCTAssertEqual(fresh.record(notes.id)?.title, "Mechanics")
+        let restored = NotebookPackage(root: fresh.root, id: notes.id)
+        guard case .ink(let ink, _) = await restored.readInk(notes.pages[0].id) else { return XCTFail("the ink didn't come back") }
+        XCTAssertEqual(ink.strokes.count, 1)
     }
 
     func testABackupBringsTheWholeLibraryBack() async throws {
@@ -393,16 +423,20 @@ final class BackupTests: XCTestCase {
     func testAFileThatIsNotABackupChangesNothing() async throws {
         let store = try makeStore()
         _ = try await makeNotebook("Mechanics", in: store)
-        let junk = FileManager.default.temporaryDirectory.appending(path: "junk-\(UUID().uuidString).owllunabackup")
-        try Data("not an archive".utf8).write(to: junk)
-        addTeardownBlock { try? FileManager.default.removeItem(at: junk) }
-        do {
-            _ = try await store.restoreBackup(from: junk)
-            XCTFail("a file that isn't a backup was accepted")
-        } catch {
-            XCTAssertEqual(error.localizedDescription, LibraryBackup.Failure.notABackup.localizedDescription)
+        for ext in [LibraryBackup.fileExtension, "data"] {
+            let junk = FileManager.default.temporaryDirectory.appending(path: "junk-\(UUID().uuidString).\(ext)")
+            try Data("not an archive".utf8).write(to: junk)
+            addTeardownBlock { try? FileManager.default.removeItem(at: junk) }
+            let type = try XCTUnwrap(try junk.resourceValues(forKeys: [.contentTypeKey]).contentType)
+            XCTAssertTrue(LibraryBackup.importContentTypes.contains { type.conforms(to: $0) })
+            do {
+                _ = try await store.restoreBackup(from: junk)
+                XCTFail("a file that isn't a backup was accepted")
+            } catch {
+                XCTAssertEqual(error.localizedDescription, LibraryBackup.Failure.notABackup.localizedDescription)
+            }
+            XCTAssertEqual(try store.context.fetchCount(FetchDescriptor<NotebookRecord>()), 1)
         }
-        XCTAssertEqual(try store.context.fetchCount(FetchDescriptor<NotebookRecord>()), 1)
     }
 
     private func backupFolders() throws -> Set<String> {

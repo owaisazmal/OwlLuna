@@ -91,7 +91,7 @@ struct OwlLunaSettingsView: View {
             backingUp?.cancel()
             if let lastBackup { ExportFolder.discard([lastBackup]) }
         }
-        .fileImporter(isPresented: $choosingBackup, allowedContentTypes: [.owlLunaBackup, .legacyBackup, .appleArchive]) { result in
+        .fileImporter(isPresented: $choosingBackup, allowedContentTypes: LibraryBackup.importContentTypes) { result in
             if case .success(let url) = result { restore(url) }
         }
         .notice("Backup", message: $backupMessage)

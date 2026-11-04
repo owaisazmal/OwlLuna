@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Backups saved in Files can be selected for restore even when their storage provider reports a generic file type. The contents are checked before anything is added to the library.
+
 ## [1.0.0-build.5] - 2026-11-02
 
 ### Added
