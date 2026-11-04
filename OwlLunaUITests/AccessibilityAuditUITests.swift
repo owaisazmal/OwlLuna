@@ -134,7 +134,20 @@ final class AccessibilityAuditUITests: XCTestCase {
         sleep(1)
         try check("recently deleted")
         sidebar("All notebooks").tap()
-        app.buttons["writing.week"].firstMatch.tap()
+        // Returning from another shelf preserves its scroll position. At accessibility
+        // sizes the calendar is a lazy ledger row and may not have been created yet.
+        let week = app.buttons["writing.week"].firstMatch
+        let library = app.scrollViews["library.scroll"]
+        for _ in 0..<10 {
+            if week.exists, week.isHittable, library.frame.contains(week.frame) { break }
+            library.swipeDown(velocity: .fast)
+        }
+        guard week.waitForExistence(timeout: 10), week.isHittable else {
+            XCTFail("Writing calendar row is not visible after returning to All notebooks")
+            return
+        }
+        week.waitUntilStill()
+        week.tap()
         XCTAssertTrue(app.navigationBars["Writing Calendar"].waitForExistence(timeout: 10))
         sleep(1)
         try check("writing calendar", modal: true, sheet: app.scrollViews["writing.calendar"])
@@ -308,7 +321,13 @@ final class AccessibilityAuditUITests: XCTestCase {
             beside.tap()
             XCTAssertTrue(app.navigationBars["Open Beside"].waitForExistence(timeout: 10))
             sleep(1)
-            try check("beside picker", modal: true)
+            let besideList = app.scrollViews.containing(NSPredicate(format: "identifier BEGINSWITH 'beside.notebook.'")).firstMatch
+            XCTAssertTrue(besideList.exists)
+            // Like the link picker, this ledger exposes rows beyond the sheet's edge.
+            // Audit them once scrolled into view, rather than sampling the dimmed editor.
+            try checkSheet("beside picker", scrolling: besideList, cutBy: besideList)
+            besideList.swipeDown(velocity: .fast)
+            besideList.swipeDown(velocity: .fast)
             app.buttons["beside.notebook.Lecture Replay"].tap()
             XCTAssertTrue(app.buttons["editor.close.pane"].waitForExistence(timeout: 20))
             sleep(2)
