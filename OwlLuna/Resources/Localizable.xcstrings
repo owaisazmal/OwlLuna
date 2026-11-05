@@ -18944,6 +18944,28 @@
         }
       }
     },
+    "New Menu" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menü „Neu“"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menú Nuevo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu Nouveau"
+          }
+        }
+      }
+    },
     "New Notebook" : {
       "localizations" : {
         "de" : {

@@ -67,7 +67,7 @@ struct ThumbIndex: View {
     }
 
     private var newMenu: some View {
-        OwlLunaMenu {
+        OwlLunaMenu(split: .below(Text("New Menu"))) {
             Button(action: onCreate) { Label("New Notebook", systemImage: "book.closed") }
             Button(action: onQuickNote) { Label("Quick Note", systemImage: "square.and.pencil") }
             Button(action: onWhiteboard) { Label("Whiteboard", systemImage: "scribble.variable") }
@@ -80,7 +80,6 @@ struct ThumbIndex: View {
         } primaryAction: {
             onCreate()
         }
-        .buttonStyle(.owlLuna(.primary, inBar: true))
         .accessibilityIdentifier("index.new")
     }
 

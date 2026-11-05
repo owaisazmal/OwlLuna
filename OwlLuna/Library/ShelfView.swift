@@ -756,7 +756,7 @@ struct ShelfView: View {
                     }
                     Button("Select") { isSelecting = true }.disabled(visible.isEmpty)
                     if scope != .trash {
-                        OwlLunaMenu {
+                        OwlLunaMenu(split: .beside(Text("New Menu"))) {
                             Button { onCreate() } label: { Label("New Notebook", systemImage: "book.closed") }
                             Button { onQuickNote() } label: { Label("Quick Note", systemImage: "square.and.pencil") }
                             Button { onWhiteboard() } label: { Label("Whiteboard", systemImage: "scribble.variable") }
@@ -770,7 +770,6 @@ struct ShelfView: View {
                         } primaryAction: {
                             onCreate()
                         }
-                        .buttonStyle(.owlLuna(.primary, inBar: true))
                     }
                 }
                 .buttonStyle(.owlLuna(.secondary, inBar: true))

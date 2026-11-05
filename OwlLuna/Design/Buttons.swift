@@ -35,8 +35,6 @@ struct OwlLunaButtonStyle: ButtonStyle {
         let compact: Bool
         let inBar: Bool
         @Environment(\.isEnabled) private var isEnabled
-        @Environment(\.colorScheme) private var scheme
-        @Environment(\.colorSchemeContrast) private var contrast
         @Environment(\.accessibilityReduceMotion) private var reduceMotion
         @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -82,16 +80,29 @@ struct OwlLunaButtonStyle: ButtonStyle {
             if !isEnabled {
                 shape.fill(Color.well)
             } else {
-                let dark = scheme == .dark
-                shape
-                    .fill(role == .destructive ? Color.destructiveCloth : Color.primaryCloth)
-                    .shadow(color: Elevation.shade(dark).opacity(pressed ? 0 : (dark ? 0.22 : 0.10)), radius: 4, y: 2)
-                    .shadow(color: Elevation.shade(dark).opacity(dark ? 0.40 : 0.12), radius: 0.5, y: 0.5)
-                    .clothWeave(in: shape)
-                    .overlay { if pressed { shape.fill(.black.opacity(dark ? 0.12 : 0.16)) } }
-                    .overlay { if contrast != .increased { shape.strokeBorder(ClothWeave.bevel, lineWidth: 1) } }
+                ClothFill(role: role, pressed: pressed, shape: shape)
             }
         }
+    }
+}
+
+/// The woven cloth under a filled button, with its shadow and bevel: cobalt, or tomato for a destructive one.
+struct ClothFill: View {
+    var role: OwlLunaButtonStyle.Role = .primary
+    var pressed = false
+    var shape = RoundedRectangle.plate
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    var body: some View {
+        let dark = scheme == .dark
+        shape
+            .fill(role == .destructive ? Color.destructiveCloth : Color.primaryCloth)
+            .shadow(color: Elevation.shade(dark).opacity(pressed ? 0 : (dark ? 0.22 : 0.10)), radius: 4, y: 2)
+            .shadow(color: Elevation.shade(dark).opacity(dark ? 0.40 : 0.12), radius: 0.5, y: 0.5)
+            .clothWeave(in: shape)
+            .overlay { if pressed { shape.fill(.black.opacity(dark ? 0.12 : 0.16)) } }
+            .overlay { if contrast != .increased { shape.strokeBorder(ClothWeave.bevel, lineWidth: 1) } }
     }
 }
 

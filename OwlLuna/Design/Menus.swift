@@ -19,6 +19,7 @@ extension ContainerValues {
 /// A button that opens a card of rows under it. In another menu it is a row that opens the next card beside it.
 struct OwlLunaMenu<Label: View, Content: View>: View {
     private let title: Text?
+    private let split: MenuSplit?
     private let primaryAction: (() -> Void)?
     private let content: Content
     private let label: Label
@@ -26,9 +27,12 @@ struct OwlLunaMenu<Label: View, Content: View>: View {
     @State private var held = false
     @Environment(\.inPanelMenu) private var nested
 
-    /// The band is named after the label unless it is given a `title`. With a `primaryAction` a tap does that, and holding opens the menu.
-    init(_ title: Text? = nil, @ViewBuilder content: () -> Content, @ViewBuilder label: () -> Label, primaryAction: (() -> Void)? = nil) {
+    /// The band is named after the label unless it is given a `title`. With a `primaryAction` a tap does that, and holding opens
+    /// the menu; `split` cuts a chevron off the cloth button that opens it with a tap.
+    init(_ title: Text? = nil, split: MenuSplit? = nil, @ViewBuilder content: () -> Content, @ViewBuilder label: () -> Label,
+         primaryAction: (() -> Void)? = nil) {
         self.title = title
+        self.split = split
         self.primaryAction = primaryAction
         self.content = content()
         self.label = label()
@@ -49,6 +53,9 @@ struct OwlLunaMenu<Label: View, Content: View>: View {
         if nested {
             Button { isOpen = true } label: { label }
                 .buttonStyle(MenuRowBody(opens: true))
+        } else if let primaryAction, let split {
+            SplitCloth(split: split, label: label, primaryAction: primaryAction, held: $held) { isOpen = true }
+                .onChange(of: isOpen) { _, open in if !open { held = false } }
         } else if let primaryAction {
             Button { if held { held = false } else { primaryAction() } } label: { label }
                 .simultaneousGesture(LongPressGesture(minimumDuration: 0.4).onEnded { _ in
@@ -60,6 +67,80 @@ struct OwlLunaMenu<Label: View, Content: View>: View {
         } else {
             Button { isOpen = true } label: { label }
         }
+    }
+}
+
+/// Where a menu button's chevron is cut: beside the label in a bar, or below it in a vertical one. The text names the chevron.
+enum MenuSplit {
+    case beside(Text)
+    case below(Text)
+}
+
+/// One cloth bar button cut in two: the label does its work, and the chevron opens the card. Holding the label opens it too.
+private struct SplitCloth<Label: View>: View {
+    let split: MenuSplit
+    let label: Label
+    let primaryAction: () -> Void
+    @Binding var held: Bool
+    let open: () -> Void
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+        let chevron: CGFloat = 26
+        let (beside, name): (Bool, Text) = switch split {
+        case .beside(let name): (true, name)
+        case .below(let name): (false, name)
+        }
+        let layout = beside ? AnyLayout(HStackLayout(spacing: 0)) : AnyLayout(VStackLayout(spacing: 0))
+        layout {
+            Button { if held { held = false } else { primaryAction() } } label: {
+                label
+                    .padding(.horizontal, Space.x3)
+                    .frame(minWidth: 44, minHeight: BarMetrics.height)
+                    .frame(maxWidth: beside ? nil : .infinity, maxHeight: beside ? .infinity : nil)
+            }
+            .simultaneousGesture(LongPressGesture(minimumDuration: 0.4).onEnded { _ in
+                held = true
+                open()
+            })
+            .accessibilityAction(named: Text("Show Menu"), open)
+            Rectangle()
+                .fill(Color.onPrimaryCloth.opacity(0.4))
+                .frame(width: beside ? 1 : nil, height: beside ? nil : 1)
+                .padding(beside ? .vertical : .horizontal, Space.x2)
+            Button(action: open) {
+                Image(systemName: "chevron.down")
+                    .font(.caption.weight(.bold))
+                    .frame(width: beside ? chevron : nil, height: beside ? nil : chevron - 4)
+                    .frame(maxWidth: beside ? nil : .infinity, maxHeight: beside ? .infinity : nil)
+            }
+            .accessibilityLabel(name)
+        }
+        .buttonStyle(ClothSegment())
+        .font(.callout.weight(.semibold))
+        .lineLimit(1)
+        .foregroundStyle(isEnabled ? Color.onPrimaryCloth : Color.textSecondary)
+        .frame(height: beside ? BarMetrics.height : nil)
+        .fixedSize()
+        .clipShape(RoundedRectangle.plate)
+        .background { if isEnabled { ClothFill() } else { RoundedRectangle.plate.fill(Color.well) } }
+        .contentShape([.hoverEffect, .accessibility], RoundedRectangle.plate)
+        .padding(.vertical, beside ? (44 - BarMetrics.height) / 2 : 0)
+        .contentShape(Rectangle())
+        .modifier(BarLimit(active: true))
+    }
+}
+
+/// A part of a split cloth button: pressed, it darkens on its own.
+private struct ClothSegment: ButtonStyle {
+    @Environment(\.colorScheme) private var scheme
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .contentShape(Rectangle())
+            .background { if configuration.isPressed { Color.black.opacity(scheme == .dark ? 0.12 : 0.16) } }
+            .hoverEffect(.highlight)
+            .animation(Motion.quick, value: configuration.isPressed)
     }
 }
 

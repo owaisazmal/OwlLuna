@@ -22,6 +22,25 @@ final class HeldMenuUITests: XCTestCase {
         XCTAssertTrue(start.waitForNonExistence(timeout: 5))
     }
 
+    func testTheChevronBesideNewOpensItsCardWithoutStartingANotebook() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-storageRoot", "heldmenu", "-resetStorage", "-seedLibrary", "2"]
+        app.launch()
+        let chevron = app.buttons["New Menu"].firstMatch
+        XCTAssertTrue(chevron.waitForExistence(timeout: 30), "the chevron stands beside New once the library has notebooks")
+        chevron.tap()
+        let importPDF = app.buttons["Import PDF…"].firstMatch
+        XCTAssertTrue(importPDF.waitForExistence(timeout: 5), "a tap on the chevron opens the New card")
+        XCTAssertFalse(app.textFields["Title"].exists, "the chevron doesn't start a notebook")
+        app.buttons["New Notebook"].firstMatch.tap()
+        XCTAssertTrue(app.textFields["Title"].waitForExistence(timeout: 10), "the card's rows still work")
+        app.buttons["Cancel"].firstMatch.tap()
+        XCTAssertTrue(app.textFields["Title"].waitForNonExistence(timeout: 5))
+        app.buttons["New"].firstMatch.press(forDuration: 1)
+        XCTAssertTrue(importPDF.waitForExistence(timeout: 5), "holding New still opens the card")
+        XCTAssertFalse(app.textFields["Title"].exists, "letting go of a held New doesn't start a notebook")
+    }
+
     func testHoldingYourOwnStickerOpensItsMenuWithoutPlacingIt() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-storageRoot", "heldmenu", "-resetStorage", "-seedLibrary", "3", "-drawingInput", "anyInput"]

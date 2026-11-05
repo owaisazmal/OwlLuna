@@ -92,7 +92,7 @@ In `Design/Surfaces.swift`. Boards never sit inside scrolling grids or lists, wh
 
 Each was picked from a set of mocks and replaces the system piece.
 
-- Bookplate bar: the library bar, and the model for the rest. Ink-ruled plates with worded actions (Sort, Select) and one cloth button for the main action (New: tap to create, hold for the menu).
+- Bookplate bar: the library bar, and the model for the rest. Ink-ruled plates with worded actions (Sort, Select) and one cloth button for the main action (New: tap to create, and a chevron cut off its end, or its foot in a vertical bar, that opens the menu; holding does too).
 - Card menus (`Design/Menus.swift`, presented by `Design/PanelPresenter.swift`): every menu and popover. A Surface plate under a woven cloth band that names it, rows ruled like an index card. Use `OwlLunaMenu`, `OwlLunaPicker(_:selection:)`, `MenuBreak()`, `.menuChosen(_:)` and `.panel(_:isPresented:)` (`adapts: true` becomes a sheet when narrow). Long-press menus use `.heldMenu(_:when:draggable:)`, with `draggable: true` where the view can also be dragged.
 - Stamp alerts (`.notice` in `Design/Notices.swift`): every alert and confirmation. A plate with a cloth edge down its leading side (tomato when something is destroyed), a flat Cancel and one cloth button. Write Cancel first and the main button last. A cancel-role button is its only way out.
 - Ledger lists (`Ledger`, `.ledgerSwipe` in `Design/Ledger.swift`): lists in sheets. One ink-ruled plate per run of rows under a well band; a swipe uncovers cloth blocks.
