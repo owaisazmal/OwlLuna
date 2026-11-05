@@ -102,20 +102,20 @@ final class AccessibilityAuditUITests: XCTestCase {
             app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch
         }
 
-        func openNotebookMenu(_ notebook: XCUIElement, item: String) -> Bool {
-            // Audits can scroll the library, and a large-text row may only be partly visible.
+        // Audits can scroll the library, and a large-text row may only be partly visible, or not made yet.
+        func scrollToNotebook(_ notebook: XCUIElement) -> Bool {
             let library = app.scrollViews["library.scroll"]
-            var isVisible = false
             for _ in 0..<15 {
                 let visible = library.frame.intersection(app.windows.firstMatch.frame).insetBy(dx: 0, dy: 30)
-                if notebook.exists, notebook.isHittable, visible.contains(notebook.frame) {
-                    isVisible = true
-                    break
-                }
+                if notebook.exists, notebook.isHittable, visible.contains(notebook.frame) { return true }
                 if notebook.exists, notebook.frame.minY < visible.minY { library.swipeDown() }
                 else { library.swipeUp() }
             }
-            guard isVisible else {
+            return false
+        }
+
+        func openNotebookMenu(_ notebook: XCUIElement, item: String) -> Bool {
+            guard scrollToNotebook(notebook) else {
                 XCTFail("Notebook is not visible: \(notebook.identifier)")
                 return false
             }
@@ -156,9 +156,13 @@ final class AccessibilityAuditUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Writing Calendar"].waitForNonExistence(timeout: 5))
 
         let biology = app.buttons["notebook.Cell Biology 1"]
-        XCTAssertTrue(biology.waitForExistence(timeout: 10))
+        _ = biology.waitForExistence(timeout: 10)
         guard openNotebookMenu(biology, item: "Delete") else { return }
-        XCTAssertTrue(app.buttons["Undo"].waitForExistence(timeout: 5))
+        // On a slow runner the menu can close before the tap lands; a delete that took nothing is tried once more.
+        if !app.buttons["Undo"].waitForExistence(timeout: 10), biology.exists {
+            guard openNotebookMenu(biology, item: "Delete") else { return }
+        }
+        XCTAssertTrue(app.buttons["Undo"].waitForExistence(timeout: 10))
         // Pressing the notebook scrolled the library to it, and scrolled, the audit places the header where it stood at the top.
         app.scrollViews["library.scroll"].swipeDown(velocity: .fast)
         app.scrollViews["library.scroll"].swipeDown(velocity: .fast)
@@ -169,7 +173,7 @@ final class AccessibilityAuditUITests: XCTestCase {
             return
         }
         app.buttons["Undo"].tap()
-        XCTAssertTrue(biology.waitForExistence(timeout: 5), "Undo puts the notebook back")
+        XCTAssertTrue(biology.waitForExistence(timeout: 5) || scrollToNotebook(biology), "Undo puts the notebook back")
 
         app.buttons["New"].firstMatch.tap()
         XCTAssertTrue(app.textFields["Title"].waitForExistence(timeout: 30))

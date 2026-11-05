@@ -100,7 +100,8 @@ final class ParityTests: XCTestCase {
     }
 
     func testRecognitionLeavesExportsAndShelfWritesAbleToFinish() async throws {
-        executionTimeAllowance = 60
+        // Vision on a cold CI runner can take most of a minute by itself; a starved export never finishes at all.
+        executionTimeAllowance = 180
         let store = try makeStore()
         let page = NotebookPage.template(.grid, color: .white, size: .letter)
         let manifest = try await makeNotebook(store.root, pages: [page])

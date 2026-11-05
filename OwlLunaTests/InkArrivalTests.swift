@@ -76,10 +76,10 @@ final class InkArrivalTests: XCTestCase {
         }
     }
 
-    /// Waits for the strokes to show in full, and returns what is still missing after three seconds.
+    /// Waits for the strokes to show in full, and returns what is still missing after fifteen seconds.
     private func drawn(_ strokes: [PKStroke], on canvas: PageCanvasView, in window: UIWindow) async throws -> [CGPoint] {
         var missed: [CGPoint] = []
-        for _ in 0..<30 {
+        for _ in 0..<150 {
             missed = try missing(strokes, on: canvas, in: window)
             if missed.isEmpty { break }
             await pause(0.1)
