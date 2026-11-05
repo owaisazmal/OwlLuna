@@ -326,9 +326,12 @@ final class AccessibilityAuditUITests: XCTestCase {
             // Like the link picker, this ledger exposes rows beyond the sheet's edge.
             // Audit them once scrolled into view, rather than sampling the dimmed editor.
             try checkSheet("beside picker", scrolling: besideList, cutBy: besideList)
-            besideList.swipeDown(velocity: .fast)
-            besideList.swipeDown(velocity: .fast)
-            app.buttons["beside.notebook.Lecture Replay"].tap()
+            // At the top of the list a swipe down pulls the sheet away, so stop once the row is in sight.
+            let lectureRow = app.buttons["beside.notebook.Lecture Replay"]
+            for _ in 0..<4 where !(lectureRow.exists && lectureRow.isHittable && besideList.frame.contains(lectureRow.frame)) {
+                besideList.swipeDown()
+            }
+            lectureRow.tap()
             XCTAssertTrue(app.buttons["editor.close.pane"].waitForExistence(timeout: 20))
             sleep(2)
             try check("two notebooks")
