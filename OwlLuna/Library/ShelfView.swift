@@ -268,6 +268,15 @@ struct ShelfView: View {
             requests?.scan = false
             startScan()
         }
+        .task { importLaunchPDFs() }
+    }
+
+    /// `-importPDFs <path,path>` brings files in as the shelf shows, for screenshots of how an import ends.
+    private func importLaunchPDFs() {
+        #if DEBUG
+        guard LaunchOptions.usesTestStorage, let paths = LaunchOptions.value("-importPDFs") else { return }
+        importPDFs(.success(paths.split(separator: ",").map { URL(filePath: String($0)) }))
+        #endif
     }
 
     // MARK: Shelves

@@ -22,7 +22,11 @@ final class HeldMenuUITests: XCTestCase {
         XCTAssertTrue(start.waitForNonExistence(timeout: 5))
     }
 
-    func testTheChevronBesideNewOpensItsCardWithoutStartingANotebook() {
+    func testTheChevronBesideNewOpensItsCardWithoutStartingANotebook() throws {
+        try XCTSkipIf(UIDevice.current.userInterfaceIdiom == .phone, "an iPhone's bar is too narrow for the chevron")
+        // Upright with the sidebar open the bar is under 600 points, where New stands alone.
+        XCUIDevice.shared.orientation = .landscapeLeft
+        addTeardownBlock { @MainActor in XCUIDevice.shared.orientation = .portrait }
         let app = XCUIApplication()
         app.launchArguments = ["-storageRoot", "heldmenu", "-resetStorage", "-seedLibrary", "2"]
         app.launch()
