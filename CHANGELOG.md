@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- New in the library bar has a chevron beside it that opens its choices with a tap: New Notebook, Quick Note, Whiteboard, Import PDF and Scan Documents. A tap on New still starts a notebook and holding it still opens the same card. On a folded iPhone Duo the chevron sits under New.
+- New in the library bar has a chevron beside it that opens its choices with a tap: New Notebook, Quick Note, Whiteboard, Import PDF and Scan Documents. A tap on New still starts a notebook and holding it still opens the same card. On a folded iPhone Duo the chevron sits under New. A bar too narrow for it, as on an iPhone, keeps the plain New button.
 
 ### Fixed
 
