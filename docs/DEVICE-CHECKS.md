@@ -271,6 +271,20 @@ Use three printed sheets (small print, a table, a creased page), in good and dim
 
 Expect: the prompt reads "OwlLuna uses the camera to scan paper into your notebooks." Pages go in after the current one, upright, cropped and sharp (up to 2,400 px), and one Undo removes them all. The library scan becomes its own notebook. Search and Find reach printed words. The book stays smooth to write in while its pages are read (each is an "OCR page" signpost).
 
+## PDFs from Files and other apps
+
+Use a readable PDF, a locked one and a broken one (a text file renamed `.pdf`), in On My iPad, iCloud Drive and a third-party provider if one is installed.
+
+1. In Files, share the readable PDF, then choose OwlLuna. Repeat from Safari's share sheet on a PDF it is showing, and from Mail.
+2. In Split View with Files, drag a PDF onto the shelf of a folder, then two at once onto All notebooks, then one into Recently deleted. Do the same from the Files sidebar's Recents.
+3. Drag a PDF from Files onto OwlLuna's icon in the Dock, with the app closed, then with it open on a notebook.
+4. Share the locked PDF, type a wrong password, then the right one. Share the broken one.
+5. After each, look at the file in Files and at Xcode's Download Container: `Documents/Inbox` and `tmp/com.owais.OwlLuna-Inbox` must be empty.
+
+Expect: OwlLuna is offered where PDFs are shared, and takes the drop everywhere but Recently deleted, saying where it is going. Each PDF becomes a notebook named after the file, in the folder on show, with the same progress and notices as Import PDF. Dropped on the icon with the app closed, the splash goes at once and the import shows on the shelf. The original is never changed or moved, and nothing stays in either inbox.
+
+Sharing from Files to OwlLuna on the iPad Pro 11-inch simulator (iOS 27.0) made the notebook, emptied the inbox and left the file in Files. The drops haven't been tried outside unit tests.
+
 ## Backup and restore
 
 1. Make a notebook with ink and a picture, then Settings › Backup › Back Up Library…. Save to Files, first in On My iPad, then in iCloud Drive. Repeat with a third-party storage provider if one is installed.

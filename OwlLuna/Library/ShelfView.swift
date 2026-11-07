@@ -53,6 +53,8 @@ struct ShelfView: View {
     @State private var selection: Set<UUID> = []
     @State private var importingPDF = false
     @State private var pdfImport: PDFImportRun?
+    /// A PDF is being dragged over the shelf.
+    @State private var droppingPDFs = false
     @State private var scanning = false
     @State private var renaming: NotebookRecord?
     @State private var renameText = ""
@@ -168,6 +170,12 @@ struct ShelfView: View {
         }
         .background(Color.paper)
         .overlay { if visible.isEmpty, !showsTagPages, !searchPending { emptyState } }
+        .overlay { if droppingPDFs { dropHint } }
+        .onDrop(of: scope == .trash ? [] : [.pdf], isTargeted: $droppingPDFs) { providers in
+            guard providers.contains(where: { $0.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) }) else { return false }
+            Task { importPDFs(.success(await IncomingPDFs.receive(providers))) }
+            return true
+        }
         .safeAreaInset(edge: .top, spacing: 0) {
             if verticalBar != nil {
                 HStack(spacing: Space.x2) {
@@ -268,7 +276,34 @@ struct ShelfView: View {
             requests?.scan = false
             startScan()
         }
+        .onChange(of: requests?.incomingPDFs ?? [], initial: true) { _, urls in
+            guard !urls.isEmpty else { return }
+            requests?.incomingPDFs = []
+            importPDFs(.success(urls))
+        }
         .task { importLaunchPDFs() }
+    }
+
+    /// Over the shelf while a PDF is held over it: where it will go.
+    private var dropHint: some View {
+        ZStack {
+            Color.accentColor.opacity(0.08)
+            VStack(spacing: Space.x3) {
+                Image(systemName: "doc.richtext")
+                    .font(.title)
+                Text(folder.map { String(localized: "Drop to import into \($0.name)") } ?? String(localized: "Drop to import"))
+                    .displayFont(22, relativeTo: .title2)
+                    .multilineTextAlignment(.center)
+            }
+            .foregroundStyle(Color.ink)
+            .padding(.horizontal, Space.x8)
+            .padding(.vertical, Space.x6)
+            .board(in: RoundedRectangle.bar)
+            .overlay { RoundedRectangle.bar.strokeBorder(Color.accentColor, lineWidth: 1.5) }
+            .padding(Space.x6)
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 
     /// `-importPDFs <path,path>` brings files in as the shelf shows, for screenshots of how an import ends.
@@ -968,6 +1003,7 @@ struct ShelfView: View {
     }
 
     /// Each PDF comes in on its own, after any still coming in, and into the folder on show when it was chosen.
+    /// A copy made for the app, by a share, a drop or the icon, goes once its import has ended.
     private func importPDFs(_ result: Result<[URL], Error>) {
         do {
             let urls = try result.get(), folder = folder, store = store
@@ -975,6 +1011,7 @@ struct ShelfView: View {
             let run = pdfImport.flatMap { $0.isFinished ? nil : $0 } ?? PDFImportRun()
             pdfImport = run
             run.add(urls) { url, password, progress in
+                defer { IncomingPDFs.discard(url) }
                 try await store.importPDF(from: url, folder: folder, password: password, progress: progress)
             }
         } catch {

@@ -6,6 +6,8 @@ import SwiftData
 final class ShelfRequests {
     var importPDF = false
     var scan = false
+    /// PDFs shared from Files or dropped on the app's icon, for the shelf to import into the folder on show.
+    var incomingPDFs: [URL] = []
 }
 
 /// The library's places down the vertical bar of a folded iPhone Duo, cut like a dictionary's thumb index: a tab for

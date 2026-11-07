@@ -33,6 +33,8 @@ struct LibraryRootView: View {
     @State private var performingAction = false
     /// A link that came before the app was ready or while the launch splash was up, carried out once it can be.
     @State private var heldAction: AppAction?
+    /// PDFs the app was opened with, waiting for the shelf to be there to take them.
+    @State private var heldPDFs: [URL] = []
     /// What sync is waiting to be told, shown once the library is in front.
     @State private var syncQuestion: SyncCenter.Question?
     @State private var window = EditorWindow()
@@ -75,7 +77,6 @@ struct LibraryRootView: View {
                         .ignoresSafeArea()
                 }
                 .environment(\.verticalBar, railBar)
-                .environment(shelfRequests)
                 .sheet(isPresented: $showingShelves) {
                     NavigationStack {
                         LibrarySidebar(scope: $scope, showingSettings: Binding(get: { false }, set: { if $0 { openSettingsFromShelves() } }),
@@ -114,6 +115,7 @@ struct LibraryRootView: View {
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { rootWidth = $0 }
             .tint(Color.accentColor)
             .environment(changes)
+            .environment(shelfRequests)
             .accessibilityHidden(editorCoversLibrary)
             .disabled(editorCoversLibrary)
 
@@ -209,8 +211,14 @@ struct LibraryRootView: View {
     /// The sidebar stands beside the shelves only when they are narrower than the window.
     private var sidebarBeside: Bool { rootWidth - detailWidth > 1 }
 
-    /// A link is carried out at once, unless the app is still starting or the launch splash is up.
+    /// A link is carried out at once, unless the app is still starting or the launch splash is up. A PDF, shared from
+    /// Files or dropped on the app's icon, goes to the shelf on show the same way.
     private func follow(_ url: URL) {
+        if IncomingPDFs.isPDF(url) {
+            heldPDFs.append(url)
+            if !deliverPDFs() { curtain?.hurry() }
+            return
+        }
         guard let action = AppAction(url: url) else { return }
         if app.phase == .ready, curtain?.isUp != true {
             Task { await perform(action) }
@@ -229,9 +237,21 @@ struct LibraryRootView: View {
     private func openWhatWaits() async {
         await restoreOpenNotebook()
         takePendingAction()
+        deliverPDFs()
         guard app.phase == .ready, let action = heldAction, curtain?.holds() != true else { return }
         heldAction = nil
         await perform(action)
+    }
+
+    /// Hands the PDFs waiting to the shelf, which imports them into the folder on show; not before the app is ready
+    /// and the launch splash has gone, so the import shows.
+    @discardableResult
+    private func deliverPDFs() -> Bool {
+        guard app.phase == .ready, curtain?.holds() != true else { return false }
+        guard !heldPDFs.isEmpty else { return true }
+        shelfRequests.incomingPDFs += heldPDFs
+        heldPDFs = []
+        return true
     }
 
     private func takePendingAction() {

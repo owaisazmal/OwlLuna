@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- A PDF can be shared to OwlLuna from Files or another app, dragged from Files onto the shelf, or dropped on OwlLuna's icon in the Dock. It comes in as Import PDF does, into the shelf on show, asking for a password if it has one and saying so if it can't be read. The original file is left where it was.
+
 ### Changed
 
 - New in the library bar has a chevron beside it that opens its choices with a tap: New Notebook, Quick Note, Whiteboard, Import PDF and Scan Documents. A tap on New still starts a notebook and holding it still opens the same card. On a folded iPhone Duo the chevron sits under New. A bar too narrow for it, as on an iPhone, keeps the plain New button.
