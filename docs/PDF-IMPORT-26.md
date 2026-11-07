@@ -18,7 +18,9 @@ Passed 54 tests on the iPad Pro 11-inch (M5), iOS 27.0 simulator with Xcode 27.1
 
 The first empty-file fixture incorrectly used a renderer that inserts a blank page. The final fixture uses an empty PDF page tree, which Core Graphics rejects as unreadable. This is distinct from a zero-byte file and neither creates a notebook.
 
-The final `xcodebuild test` run succeeded, and `git diff --check` passed. The initial clean build emitted existing UI-test actor-isolation warnings in `ShapeStripUITests.swift` and a widget App Intents metadata warning. No new compiler warnings were reported for these changes. Error-dialog screenshots in portrait/landscape and light/dark remain outstanding: the computer-use tool could not access Simulator and denied access to Device Hub.
+The final `xcodebuild test` run succeeded, and `git diff --check` passed. The initial clean build emitted existing UI-test actor-isolation warnings in `ShapeStripUITests.swift` and a widget App Intents metadata warning. No new compiler warnings were reported for these changes.
+
+On 2026-11-06 the same 54 tests passed again on the iPad Pro 13-inch (M5), iOS 27.0 simulator with the build after 1.0.0-build.5. The error notices were screenshotted on the iPad Pro 11-inch (M5) simulator in portrait and landscape, light and dark: one unreadable PDF on its own ("Lecture 3 notes" wasn't imported, with the damaged-or-unsupported explanation) and the same file in a batch with a readable one (1 of 2 PDFs imported, the file named with "Can't be read"). The shots are in `build/issue-26-screenshots/`, which git ignores. A debug build takes `-importPDFs <path,path>` with `-storageRoot` to bring files in as the shelf shows, which is how they were taken.
 
 ## Device checks still needed
 

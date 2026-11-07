@@ -10,8 +10,23 @@ final class PageCanvasView: PKCanvasView {
     var strokeCount: Int?
     /// Renders still to be looked over for a lost tile after ink was put on from the page's side.
     var tileChecks = 0
+    private let holdGuard = LoneFingerHoldGuard()
+    /// How many of PencilKit's handwriting holds wait for the guard, for tests.
+    private(set) var guardedHolds = 0
 
     override var undoManager: UndoManager? { undoProxy ?? super.undoManager }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        addGestureRecognizer(holdGuard)
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        if guardedHolds == 0 { guardedHolds = holdGuard.guardHolds(in: self) }
+    }
 
     /// Whether a tile PencilKit has drawn is empty where a stroke runs through it. When memory runs short PencilKit
     /// can lose a tile's render and leave it blank until the strokes change.

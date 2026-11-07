@@ -121,6 +121,52 @@ final class AutoScroller: NSObject {
     }
 }
 
+/// `-animationProbe <file>` writes what is animating, every two seconds while it changes, so a UI test that stalls waiting
+/// for the app to go idle can say whether an animation or a scroll of the app's was still running.
+@MainActor
+enum AnimationProbe {
+    private static var timer: Timer?
+    private static var last: String?
+
+    static func install() {
+        guard timer == nil, let path = LaunchOptions.value("-animationProbe") else { return }
+        timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { _ in
+            MainActor.assumeIsolated { write(summary(), to: path) }
+        }
+    }
+
+    /// Every layer in the app's windows that has an animation running, and every scroll view in motion.
+    static func summary(windows: [UIWindow] = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows)) -> String {
+        var animations: [String] = [], scrolling: [String] = []
+        func walk(_ layer: CALayer, depth: Int) {
+            if let keys = layer.animationKeys(), !keys.isEmpty {
+                let owner = (layer.delegate as? UIView).map { NSStringFromClass(type(of: $0)) } ?? NSStringFromClass(type(of: layer))
+                animations.append("\(owner)(\(keys.joined(separator: ",")))")
+            }
+            for sublayer in layer.sublayers ?? [] { walk(sublayer, depth: depth + 1) }
+        }
+        func views(_ view: UIView) {
+            if let scroll = view as? UIScrollView, scroll.isDragging || scroll.isDecelerating || scroll.isZooming || scroll.isZoomBouncing {
+                scrolling.append("\(NSStringFromClass(type(of: scroll)))[\(scroll.accessibilityIdentifier ?? "-")]")
+            }
+            for subview in view.subviews { views(subview) }
+        }
+        for window in windows {
+            walk(window.layer, depth: 0)
+            views(window)
+        }
+        let date = Date.now.formatted(date: .omitted, time: .standard)
+        return "\(date) animations=\(animations.count) \(animations.prefix(12).joined(separator: " ")) scrolling=\(scrolling.joined(separator: " "))"
+    }
+
+    private static func write(_ line: String, to path: String) {
+        let state = String(line.drop { $0 != " " })
+        guard state != last else { return }
+        last = state
+        try? (line + "\n").write(toFile: path, atomically: true, encoding: .utf8)
+    }
+}
+
 /// `-secondScreenInset` stands a small window in for a second screen, so UI tests can see what one would show.
 @MainActor
 enum SecondScreenInset {

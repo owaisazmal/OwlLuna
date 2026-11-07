@@ -13,9 +13,12 @@ LIMIT = 4000
 SLOWEST = 10
 AUDIT_ANNOTATIONS = 7
 TEST_CASE = re.compile(r"Test Case '-\[(?:\w+\.)?(\w+) (\w+)\]' (started|passed|failed|skipped)(?: \(([\d.]+) seconds\))?")
+AUDIT_SCREEN = re.compile(r"AUDIT \[([^\]]+)\]")
 BUILD_DONE = re.compile(r"\*\* (?:TEST )?BUILD (SUCCEEDED|FAILED) \*\*")
 
 summary = []
+# The screen each audit test last reached, by result bundle and test, from the logs: a test cut short by its allowance says where it got to.
+last_screens = {}
 
 
 def escape(text):
@@ -78,7 +81,7 @@ def report_slowest(name, overview, timed):
     summary.extend(f"| {seconds(taken)} | `{test}` |" for test, taken in timed[:SLOWEST])
 
 
-def report_bundle(bundle):
+def report_bundle(bundle, rerun_passed=False):
     name = bundle.stem
     tests = xcresult("tests", bundle)
     if tests is None:
@@ -99,16 +102,37 @@ def report_bundle(bundle):
     for case in found:
         messages = [node.get("name", "") for node in descendants(case) if node.get("nodeType") == "Failure Message"]
         if case.get("result") == "Failed":
-            failed.append(f"{label(case)}: {messages[0][:300] if messages else 'failed'}")
+            line = f"{label(case)}: {messages[0][:300] if messages else 'failed'}"
+            if "execution time allowance" in line and (screen := last_screens.get((name, label(case)))):
+                line += f" (the last screen audited was {screen})"
+            failed.append(line)
         elif messages:
             retried.append(f"{label(case)}: {messages[0][:300]}")
-    for title, level, lines in (("Failed tests", "error", failed), ("Passed on a retry", "warning", retried)):
+    # A UI run that failed and then passed in a fresh test runner is a warning, with the first run's failures.
+    failures = ("Failed on the first run", "warning") if rerun_passed else ("Failed tests", "error")
+    for title, level, lines in ((*failures, failed), ("Passed on a retry", "warning", retried)):
         if lines:
             annotate(level, f"{title} ({name}, {len(lines)})", next(fold(lines)))
             summary.append(f"\n**{title}**\n")
             summary.extend(f"- `{line}`" for line in lines[:200])
     summary.append("")
     return True
+
+
+def note_screens(logs):
+    for log in logs:
+        test, bundle = None, None
+        with open(log, errors="replace") as lines:
+            for line in lines:
+                if bundle == "":
+                    bundle = Path(line.strip()).stem
+                elif line.startswith("Writing result bundle at path:"):
+                    bundle = ""
+                elif match := TEST_CASE.search(line):
+                    suite, name, state, _ = match.groups()
+                    test = f"{suite}/{name}()" if state == "started" else None
+                elif test and (match := AUDIT_SCREEN.search(line)):
+                    last_screens[(bundle, test)] = match.group(1)
 
 
 def report_logs(logs, readable):
@@ -144,7 +168,8 @@ def report_logs(logs, readable):
             overview = f"{len(times)} tests finished in {log.name}; {bundle}.xcresult couldn't be read"
             report_slowest(bundle, overview, timed)
             if running:
-                annotate("error", f"Unfinished test ({bundle})", [f"{running} started and never finished."])
+                reached = f" The last screen audited was {last_screens[(bundle, running)]}." if (bundle, running) in last_screens else ""
+                annotate("error", f"Unfinished test ({bundle})", [f"{running} started and never finished.{reached}"])
                 summary.append(f"\n**Unfinished:** `{running}`\n")
     if audits:
         report_audits(audits)
@@ -189,9 +214,22 @@ def report_audits(audits):
     summary.append(f"### Audit failures ({total})\n\n```\n" + "\n".join(grouped) + "\n```\n")
 
 
+def passed(bundle):
+    info = xcresult("summary", bundle) or {}
+    return info.get("result") == "Passed"
+
+
 def main():
     folder = Path(sys.argv[1] if len(sys.argv) > 1 else ".")
-    readable = {bundle.stem for bundle in sorted(folder.glob("*.xcresult")) if report_bundle(bundle)}
+    note_screens(sorted(folder.glob("*.log")))
+    bundles = sorted(folder.glob("*.xcresult"))
+    stems = {bundle.stem for bundle in bundles}
+    readable = set()
+    for bundle in bundles:
+        # UI-<run>-1 is a first attempt; its rerun is UI-<run>-2.
+        rerun = folder / f"{bundle.stem[:-2]}-2.xcresult" if bundle.stem.endswith("-1") and f"{bundle.stem[:-2]}-2" in stems else None
+        if report_bundle(bundle, rerun_passed=rerun is not None and passed(rerun)):
+            readable.add(bundle.stem)
     report_logs(sorted(folder.glob("*.log")), readable)
     if summary:
         text = "\n".join(summary) + "\n"

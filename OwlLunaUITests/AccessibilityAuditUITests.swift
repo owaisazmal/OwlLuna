@@ -6,6 +6,11 @@ import XCTest
 final class AccessibilityAuditUITests: XCTestCase {
     private static let colourChecks: XCUIAccessibilityAuditType = .all
     private static let textSizeChecks: XCUIAccessibilityAuditType = [.dynamicType, .textClipped, .contrast]
+    /// Longer than the steps between any two screens take, even on a slow runner: a gap past this is XCUITest waiting a minute
+    /// at a time for the app to go idle, which it does on every step once it starts.
+    private static let stallGap: TimeInterval = 110
+
+    private struct AuditStalled: Error {}
 
     override func setUpWithError() throws {
         continueAfterFailure = true
@@ -43,15 +48,27 @@ final class AccessibilityAuditUITests: XCTestCase {
         empty.terminate()
 
         let app = XCUIApplication()
-        app.launchArguments = ["-storageRoot", "audit", "-resetStorage", "-keepUndoVisible", "-seedLibrary", "6", "-seedLongPDF", "-seedJournal", "-indexSeed", "-seedActivity", "-seedReplay", "-seedHandwriting", "-fakeTranscript", "-fakeTranslate", "-fakeCalendar", "-fakeScan", "-fakeUnlockOnce", "-drawingInput", "anyInput"] + extra
+        let probe = FileManager.default.temporaryDirectory.appendingPathComponent("animations-\(mode).txt").path
+        app.launchArguments = ["-animationProbe", probe, "-storageRoot", "audit", "-resetStorage", "-keepUndoVisible", "-seedLibrary", "6", "-seedLongPDF", "-seedJournal", "-indexSeed", "-seedActivity", "-seedReplay", "-seedHandwriting", "-fakeTranscript", "-fakeTranslate", "-fakeCalendar", "-fakeScan", "-fakeUnlockOnce", "-drawingInput", "anyInput"] + extra
         app.launch()
         let textbook = app.buttons["notebook.Textbook"]
         XCTAssertTrue(textbook.waitForExistence(timeout: 90))
         sleep(1)
 
         var pageText: [String] = []
+        var lastCheckEnded = Date.now, stalls = 0
         func check(_ screen: String, modal: Bool = false, scrolled: Bool = false, formText: [String] = [], sheet: XCUIElement? = nil,
                    popover: Bool = false, overlay: XCUIElement? = nil, bar: XCUIElement? = nil, cutBy list: XCUIElement? = nil) throws {
+            // The second stall ends the tour: a retry in a fresh app has a better chance than forty more screens at two minutes a step.
+            let gap = Date.now.timeIntervalSince(lastCheckEnded)
+            if gap > Self.stallGap {
+                stalls += 1
+                let animating = (try? String(contentsOfFile: probe, encoding: .utf8))?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "no probe file"
+                print("AUDIT STALL [\(mode) \(screen)] \(Int(gap)) s since the last screen; app: \(animating)")
+                XCTFail("The steps before \(screen) took \(Int(gap)) s, with the runner waiting for the app to go idle; app: \(animating)")
+                if stalls >= 2 { throw AuditStalled() }
+            }
+            defer { lastCheckEnded = .now }
             let attachment = XCTAttachment(screenshot: app.screenshot())
             attachment.name = "\(mode) \(screen)"
             attachment.lifetime = .keepAlways

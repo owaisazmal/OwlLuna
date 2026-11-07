@@ -60,6 +60,8 @@ PencilKit doesn't say how a stroke ended, so `StrokeHoldRecognizer`, a recognise
 
 Circle and hold uses the same rest, and `pencilGesture` sees the stroke first. A closed stroke with ink inside selects that ink, unless it straightens into three or four sides (`PencilGestures.keepsFigure`): a box or triangle round a formula is kept. In strokes drawn in code, loops round words read as ellipses or as five to twelve sides, and almost never as four. The loop goes into the document, then a second step, Circle to Select, takes it off as the selection starts, so Undo gives it back and leaves Select Ink. If the loop reads as an ellipse, the Select Ink bar offers Keep Circle, which undoes that step and straightens the loop. Tests have no touches, so they set `StrokeHoldRecognizer.nextRest`.
 
+On iPadOS 27 PencilKit opens its own menu (Select All, Insert Space) when a finger is held on handwriting, and a resting palm counted as that finger. `LoneFingerHoldGuard`, a recogniser on every `PageCanvasView` that PencilKit's named holds are made to wait for, fails only for one fingertip alone (`LoneFingerHold`); a wide touch, a second finger or the Pencil's hand makes it begin instead, which keeps the menu shut.
+
 PencilKit draws a pen's, fineliner's or fountain pen's nib 2 pt narrower all round than its point size, so `ShapeSnap.pointSize(for:)` sizes the points of a shape drawn from the tray to match a hand-drawn stroke. Those sizes were measured with a finger and need a Pencil check.
 
 ## Pictures, stickers and bookmarks

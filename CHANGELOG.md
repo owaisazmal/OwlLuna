@@ -13,6 +13,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - Backups saved in Files can be selected for restore even when their storage provider reports a generic file type. The contents are checked before anything is added to the library.
+- A palm resting on the page no longer opens PencilKit's Select All and Insert Space menu over handwriting. The menu opens for one fingertip held still, and never for a wide touch, a second finger or the hand holding the Pencil.
 
 ## [1.0.0-build.5] - 2026-11-02
 

@@ -269,20 +269,23 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Each line of `runs` is one xcodebuild run. A run that fails is tried once more in a fresh test runner on a
+          # rebooted simulator: a runner session that has gone slow waits a minute for the app to go idle on every step.
           - part: tests
-            tests: -only-testing:OwlLunaUITests -skip-testing:OwlLunaUITests/AccessibilityAuditUITests
+            runs: |
+              -only-testing:OwlLunaUITests -skip-testing:OwlLunaUITests/AccessibilityAuditUITests
             allowance: 900
             appearance: light
           # The simulator ignores XCUIDevice's appearance switch, so each part sets it before the tests start.
           - part: audits-light
-            tests: >-
+            runs: |
               -only-testing:OwlLunaUITests/AccessibilityAuditUITests/testAuditLight
               -only-testing:OwlLunaUITests/AccessibilityAuditUITests/testAuditLightIncreaseContrast
               -only-testing:OwlLunaUITests/AccessibilityAuditUITests/testAuditLargeText
             allowance: 2700
             appearance: light
           - part: audits-dark
-            tests: >-
+            runs: |
               -only-testing:OwlLunaUITests/AccessibilityAuditUITests/testAuditDark
               -only-testing:OwlLunaUITests/AccessibilityAuditUITests/testAuditDarkIncreaseContrast
             allowance: 2700
@@ -311,18 +314,41 @@ jobs:
         run: xcrun simctl ui "$SIMULATOR_UDID" appearance ${{ matrix.appearance }}
 
       - name: UI tests
+        env:
+          RUNS: ${{ matrix.runs }}
+          ALLOWANCE: ${{ matrix.allowance }}
+          APPEARANCE: ${{ matrix.appearance }}
         run: |
           set -o pipefail
-          xcodebuild test-without-building \
-            -xctestrun "$XCTESTRUN" \
-            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
-            ${{ matrix.tests }} \
-            -parallel-testing-enabled NO \
-            -retry-tests-on-failure -test-iterations 2 \
-            -test-timeouts-enabled YES -default-test-execution-time-allowance ${{ matrix.allowance }} \
-            -resultBundlePath "$RUNNER_TEMP/UI.xcresult" \
-            2>&1 | tee "$RUNNER_TEMP/ui.log" \
-            | xcbeautify --renderer github-actions
+          failed=0
+          number=0
+          while IFS= read -r selection; do
+            [ -n "$selection" ] || continue
+            number=$((number + 1))
+            for attempt in 1 2; do
+              if [ "$attempt" = 2 ]; then
+                echo "::warning title=UI run $number tried again::The first run failed, so it runs once more in a fresh test runner on a rebooted simulator."
+                xcrun simctl shutdown "$SIMULATOR_UDID"
+                xcrun simctl boot "$SIMULATOR_UDID"
+                xcrun simctl bootstatus "$SIMULATOR_UDID"
+                xcrun simctl ui "$SIMULATOR_UDID" appearance "$APPEARANCE"
+              fi
+              if xcodebuild test-without-building \
+                -xctestrun "$XCTESTRUN" \
+                -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+                $selection \
+                -parallel-testing-enabled NO \
+                -retry-tests-on-failure -test-iterations 2 \
+                -test-timeouts-enabled YES -default-test-execution-time-allowance "$ALLOWANCE" \
+                -resultBundlePath "$RUNNER_TEMP/UI-$number-$attempt.xcresult" \
+                2>&1 | tee "$RUNNER_TEMP/ui-$number-$attempt.log" \
+                | xcbeautify --renderer github-actions; then
+                break
+              fi
+              [ "$attempt" = 2 ] && failed=1
+            done
+          done <<< "$RUNS"
+          exit $failed
 
       - name: Report
         if: always()

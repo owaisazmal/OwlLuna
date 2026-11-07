@@ -82,6 +82,7 @@ struct OwlLunaRoot: View {
             curtain.isUp = enabled && app.phase != .ready && !opensSomething
             #if DEBUG
             if LaunchOptions.arguments.contains("-framePacing") { FramePacingWindow.install() }
+            AnimationProbe.install()
             WindowButtons.shared.install()
             #endif
             await app.start()
