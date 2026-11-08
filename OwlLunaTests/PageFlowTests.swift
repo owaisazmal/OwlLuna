@@ -43,11 +43,14 @@ final class PageFlowTests: XCTestCase {
         try XCTUnwrap(controller.view.subviews.lazy.compactMap { $0 as? UIScrollView }.first)
     }
 
-    /// A finger swipe that ended `distance` points past a side of the page, as the scroll view reports it.
-    private func swipe(_ controller: PageStackController, past distance: CGFloat) throws {
+    /// A finger swipe that ended `distance` points past a side of the page, as the scroll view reports it. `from`
+    /// is where the drag began; by default the side it ends past.
+    private func swipe(_ controller: PageStackController, past distance: CGFloat, from start: CGFloat? = nil) throws {
         let scroll = try scrollView(of: controller)
         let inset = scroll.contentInset
         let minX = -inset.left, maxX = max(minX, scroll.contentSize.width + inset.right - scroll.bounds.width)
+        scroll.contentOffset.x = start ?? (distance > 0 ? maxX : minX)
+        controller.scrollViewWillBeginDragging(scroll)
         scroll.contentOffset.x = distance > 0 ? maxX + distance : minX + distance
         controller.scrollViewDidEndDragging(scroll, willDecelerate: true)
     }
@@ -126,8 +129,10 @@ final class PageFlowTests: XCTestCase {
         controller.scrollBy(viewportFraction: 0.5)
         XCTAssertGreaterThan(scroll.contentOffset.y, before.y)
         XCTAssertEqual(controller.currentPage, 4, "scrolling within the page turns nothing")
+        try swipe(controller, past: 80, from: 100)
+        XCTAssertEqual(session.currentPage, 4, "a drag that pans to the side and on past it turns nothing either")
         try swipe(controller, past: 80)
-        XCTAssertEqual(session.currentPage, 5)
+        XCTAssertEqual(session.currentPage, 5, "a swipe begun at the side turns")
         XCTAssertEqual(controller.zoom, 2, accuracy: 0.001)
         controller.fit(.width)
         XCTAssertEqual(controller.zoom, 1, accuracy: 0.001)

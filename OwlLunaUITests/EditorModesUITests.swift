@@ -81,14 +81,20 @@ final class EditorModesUITests: XCTestCase {
         XCTAssertTrue(first.exists)
         XCTAssertEqual(ribbon.label, "Page 1 of 3")
         attach(app, "one-page-at-a-time")
+        let before = strokeCount(first)
+        drag(on: first, y: 0.3)
+        XCTAssertEqual(strokeCount(first), before + 1, "writing carries on one page at a time")
 
+        // With fingers drawing a one-finger swipe would draw, so from here only the Pencil draws and a finger turns.
+        app.buttons["More"].firstMatch.tap()
+        app.buttons["Draw With"].firstMatch.tap()
+        let pencilOnly = app.buttons["Apple Pencil Only"]
+        XCTAssertTrue(pencilOnly.waitForExistence(timeout: 5))
+        pencilOnly.tap()
         first.swipeLeft()
         XCTAssertTrue(second.waitForExistence(timeout: 5), "a swipe turns to the next page")
         XCTAssertTrue(first.waitForNonExistence(timeout: 5))
         XCTAssertEqual(ribbon.label, "Page 2 of 3")
-        let before = strokeCount(second)
-        drag(on: second, y: 0.3)
-        XCTAssertEqual(strokeCount(second), before + 1, "writing carries on one page at a time")
 
         second.swipeRight()
         XCTAssertTrue(first.waitForExistence(timeout: 5), "a swipe back turns to the page before")

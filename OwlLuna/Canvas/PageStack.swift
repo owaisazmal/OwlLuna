@@ -3057,14 +3057,26 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         return true
     }
 
-    /// A swipe that ended past a side of the page turns it: a good way past, or a flick. Within a page wider
-    /// than the view a swipe pans until its edge is reached, so only a swipe at an edge turns.
+    /// The sides of the page the view was at when the last drag began. Within a page wider than the view a drag
+    /// pans to a side first; only the next swipe, begun at that side, turns.
+    private var edgesAtDragStart: (left: Bool, right: Bool) = (false, false)
+
+    private var sideOffsets: (minX: CGFloat, maxX: CGFloat) {
+        let inset = scrollView.contentInset
+        let minX = -inset.left
+        return (minX, max(minX, scrollView.contentSize.width + inset.right - scrollView.bounds.width))
+    }
+
+    private func noteEdges() {
+        let (minX, maxX) = sideOffsets, x = scrollView.contentOffset.x
+        edgesAtDragStart = (x <= minX + 1, x >= maxX - 1)
+    }
+
+    /// A swipe that ended past a side of the page the view was already at turns it: a good way past, or a flick.
     private func swipedTurn() -> Int? {
         guard layout.single != nil, !scrollView.isZooming else { return nil }
-        let inset = scrollView.contentInset
-        let minX = -inset.left, maxX = max(minX, scrollView.contentSize.width + inset.right - scrollView.bounds.width)
-        let x = scrollView.contentOffset.x
-        let over = x > maxX ? x - maxX : x < minX ? x - minX : 0
+        let (minX, maxX) = sideOffsets, x = scrollView.contentOffset.x
+        let over = x > maxX && edgesAtDragStart.right ? x - maxX : x < minX && edgesAtDragStart.left ? x - minX : 0
         guard over != 0 else { return nil }
         let speed = scrollView.panGestureRecognizer.velocity(in: scrollView).x
         let flick = over > 0 ? speed < -Self.turnFlick : speed > Self.turnFlick
@@ -3306,6 +3318,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         pendingPage = nil
+        noteEdges()
         dropLaser()
         if fingersDraw { document.dismissNotices(.twoFingersScroll) }
     }
