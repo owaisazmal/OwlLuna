@@ -100,6 +100,8 @@ A notebook's cards are `cards.json` beside its manifest (`FlashcardFile`: a vers
 
 The app delegate hands an external display's scene to `ExternalDisplaySceneDelegate`, which only registers it with `ExternalDisplay`, so the screen mirrors the iPad until presenting starts. `PresentationStageController` renders each page once, within 12 megapixels, and then only receives the visible part (`PresentationStage.pageFrame`) and the laser as fractions of the page. Presenter notes are a page's `notes` field. They aren't part of its `appearanceKey`, so thumbnails and exports never show them.
 
+Showing one page at a time is a layout choice (`PageFlow`, kept in `UserDefaults` as `pageFlow`), not an editor mode: `PageStackController.setPageFlow` lays out the one page and turns to the next or previous on a swipe, so writing, find, select and the zoom window all work inside it. Presenting is the mode that locks editing.
+
 ## Selecting ink across pages
 
 PencilKit's lasso can't leave its canvas, so this is an editor mode. `EditorMode.selecting` lays `InkLassoOverlay` over the page stack, and `InkLasso.moved` moves a stroke whose middle lands on another page into that page's drawing. `NotebookDocument.updateInk` replaces every affected page's ink with one undo step, and refuses a page whose ink isn't in memory; the lasso only reaches pinned pages.

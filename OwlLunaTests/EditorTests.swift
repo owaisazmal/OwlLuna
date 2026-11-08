@@ -25,6 +25,39 @@ final class PageStackLayoutTests: XCTestCase {
         XCTAssertEqual(layout.pageIndex(atY: 1_000_000), 4)
         XCTAssertEqual(layout.range(from: layout.frames[1].midY, to: layout.frames[2].midY), 1...2)
     }
+
+    func testSingleFlowLaysOnePageOutAloneAndPutsTheOthersAway() {
+        let margin = PageStackLayout.margin
+        let pages = [NotebookPage.template(.blank, color: .white, size: .letter), .template(.blank, color: .white, size: .a5),
+                     .board(template: .dotted, color: .white), .template(.blank, color: .white, size: .letter)]
+        let a5 = PageSize.a5.points
+        let layout = PageStackLayout(pages: pages, single: 1)
+        XCTAssertEqual(layout.single, 1)
+        XCTAssertNil(layout.solo)
+        XCTAssertEqual(layout.alone, 1)
+        XCTAssertEqual(layout.frames.count, 4)
+        XCTAssertEqual(layout.frames[1], CGRect(x: margin, y: margin, width: a5.width, height: a5.height), "the page fills the width itself")
+        XCTAssertEqual(layout.frames[0], .zero)
+        XCTAssertEqual(layout.frames[3], .zero)
+        XCTAssertEqual(layout.size, CGSize(width: a5.width + margin * 2, height: a5.height + margin * 2))
+        XCTAssertTrue(layout.isLaidOut(1, in: pages))
+        XCTAssertFalse(layout.isLaidOut(0, in: pages))
+        XCTAssertFalse(layout.isLaidOut(3, in: pages))
+        XCTAssertEqual(layout.pageIndex(atY: 0), 1)
+        XCTAssertEqual(layout.pageIndex(atY: 10_000), 1)
+        XCTAssertEqual(layout.range(from: 0, to: 2000), 1...1)
+
+        let card = PageStackLayout(pages: pages, single: 2)
+        XCTAssertEqual(card.frames[2].width, PageSize.letter.points.width, "a whiteboard on its own is a Letter-wide card")
+        XCTAssertEqual(card.frames[2].height, 459)
+        XCTAssertFalse(card.isLaidOut(2, in: pages), "the card is not the board at its own size")
+
+        XCTAssertNil(PageStackLayout(pages: pages, single: 9).single, "a page that is gone leaves the stack laid out")
+        XCTAssertEqual(PageStackLayout(pages: pages, single: 9).frames[3].minY, PageStackLayout(pages: pages).frames[3].minY)
+        XCTAssertNil(PageStackLayout(pages: pages, solo: 2, single: 1).single, "an open whiteboard takes the place of the single page")
+        XCTAssertEqual(PageStackLayout(pages: pages, solo: 2, single: 1).alone, 2)
+        XCTAssertNil(PageStackLayout(pages: [], single: 0).single)
+    }
 }
 
 @MainActor

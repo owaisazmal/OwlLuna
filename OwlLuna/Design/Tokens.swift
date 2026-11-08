@@ -27,7 +27,8 @@ enum Radius {
 }
 
 enum Motion {
-    static let standard = Animation.easeOut(duration: 0.18)
+    static let standardDuration: TimeInterval = 0.18
+    static let standard = Animation.easeOut(duration: standardDuration)
     static let quick = Animation.easeOut(duration: 0.15)
     static let ribbon = Animation.spring(response: 0.34, dampingFraction: 0.62)
 

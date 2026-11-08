@@ -141,6 +141,11 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     private var stackZoom: CGFloat = 1
     private var boardViews: [UUID: (center: CGPoint, zoom: CGFloat)] = [:]
     private var isSolo: Bool { layout.solo != nil }
+    /// How the pages flow while writing, and the page shown on its own in single flow. The stack comes back
+    /// while ink is selected across pages, which needs them all laid out.
+    private var pageFlow = PageFlow.continuous
+    private var singleID: UUID?
+    private var isSingle: Bool { pageFlow == .single && inkLasso == nil }
     private var lastSafeTop: CGFloat = 0
     /// The view's top in its window at the last change of size, to tell a bar going above the pages from one below.
     private var lastTop: CGFloat?
@@ -169,7 +174,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         document.onStructureChange = { [weak self] in self?.pagesDidChange() }
         pages = document.pages
         linkTitles = LinkTitles(pages: pages, notebooks: session.notebookTitles)
-        layout = PageStackLayout(pages: pages)
+        pageFlow = session.pageFlow
+        rebuildLayout()
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -320,8 +326,9 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         let isFirst = lastBounds == .zero
         let top = windowTop
         defer { lastTop = top }
-        // The pages keep the reader's place once they are on screen. Presenting, a replay and an open whiteboard keep their own.
-        if !isFirst, hasAppeared, !isSolo, !isPresenting, replay == nil {
+        // The pages keep the reader's place once they are on screen. Presenting, a replay, an open whiteboard and a
+        // page shown on its own keep their own.
+        if !isFirst, hasAppeared, layout.alone == nil, !isPresenting, replay == nil {
             let old = lastBounds.size
             lastBounds = bounds
             return old.width == bounds.width ? keepPlace(fromHeight: old.height, top: top) : keepPlace(from: old)
@@ -334,10 +341,11 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         if isFirst {
             firstInkPage = pages.indices.contains(page) ? pages[page].id : nil
             lastSafeTop = view.safeAreaInsets.top
-            if pages.indices.contains(page), pages[page].isBoard {
-                soloID = pages[page].id
-                layout = PageStackLayout(pages: pages, solo: page)
+            if pages.indices.contains(page) {
+                if pages[page].isBoard { soloID = pages[page].id }
+                singleID = pages[page].id
             }
+            rebuildLayout()
         }
         measure()
         layoutZoomPanel()
@@ -497,7 +505,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
              UIKeyCommand(title: title, action: #selector(nudge), input: input, modifierFlags: .shift)]
         }
         if canNudge { commands.removeAll { $0.action == #selector(lineDown) || $0.action == #selector(lineUp) } }
-        let presenting = !isPresenting ? [] : [
+        // Presenting, and in single flow, the side arrows turn the page too.
+        let presenting = !(isPresenting || layout.single != nil) || canNudge ? [] : [
             UIKeyCommand(title: String(localized: "Next Page"), action: #selector(nextPage), input: UIKeyCommand.inputRightArrow),
             UIKeyCommand(title: String(localized: "Previous Page"), action: #selector(previousPage), input: UIKeyCommand.inputLeftArrow),
         ]
@@ -616,7 +625,10 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     private static let addPageHeight: CGFloat = 72
 
-    private var showsAddPage: Bool { Device.isPhone && !isSolo && !isPresenting && !document.isReadOnly && !pages.isEmpty }
+    /// Under the last page, which in single flow is there only while it is the page shown.
+    private var showsAddPage: Bool {
+        Device.isPhone && !isSolo && !isPresenting && !document.isReadOnly && !pages.isEmpty && (layout.single.map { $0 == pages.count - 1 } ?? true)
+    }
 
     /// The card fills the room under the last page down to the tools; it sits out a pinch, which doesn't scale it.
     private func layoutAddPage() {
@@ -642,7 +654,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     /// The page under a line 30% down the viewport, or the last page once the scroll can't go further,
     /// so a short last page can still become current.
     var currentPage: Int {
-        if let solo = layout.solo { return solo }
+        if let alone = layout.alone { return alone }
         guard effectiveScale > 0, !pages.isEmpty else { return 0 }
         let inset = scrollView.adjustedContentInset
         let maxY = scrollView.contentSize.height + inset.bottom - scrollView.bounds.height
@@ -742,6 +754,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         if pages[index].isBoard { return openBoard(index) }
         let animated = animated && !isSolo
         closeBoard()
+        if layout.single != nil { return turn(to: index, animated: animated) }
         let target = clamped(CGPoint(x: scrollView.contentOffset.x, y: pageTopOffset(index)))
         let moves = Motion.slides(animated && abs(target.y - scrollView.contentOffset.y) > 0.5, fading: scrollView.layer)
         pendingPage = moves ? index : nil
@@ -774,7 +787,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     private func updateWindow(force: Bool = false) {
         guard isViewLoaded, lastBounds != .zero, !isBaking, let visible = visibleRange() else { return }
         let count = pages.count
-        let window = layout.solo.map { $0...$0 } ?? max(0, visible.lowerBound - 1)...min(count - 1, visible.upperBound + 1)
+        let window = layout.alone.map { $0...$0 } ?? max(0, visible.lowerBound - 1)...min(count - 1, visible.upperBound + 1)
         if force || window != canvasWindow {
             canvasWindow = window
             let keep = Set(pages[window].map(\.id))
@@ -784,6 +797,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
                 let slot = slots[page.id] ?? makeSlot(page, at: index)
                 if slot.canvas == nil, slot.card == nil { attachCanvas(page, to: slot) }
             }
+            offerPageTurns()
             document.pinInk(keep.union(zoomWindow.map { [$0.pageID] } ?? []))
             let prefetch = isSolo ? window : max(0, visible.lowerBound - 3)...min(count - 1, visible.upperBound + 3)
             document.prefetchInk(pages[prefetch].map(\.id))
@@ -1921,7 +1935,9 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             if pages.isEmpty { return updateWindow(force: true) }
             return session.go(to: min(wasSolo, pages.count - 1), animated: false)
         }
-        layout = PageStackLayout(pages: pages, solo: soloID.flatMap(index(of:)))
+        // The page shown on its own that was deleted gives way to the one that takes its place.
+        if let wasSingle = layout.single, singleID.flatMap(index(of:)) == nil, !pages.isEmpty { singleID = pages[min(wasSingle, pages.count - 1)].id }
+        rebuildLayout()
         for id in changed where slots[id] != nil { removeSlot(id) }
         for (id, slot) in slots {
             guard let index = index(of: id) else { removeSlot(id); continue }
@@ -1929,8 +1945,14 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             nameCanvas(slot.canvas, for: pages[index], at: index)
             nameCard(in: slot, at: index)
         }
-        contentView.frame = CGRect(x: 0, y: 0, width: layout.size.width * effectiveScale, height: layout.size.height * effectiveScale)
-        scrollView.contentSize = contentView.frame.size
+        if layout.single != nil {
+            // The page shown alone sets the width it is fitted to.
+            measure()
+            bake(zoom: zoom)
+        } else {
+            contentView.frame = CGRect(x: 0, y: 0, width: layout.size.width * effectiveScale, height: layout.size.height * effectiveScale)
+            scrollView.contentSize = contentView.frame.size
+        }
         if let anchorID, let index = index(of: anchorID), let anchorOffset {
             scrollView.contentOffset = clamped(CGPoint(x: scrollView.contentOffset.x, y: layout.frames[index].minY * effectiveScale + anchorOffset))
         } else {
@@ -1949,6 +1971,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         scrollView.scrollsToTop = !isSolo
         scrollView.showsVerticalScrollIndicator = !isSolo
         scrollView.showsHorizontalScrollIndicator = !isSolo
+        // A page on its own gives sideways, so a swipe past its edge can turn it.
+        scrollView.alwaysBounceHorizontal = layout.single != nil
         fitScale = fitScale(forWidth: bounds.width)
         minimumZoom = isSolo ? Whiteboard.minimumZoom : smallestZoom
     }
@@ -2010,7 +2034,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         }
         for slot in Array(slots.keys) { removeSlot(slot) }
         soloID = id
-        layout = PageStackLayout(pages: pages, solo: id.flatMap(index(of:)))
+        rebuildLayout()
         canvasWindow = nil
         pendingPage = nil
         if lastBounds != .zero { measure() }
@@ -2032,12 +2056,12 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         if lastBounds != .zero { bake(zoom: stackZoom) }
     }
 
-    /// Shows a page among the others, or on its own if it is a whiteboard, without choosing where in it to look.
+    /// Shows a page among the others, or on its own if it is a whiteboard or the flow is single, without choosing where in it to look.
     private func bring(_ index: Int) {
         guard pages.indices.contains(index) else { return }
         if pages[index].isBoard {
             openBoard(index)
-        } else if isSolo {
+        } else if isSolo || layout.single.map({ $0 != index }) ?? false {
             scrollToPage(index, animated: false)
         }
     }
@@ -2280,6 +2304,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             inkLasso = nil
             setInkSelection([:])
         }
+        if pageFlow == .single { reflow() }
         lockDidChange()
     }
 
@@ -2849,8 +2874,9 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         if change(&window) {
             zoomWindow = window
             showZoomWindow()
-        } else if orTurnPage, window.isAtPageEnd, let index = index(of: window.pageID), layout.isLaidOut(index + 1, in: pages) {
+        } else if orTurnPage, window.isAtPageEnd, let index = index(of: window.pageID), !isSolo, pages.indices.contains(index + 1), !pages[index + 1].isBoard {
             let size = window.rect.size
+            bring(index + 1)
             placeZoomWindow(onPage: index + 1, center: CGPoint(x: window.lineStart + size.width / 2, y: size.height / 2 + window.lineHeight))
         } else {
             return
@@ -2926,6 +2952,141 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             guard let ink = document.loadedInk(slot.page.id), let stroke = ReplayInk.stroke(at: onPage, in: ink),
                   let time = replay.timeline.time(ofStroke: stroke, onPage: slot.page.id) else { return }
             session.seekReplay(to: time)
+        }
+    }
+
+    // MARK: Single flow
+
+    func setPageFlow(_ flow: PageFlow) {
+        guard flow != pageFlow else { return }
+        pageFlow = flow
+        reflow()
+    }
+
+    /// The layout as things stand: the open whiteboard alone, the shown page alone in single flow, or the stack.
+    private func rebuildLayout() {
+        if isSingle, singleID.flatMap(index(of:)) == nil, !pages.isEmpty { singleID = pages[min(max(session.currentPage, 0), pages.count - 1)].id }
+        layout = PageStackLayout(pages: pages, solo: soloID.flatMap(index(of:)), single: isSingle ? singleID.flatMap(index(of:)) : nil)
+    }
+
+    /// Lays the pages out in the flow that holds now, at the page that is shown. An open whiteboard stays as it is;
+    /// the stack behind it follows the flow once it closes.
+    private func reflow() {
+        guard lastBounds != .zero else { return rebuildLayout() }
+        if isSolo { return }
+        let page = pendingPage ?? currentPage
+        if let window = zoomWindow, index(of: window.pageID) != page {
+            closeZoomWindow()
+            session.zoomWindowDidClose()
+        }
+        select(nil)
+        rememberView()
+        scrollView.setContentOffset(scrollView.contentOffset, animated: false)
+        if view.window != nil { Motion.crossFade(scrollView.layer) }
+        for slot in Array(slots.keys) { removeSlot(slot) }
+        singleID = pages.indices.contains(page) ? pages[page].id : nil
+        rebuildLayout()
+        canvasWindow = nil
+        pendingPage = nil
+        measure()
+        bake(zoom: zoom)
+        scrollToPage(page, animated: false)
+        updateWindow(force: true)
+        revealZoomTarget()
+    }
+
+    /// Single flow: shows a page on its own, sliding it in from the side it lies on. The page already shown goes
+    /// back to its top, as a page in the stack does.
+    private func turn(to index: Int, animated: Bool) {
+        guard pages.indices.contains(index), let from = layout.single else { return }
+        // Before the first layout the page is only noted; that layout goes to it.
+        guard lastBounds != .zero else {
+            singleID = pages[index].id
+            return rebuildLayout()
+        }
+        if from == index {
+            let target = clamped(CGPoint(x: scrollView.contentOffset.x, y: pageTopOffset(index)))
+            let moves = Motion.slides(animated && abs(target.y - scrollView.contentOffset.y) > 0.5, fading: scrollView.layer)
+            pendingPage = moves ? index : nil
+            scrollView.setContentOffset(target, animated: moves)
+            if !moves { updateWindow() }
+            return
+        }
+        let slides = animated && view.window != nil
+        let leaving = slides && !UIAccessibility.isReduceMotionEnabled ? scrollView.snapshotView(afterScreenUpdates: false) : nil
+        if slides, leaving == nil { Motion.crossFade(scrollView.layer) }
+        select(nil)
+        scrollView.setContentOffset(scrollView.contentOffset, animated: false)
+        for id in Array(slots.keys) where id != pages[index].id { removeSlot(id) }
+        singleID = pages[index].id
+        rebuildLayout()
+        canvasWindow = nil
+        pendingPage = nil
+        measure()
+        bake(zoom: zoom)
+        scrollView.contentOffset = clamped(CGPoint(x: -scrollView.contentInset.left, y: pageTopOffset(index)))
+        updateWindow(force: true)
+        session.pageDidChange(index)
+        if let leaving { slide(leaving, forward: index > from) }
+    }
+
+    /// The old page's picture slides off while the new page comes in behind it from the other side.
+    private func slide(_ leaving: UIView, forward: Bool) {
+        let width = view.bounds.width
+        leaving.frame = scrollView.frame
+        view.insertSubview(leaving, aboveSubview: scrollView)
+        scrollView.transform = CGAffineTransform(translationX: forward ? width : -width, y: 0)
+        UIView.animate(withDuration: Motion.standardDuration, delay: 0, options: [.curveEaseOut, .beginFromCurrentState]) {
+            leaving.transform = CGAffineTransform(translationX: forward ? -width : width, y: 0)
+            self.scrollView.transform = .identity
+        } completion: { _ in
+            leaving.removeFromSuperview()
+        }
+    }
+
+    /// Turns to the page before or after the one shown. False at the first and last page, which only bounce.
+    @discardableResult
+    private func turnPage(by delta: Int) -> Bool {
+        guard let shown = layout.single, pages.indices.contains(shown + delta) else { return false }
+        if isPresenting {
+            present(page: shown + delta)
+        } else {
+            turn(to: shown + delta, animated: true)
+        }
+        AccessibilityNotification.Announcement(String(localized: "Page \(shown + delta + 1) of \(pages.count)")).post()
+        return true
+    }
+
+    /// A swipe that ended past a side of the page turns it: a good way past, or a flick. Within a page wider
+    /// than the view a swipe pans until its edge is reached, so only a swipe at an edge turns.
+    private func swipedTurn() -> Int? {
+        guard layout.single != nil, !scrollView.isZooming else { return nil }
+        let inset = scrollView.contentInset
+        let minX = -inset.left, maxX = max(minX, scrollView.contentSize.width + inset.right - scrollView.bounds.width)
+        let x = scrollView.contentOffset.x
+        let over = x > maxX ? x - maxX : x < minX ? x - minX : 0
+        guard over != 0 else { return nil }
+        let speed = scrollView.panGestureRecognizer.velocity(in: scrollView).x
+        let flick = over > 0 ? speed < -Self.turnFlick : speed > Self.turnFlick
+        guard abs(over) >= Self.turnDistance || (abs(over) >= Self.turnNudge && flick) else { return nil }
+        return over > 0 ? 1 : -1
+    }
+
+    private static let turnDistance: CGFloat = 60
+    private static let turnNudge: CGFloat = 16
+    private static let turnFlick: CGFloat = 300
+
+    /// VoiceOver turns the page from the page itself in single flow.
+    private func offerPageTurns() {
+        let actions: [UIAccessibilityCustomAction]? = layout.single == nil ? nil : [
+            UIAccessibilityCustomAction(name: String(localized: "Next Page")) { [weak self] _ in self?.turnPage(by: 1) ?? false },
+            UIAccessibilityCustomAction(name: String(localized: "Previous Page")) { [weak self] _ in self?.turnPage(by: -1) ?? false },
+        ]
+        for slot in slots.values {
+            for element in [slot.canvas, slot.card] as [UIView?] {
+                guard let element, (element.accessibilityCustomActions == nil) != (actions == nil) else { continue }
+                element.accessibilityCustomActions = actions
+            }
         }
     }
 
@@ -3147,6 +3308,10 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         pendingPage = nil
         dropLaser()
         if fingersDraw { document.dismissNotices(.twoFingersScroll) }
+    }
+
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        if let delta = swipedTurn() { turnPage(by: delta) }
     }
 
     func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) {

@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Pages can be shown one at a time, turned with a swipe left or right, from ⋯ › Pages › One Page at a Time. Writing, find, select and the zoom window all work as before, and Continuous brings the scrolling stack back. The choice is kept for every notebook.
 - A PDF can be shared to OwlLuna from Files or another app, dragged from Files onto the shelf, or dropped on OwlLuna's icon in the Dock. It comes in as Import PDF does, into the shelf on show, asking for a password if it has one and saying so if it can't be read. The original file is left where it was.
 
 ### Changed

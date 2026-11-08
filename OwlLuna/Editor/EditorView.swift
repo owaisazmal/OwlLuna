@@ -1393,6 +1393,11 @@ fileprivate struct EditorContent: View {
             } else {
                 Button { session.canvas?.fit(.width) } label: { Label("Fit Width", systemImage: "arrow.left.and.right") }
                 Button { session.canvas?.fit(.page) } label: { Label("Fit Page", systemImage: "arrow.up.and.down") }
+                OwlLunaMenu {
+                    OwlLunaPicker(selection: $session.pageFlow) {
+                        ForEach(PageFlow.allCases) { Text($0.displayName).tag($0) }
+                    }
+                } label: { Label("Pages", systemImage: "rectangle.portrait.on.rectangle.portrait") }
             }
             MenuBreak()
             if !document.isReadOnly {

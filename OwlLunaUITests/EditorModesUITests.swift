@@ -64,6 +64,45 @@ final class EditorModesUITests: XCTestCase {
         XCTAssertTrue(app.buttons["editor.back"].exists)
     }
 
+    func testOnePageAtATimeTurnsWithASwipe() throws {
+        let app = XCUIApplication()
+        let first = openNotebook(app, input: "anyInput")
+        let second = app.descendants(matching: .any)["page.canvas.2"]
+        let ribbon = app.buttons["editor.ribbon"]
+        XCTAssertTrue(second.waitForExistence(timeout: 10), "the stack starts continuous, with the next page under the first")
+
+        app.buttons["More"].firstMatch.tap()
+        app.buttons["Pages"].firstMatch.tap()
+        let single = app.buttons["One Page at a Time"]
+        XCTAssertTrue(single.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Continuous"].isSelected, "the stack is marked as the choice in force")
+        single.tap()
+        XCTAssertTrue(second.waitForNonExistence(timeout: 5), "only the page on show is laid out")
+        XCTAssertTrue(first.exists)
+        XCTAssertEqual(ribbon.label, "Page 1 of 3")
+        attach(app, "one-page-at-a-time")
+
+        first.swipeLeft()
+        XCTAssertTrue(second.waitForExistence(timeout: 5), "a swipe turns to the next page")
+        XCTAssertTrue(first.waitForNonExistence(timeout: 5))
+        XCTAssertEqual(ribbon.label, "Page 2 of 3")
+        let before = strokeCount(second)
+        drag(on: second, y: 0.3)
+        XCTAssertEqual(strokeCount(second), before + 1, "writing carries on one page at a time")
+
+        second.swipeRight()
+        XCTAssertTrue(first.waitForExistence(timeout: 5), "a swipe back turns to the page before")
+        XCTAssertEqual(ribbon.label, "Page 1 of 3")
+
+        app.buttons["More"].firstMatch.tap()
+        app.buttons["Pages"].firstMatch.tap()
+        XCTAssertTrue(single.waitForExistence(timeout: 5))
+        XCTAssertTrue(single.isSelected, "the picker marks the choice in force")
+        app.buttons["Continuous"].tap()
+        XCTAssertTrue(second.waitForExistence(timeout: 5), "the pages are stacked again")
+        XCTAssertTrue(first.exists)
+    }
+
     func testABookmarkedPageIsListedInTheOutline() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-storageRoot", "modes", "-resetStorage", "-seedLibrary", "3", "-drawingInput", "anyInput"]

@@ -11,6 +11,7 @@ protocol EditorCanvasControlling: AnyObject {
     func fit(_ fit: PageFit)
     func setPresenting(_ presenting: Bool)
     func present(page index: Int)
+    func setPageFlow(_ flow: PageFlow)
     func setLaserColor(_ color: LaserColor)
     func visibleCenter(ofPage index: Int) -> CGPoint?
     func visibleRect(ofPage index: Int) -> CGRect?
@@ -127,6 +128,12 @@ final class EditorSession {
             if drawingInput == .pencilOnly { document.dismissNotices(.twoFingersScroll) }
         }
     }
+    var pageFlow: PageFlow {
+        didSet {
+            UserDefaults.standard.set(pageFlow.rawValue, forKey: SettingsKey.pageFlow)
+            canvas?.setPageFlow(pageFlow)
+        }
+    }
     /// Once a Pencil touches an iPhone's pages only the Pencil draws, as on an iPad, unless a choice was made before.
     func pencilSeen() {
         guard Device.isPhone, UserDefaults.standard.string(forKey: SettingsKey.drawingInput) == nil else { return }
@@ -155,6 +162,7 @@ final class EditorSession {
         let saved = document.manifest.library.currentPage
         currentPage = max(0, min(initialPageID.flatMap(document.index(of:)) ?? saved, document.pages.count - 1))
         drawingInput = UserDefaults.standard.string(forKey: SettingsKey.drawingInput).flatMap(DrawingInput.init(rawValue:)) ?? .initial
+        pageFlow = UserDefaults.standard.pageFlow
         finder.startPage = { [weak self] in self?.currentPage ?? 0 }
         finder.onChange = { [weak self] in
             guard let self else { return }

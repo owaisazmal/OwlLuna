@@ -36,6 +36,19 @@ enum DrawingInput: String, CaseIterable, Identifiable {
     }
 }
 
+/// How the pages are shown while writing: stacked and scrolled through, or one at a time, turned with a swipe.
+enum PageFlow: String, CaseIterable, Identifiable {
+    case continuous, single
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .continuous: String(localized: "Continuous")
+        case .single: String(localized: "One Page at a Time")
+        }
+    }
+}
+
 /// The notice for a finger that dragged on a page and drew nothing because only the Pencil draws: once per install.
 enum FingerDrawHint {
     /// UI tests drag fingers on Pencil-only pages all the time, so there it is off unless one asks for it fresh with `-freshFingerDrawHint`.
@@ -77,6 +90,7 @@ enum FingerDrawHint {
 
 enum SettingsKey {
     static let drawingInput = "drawingInput"
+    static let pageFlow = "pageFlow"
     static let defaultTemplate = "defaultTemplate"
     static let defaultPaperColor = "defaultPaperColor"
     static let defaultPageSize = "defaultPageSize"
@@ -124,6 +138,8 @@ enum SettingsKey {
 extension UserDefaults {
     /// A setting's switch, `value` until it is first changed.
     func bool(forKey key: String, default value: Bool) -> Bool { object(forKey: key) as? Bool ?? value }
+
+    var pageFlow: PageFlow { string(forKey: SettingsKey.pageFlow).flatMap(PageFlow.init(rawValue:)) ?? .continuous }
 
     /// The paper Settings chose for new notebooks.
     var defaultTemplate: PaperTemplate { string(forKey: SettingsKey.defaultTemplate).flatMap(PaperTemplate.init(rawValue:)) ?? .narrowRuled }

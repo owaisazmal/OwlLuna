@@ -31,6 +31,7 @@ The App Store version comes later. To build it yourself, see [Getting started](#
 - Zoom up to 5× with sharp ink, Fit Width (⌘0) and Fit Page (⌘9).
 - Undo and redo for ink and page changes, and keyboard shortcuts for most actions.
 - Draw with the Pencil only, or with a finger too.
+- Pages scrolled continuously, or shown one at a time and turned with a swipe.
 - Focus mode (⌃⌘F), notebook tabs, and two notebooks side by side in one window.
 
 ### Presenting
