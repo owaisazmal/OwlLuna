@@ -49,17 +49,24 @@ final class InkTypingTests: XCTestCase {
 
     func testWritingIsReadWhileThePenRestsAndSetOnlyOnceTheRestIsLongEnough() async {
         XCTAssertLessThan(InkTyping.lookAhead, InkTyping.pause, "the reading begins before the rest is long enough")
-        let piece = PKDrawing(strokes: BlockLetters.strokes("HI", origin: .zero)), start = CACurrentMediaTime()
-        let texts = await InkTyping.read([piece, piece], handingBackAfter: 1.5) { _ in
-            let began = CACurrentMediaTime()
-            Thread.sleep(forTimeInterval: 0.2)
-            return String(began)
+        let piece = PKDrawing(strokes: BlockLetters.strokes("HI", origin: .zero))
+        let read = expectation(description: "both pages are read during the rest, not after it")
+        read.expectedFulfillmentCount = 2
+        let resting = Task {
+            await InkTyping.read([piece, piece], handingBackAfter: 60) { _ in
+                Thread.sleep(forTimeInterval: 0.2)
+                read.fulfill()
+                return "read"
+            }
         }
-        let handedBack = CACurrentMediaTime() - start
-        let began = texts.compactMap { $0.flatMap(Double.init) }
-        XCTAssertEqual(began.count, 2)
-        XCTAssertLessThan((began.max() ?? .infinity) - start, 1, "both pages are read during the rest, not after it")
-        XCTAssertGreaterThanOrEqual(handedBack, 1.5, "the text waits for the rest")
+        await fulfillment(of: [read], timeout: 10)
+        resting.cancel() // cuts the rest short, as writing on does
+        let texts = await resting.value
+        XCTAssertEqual(texts, ["read", "read"])
+
+        let start = CACurrentMediaTime()
+        _ = await InkTyping.read([piece], handingBackAfter: 1.5) { _ in "read" }
+        XCTAssertGreaterThanOrEqual(CACurrentMediaTime() - start, 1.5, "the text waits for the rest")
 
         let slow = CACurrentMediaTime()
         let late = await InkTyping.read([piece], handingBackAfter: 0.1) { _ in
