@@ -78,13 +78,27 @@ final class InkTypingTests: XCTestCase {
     }
 
     /// Vision passes over some short words in a tight frame, so one that reads as nothing is read again with more room.
-    func testShortWordsAreReadHoweverTheyAreFramed() throws {
-        func read(_ word: String) -> String? {
-            InkText.recognize([PKDrawing(strokes: BlockLetters.strokes(word, origin: CGPoint(x: 100, y: 140)))])?.uppercased()
+    func testShortWordsAreReadHoweverTheyAreFramed() async throws {
+        struct Unfinished: Error, CustomStringConvertible {
+            let word: String
+            var description: String { "Vision did not finish reading \(word) within 60 s" }
         }
-        guard read("HELLO") == "HELLO" else { throw XCTSkip("Vision's text recogniser can't read block letters here") }
+        // Vision has no timeout of its own: starved of CPU on a slow runner, a reading never comes back.
+        func read(_ word: String) async throws -> String? {
+            let piece = PKDrawing(strokes: BlockLetters.strokes(word, origin: CGPoint(x: 100, y: 140)))
+            let finished = expectation(description: "Vision finished reading \(word)")
+            let reading = Task {
+                let text = await InkText.recognizeInBackground([piece])
+                finished.fulfill()
+                return text?.uppercased()
+            }
+            guard await XCTWaiter.fulfillment(of: [finished], timeout: 60) == .completed else { throw Unfinished(word: word) }
+            return await reading.value
+        }
+        guard try await read("HELLO") == "HELLO" else { throw XCTSkip("Vision's text recogniser can't read block letters here") }
         for word in ["OK", "ZINK", "WILL", "MAX"] {
-            XCTAssertEqual(read(word), word)
+            let text = try await read(word)
+            XCTAssertEqual(text, word)
         }
     }
 
