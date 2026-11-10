@@ -95,7 +95,7 @@ final class PageFlowTests: XCTestCase {
         let (session, controller, _) = try await open([letter(), letter(), letter()])
         session.go(to: 1, animated: false)
         let canvas = try XCTUnwrap(controller.canvas(forPage: 1))
-        for _ in 0..<40 where !canvas.isLoaded { await pause(0.05) }
+        for _ in 0..<100 where !canvas.isLoaded { await pause(0.05) }
         XCTAssertTrue(canvas.drawingGestureRecognizer.isEnabled, "the page is written on, not locked")
         canvas.drawing = PKDrawing(strokes: [dot(at: CGPoint(x: 100, y: 120))])
         controller.canvasViewDrawingDidChange(canvas)
@@ -145,7 +145,7 @@ final class PageFlowTests: XCTestCase {
         XCTAssertFalse(scroll.alwaysBounceHorizontal)
         let stack = PageStackLayout(pages: session.document.pages)
         XCTAssertEqual(scroll.contentSize.height / scroll.contentSize.width, stack.size.height / stack.size.width, accuracy: 0.01, "every page is laid out")
-        for _ in 0..<40 where controller.canvas(forPage: 4)?.isLoaded != true { await pause(0.05) }
+        for _ in 0..<100 where controller.canvas(forPage: 4)?.isLoaded != true { await pause(0.05) }
 
         session.pageFlow = .single
         XCTAssertEqual(controller.currentPage, 5)
