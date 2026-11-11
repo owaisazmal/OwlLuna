@@ -225,9 +225,12 @@ final class RecordingsTests: XCTestCase {
         XCTAssertNil(recorder.playingID, "Redo stops it too")
 
         document.undoManager.undo()
-        recorder.togglePlayback(try XCTUnwrap(recorder.recordings.first))
+        let back = try XCTUnwrap(recorder.recordings.first)
+        // The replay starts it the same way, and its start can be waited for.
+        let starting = Task { await recorder.beginReplay(back) }
         recorder.delete(entry)
-        try await Task.sleep(for: .milliseconds(500))
+        let started = await starting.value
+        XCTAssertFalse(started)
         XCTAssertNil(recorder.playingID, "one deleted while its playback is starting never sounds")
         XCTAssertFalse(session.isPlaying(recorder), "and lets go of the session")
     }
@@ -667,8 +670,8 @@ final class RecordingsTests: XCTestCase {
         XCTAssertTrue(recorder.isPaused, "and leaving the screen locks it")
 
         recorder.stopPlayback()
-        recorder.togglePlayback(recorder.recordings[0])
-        try await Task.sleep(for: .milliseconds(500))
+        let started = await recorder.beginReplay(recorder.recordings[0])
+        XCTAssertFalse(started)
         XCTAssertNil(recorder.playingID, "a playback started behind the lock never sounds")
         XCTAssertFalse(session.isPlaying(recorder))
     }
