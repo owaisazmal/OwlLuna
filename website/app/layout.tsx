@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body>
-        <FontPreload font="fraunces" />
+        <FontPreload font="franklin" />
         <a href="#main" className="skip-link">
           Skip to content
         </a>

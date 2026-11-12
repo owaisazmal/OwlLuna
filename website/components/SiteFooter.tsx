@@ -52,8 +52,8 @@ export function SiteFooter() {
 
       <div className={`wrap ${styles.small}`}>
         <p>
-          © {site.since} {site.author.name}. OwlLuna is released under the MIT License. Set in Fraunces,
-          Archivo and Bricolage Grotesque, used under the <a href={site.fontLicenses}>SIL Open Font License</a>.
+          © {site.since} {site.author.name}. OwlLuna is released under the MIT License. Set in Libre
+          Franklin, Fraunces, Archivo and Bricolage Grotesque, used under the <a href={site.fontLicenses}>SIL Open Font License</a>.
         </p>
         <p>
           Apple, iPad, iPadOS, Apple Pencil, Mac, iCloud, Face ID, Touch ID, Spotlight, Siri, SwiftUI, SwiftData,

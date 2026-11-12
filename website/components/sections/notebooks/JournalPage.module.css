@@ -67,7 +67,7 @@
 
 .date {
   display: block;
-  font-family: var(--font-display);
+  font-family: var(--font-app);
   font-weight: 600;
   font-optical-sizing: auto;
   font-variation-settings: 'SOFT' 50, 'WONK' 1;

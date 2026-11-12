@@ -84,7 +84,7 @@ export function SearchDemo() {
           <Thumb kind={chosen} replay={touched} />
         </motion.div>
         <div className={styles.found}>
-          <p className="meta">
+          <p className="caps">
             <span className={styles.spot}>{place.book}</span>{' '}
             {place.spot ? <span className={styles.spot}>· {place.spot}</span> : null}
           </p>

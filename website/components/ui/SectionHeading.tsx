@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import styles from './SectionHeading.module.css'
 
 type Props = {
-  /** Small caps over the heading. */
+  /** The label over the heading. */
   eyebrow: string
   title: ReactNode
   children?: ReactNode
@@ -10,11 +10,11 @@ type Props = {
   as?: 'h1' | 'h2'
 }
 
-/** The library's editorial heading: small caps, a Fraunces line, and a lede under a hairline. */
+/** A section's heading: a heavy rule, a label, a bold line and a lede. */
 export function SectionHeading({ eyebrow, title, children, id, as: Tag = 'h2' }: Props) {
   return (
     <header className={styles.heading}>
-      <p className="meta">{eyebrow}</p>
+      <p className={`meta ${styles.eyebrow}`}>{eyebrow}</p>
       <Tag id={id} className={`display ${styles.title}`}>
         {title}
       </Tag>

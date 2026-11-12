@@ -67,11 +67,9 @@
   min-height: 48px;
   padding: var(--x2) var(--x4) var(--x2) var(--text-edge);
   border-bottom: 2px solid var(--ink);
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 800;
   line-height: 1.3;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
   color: var(--ink);
 }
 

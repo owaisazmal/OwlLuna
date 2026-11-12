@@ -1,19 +1,12 @@
 .ledger {
-  background: var(--board);
-  border: var(--line) solid var(--outline);
-  border-radius: var(--radius-plate);
-  overflow: hidden;
+  border-top: 3px solid var(--outline);
 }
 
 .band {
-  padding: var(--x2) var(--x4);
-  background: var(--well);
-  border-bottom: var(--line) solid var(--outline);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
+  padding: var(--x2) 0;
+  border-bottom: 1px solid var(--outline);
+  font-size: 0.95rem;
+  font-weight: 800;
 }
 
 .rows {
@@ -25,8 +18,8 @@
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
   gap: var(--x4);
   align-items: baseline;
-  padding: var(--x3) var(--x4);
-  border-top: 1px solid var(--outline);
+  padding: var(--x3) 0;
+  border-top: 1px solid var(--hairline);
 }
 
 .row:first-child {

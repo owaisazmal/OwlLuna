@@ -174,7 +174,7 @@ export function CardPile() {
                     </svg>
                   </IndexCard>
                 </span>
-                <p className={`display ${styles.caught}`}>All caught up.</p>
+                <p className={`app-display ${styles.caught}`}>All caught up.</p>
                 <p className={styles.back}>{soonest === 1 ? 'The next card comes back tomorrow.' : 'The next card comes back in 4 days.'}</p>
               </div>
             </motion.div>

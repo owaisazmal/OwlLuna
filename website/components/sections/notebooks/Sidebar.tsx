@@ -35,7 +35,7 @@ export function Sidebar() {
 
   return (
     <figure ref={frame} className={styles.sidebar} style={{ minHeight: floor }} aria-label="The library's sidebar">
-      <p className={`display ${styles.title}`}>OwlLuna</p>
+      <p className={`app-display ${styles.title}`}>OwlLuna</p>
 
       <ul className={styles.rows}>
         <li className={`cloth ${styles.row} ${styles.chosen}`}>
@@ -54,7 +54,7 @@ export function Sidebar() {
         </li>
       </ul>
 
-      <p className={`meta ${styles.head}`}>Shelves</p>
+      <p className={`caps ${styles.head}`}>Shelves</p>
       <ul className={styles.rows}>
         <li>
           <button type="button" className={`${styles.row} ${styles.folder}`} aria-expanded={open} aria-controls={list} aria-label="University, 12 notebooks, folder" onClick={toggle}>
@@ -97,7 +97,7 @@ export function Sidebar() {
         </li>
       </ul>
 
-      <p className={`meta ${styles.head}`}>Smart shelves</p>
+      <p className={`caps ${styles.head}`}>Smart shelves</p>
       <ul className={styles.rows}>
         <li className={styles.row}>
           <svg className={styles.icon} viewBox="0 0 20 20" aria-hidden="true">
@@ -108,7 +108,7 @@ export function Sidebar() {
         </li>
       </ul>
 
-      <p className={`meta ${styles.head}`}>Tags</p>
+      <p className={`caps ${styles.head}`}>Tags</p>
       <ul className={styles.tags}>
         {tags.map((tag) => (
           <li key={tag} className={`print ${styles.tag}`}>

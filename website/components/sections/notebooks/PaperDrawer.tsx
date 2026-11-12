@@ -31,7 +31,7 @@ export function PaperDrawer() {
     <Panel title="Paper drawer" note={colour.name}>
       <div ref={root} className={styles.drawer} data-ink={colour.ink} style={{ '--p-fill': colour.fill } as CSSProperties}>
         <div className={styles.colours}>
-          <p className={`meta ${styles.label}`} id={label}>
+          <p className={`caps ${styles.label}`} id={label}>
             Colour
           </p>
           <div className={styles.swatches} role="group" aria-labelledby={label}>
@@ -63,7 +63,7 @@ export function PaperDrawer() {
         <div className={styles.tray}>
           {families.map((family) => (
             <div key={family.name} className={styles.bay} style={{ '--n': family.templates.length } as CSSProperties}>
-              <h4 className={`meta ${styles.label}`}>{family.name}</h4>
+              <h4 className={`caps ${styles.label}`}>{family.name}</h4>
               <ul className={styles.sheets}>
                 {family.templates.map((template) => {
                   const index = order.get(template.name) ?? 0

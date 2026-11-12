@@ -139,7 +139,7 @@
 }
 
 .leafDay {
-  font-family: var(--font-display);
+  font-family: var(--font-app);
   font-size: 46px;
   font-weight: 600;
   font-variant-numeric: lining-nums tabular-nums;

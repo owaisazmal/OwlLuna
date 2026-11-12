@@ -1,9 +1,9 @@
 'use client'
 
 import archivo from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2' with { turbopackModuleType: 'asset' }
-import fraunces from '@fontsource-variable/fraunces/files/fraunces-latin-full-normal.woff2' with { turbopackModuleType: 'asset' }
+import franklin from '@fontsource-variable/libre-franklin/files/libre-franklin-latin-wght-normal.woff2' with { turbopackModuleType: 'asset' }
 
-const files = { fraunces, archivo }
+const files = { franklin, archivo }
 
 /** Fetches a file of `app/fonts.css` with the page. A client component, so prefetching a page does not fetch its fonts. */
 export function FontPreload({ font }: { font: keyof typeof files }) {

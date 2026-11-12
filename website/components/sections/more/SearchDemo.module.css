@@ -304,14 +304,14 @@
 }
 
 .pdfHead {
-  font-family: var(--font-display);
+  font-family: var(--font-app);
   font-size: calc(var(--u) * 10.5);
   font-weight: 600;
   line-height: 1.2;
 }
 
 .pdfBody {
-  font-family: var(--font-display);
+  font-family: var(--font-app);
   font-size: calc(var(--u) * 8);
   line-height: calc(var(--u) * 12);
   color: var(--text-secondary);

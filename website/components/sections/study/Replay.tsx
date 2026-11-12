@@ -166,8 +166,8 @@ export function Replay() {
 
         <div className={styles.transcript}>
           <div className={styles.transcriptHead}>
-            <span className="meta">Transcript</span>
-            <span className="meta">Made on the device</span>
+            <span className="caps">Transcript</span>
+            <span className="caps">Made on the device</span>
           </div>
           <ol className={styles.said}>
             {spoken.map((line, index) => (
@@ -189,7 +189,7 @@ export function Replay() {
               </li>
             ))}
           </ol>
-          <p className={`meta ${styles.hint}`}>Tap a line to hear it</p>
+          <p className={`caps ${styles.hint}`}>Tap a line to hear it</p>
         </div>
       </div>
       <figcaption className={`meta ${styles.caption}`}>Tap a line of ink to jump the sound to the moment it was written.</figcaption>

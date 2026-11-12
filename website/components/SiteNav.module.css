@@ -31,9 +31,9 @@
 
 .name {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 800;
   font-size: 1.32rem;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.03em;
 }
 
 .links {
@@ -136,10 +136,8 @@
 .cardBand {
   padding: var(--x2) var(--x4);
   border-bottom: var(--line) solid var(--outline);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.95rem;
+  font-weight: 800;
 }
 
 .card li + li {

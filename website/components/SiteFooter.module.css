@@ -26,8 +26,9 @@
 
 .name {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 800;
   font-size: 1.6rem;
+  letter-spacing: -0.03em;
 }
 
 .line {

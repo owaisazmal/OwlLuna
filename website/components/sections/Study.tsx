@@ -82,12 +82,12 @@ export function Study() {
               <Reveal className={styles.art} tilt={-1.5}>
                 <div className={styles.guide}>
                   <div className={styles.leaf}>
-                    <p className="meta">What a study guide gives you</p>
-                    <p className={`display ${styles.leafTitle}`}>Key Points</p>
+                    <p className="caps">What a study guide gives you</p>
+                    <p className={`app-display ${styles.leafTitle}`}>Key Points</p>
                     <ol className={styles.keys} role="list">
                       {keyPoints.map((point, index) => (
                         <li key={point} className={styles.key}>
-                          <span className={`display ${styles.numeral}`} aria-hidden="true">
+                          <span className={`app-display ${styles.numeral}`} aria-hidden="true">
                             {index + 1}
                           </span>
                           <span>{point}</span>

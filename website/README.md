@@ -58,7 +58,7 @@ The look follows [docs/DESIGN.md](../docs/DESIGN.md). Printed things (tiles, cov
 
 ## Fonts
 
-Fraunces, Archivo and Bricolage Grotesque, the same three the app bundles, come from the `@fontsource-variable` packages and are served from the site. All three are under the SIL Open Font License; the licence texts are in [OwlLuna/Resources/Fonts](../OwlLuna/Resources/Fonts).
+Libre Franklin sets the site's own text. Fraunces, Archivo and Bricolage Grotesque, the three the app bundles, appear only in the hero and in pictures of the app (`--font-app`, `.app-display`, `.caps`). All four come from the `@fontsource-variable` packages and are served from the site, under the SIL Open Font License. The app's three licence texts are in [OwlLuna/Resources/Fonts](../OwlLuna/Resources/Fonts); Libre Franklin's comes with its package.
 
 ## Publishing
 

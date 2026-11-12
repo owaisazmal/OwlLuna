@@ -35,7 +35,7 @@
   flex-direction: column;
   justify-content: center;
   padding: var(--x4) var(--x5) var(--x5);
-  font-family: var(--font-display);
+  font-family: var(--font-app);
   font-size: 1.1rem;
   line-height: var(--pitch);
   text-align: center;

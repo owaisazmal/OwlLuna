@@ -301,7 +301,7 @@ struct ShelfRule: View {
 }
 
 /// A square box, ticked in mustard when its row is chosen: never colour alone.
-private struct SelectionBox: View {
+struct SelectionBox: View {
     let isSelected: Bool
 
     var body: some View {

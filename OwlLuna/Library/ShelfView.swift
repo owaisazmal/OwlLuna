@@ -824,7 +824,7 @@ struct ShelfView: View {
                             if DocumentScan.isAvailable {
                                 Button(action: startScan) { Label("Scan Documents…", systemImage: "doc.viewfinder") }
                             }
-                            if let folder {
+                            if folder != nil {
                                 MenuBreak()
                                 Button { addingFromNew = true } label: { Label("Add Notebooks…", systemImage: "books.vertical") }
                                     .accessibilityIdentifier("library.new.addNotebooks")

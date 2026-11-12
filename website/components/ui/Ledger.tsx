@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import styles from './Ledger.module.css'
 
-/** The app's Ledger: one board for a run of rows, ruled in ink, under a well band that names the run. */
+/** A run of rows ruled in ink, under a heavy rule and the run's name. */
 export function Ledger({ title, children, className }: { title?: string; children: ReactNode; className?: string }) {
   return (
     <div className={[styles.ledger, className].filter(Boolean).join(' ')}>
