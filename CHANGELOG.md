@@ -6,19 +6,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.0.0-build.6] - 2026-11-12
+
 ### Added
 
 - Pages can be shown one at a time, turned with a swipe left or right, from ⋯ › Pages › One Page at a Time. Writing, find, select and the zoom window all work as before, and Continuous brings the scrolling stack back. The choice is kept for every notebook.
 - A PDF can be shared to OwlLuna from Files or another app, dragged from Files onto the shelf, or dropped on OwlLuna's icon in the Dock. It comes in as Import PDF does, into the shelf on show, asking for a password if it has one and saying so if it can't be read. The original file is left where it was.
+- Add Notebooks… puts notebooks you already have on a shelf. It is in the shelf's held menu in the sidebar, in New's choices while the shelf is on show, and on the shelf while it is empty. It lists the notebooks not on that shelf, those on no shelf first, and a search narrows them by title, tag or shelf. The ones you tick move together, and Undo puts them back.
+- Move to Shelf, beside Tags… in the editor's ⋯ menu and in a tab's held menu, moves the open notebook onto any shelf or off them all.
+- A notebook dragged over a shelf in the sidebar and held there opens that shelf, so it can be dropped among the notebooks on it. On a folded iPhone Duo a notebook can be dropped on a shelf's tab.
 
 ### Changed
 
 - New in the library bar has a chevron beside it that opens its choices with a tap: New Notebook, Quick Note, Whiteboard, Import PDF and Scan Documents. A tap on New still starts a notebook and holding it still opens the same card. On a folded iPhone Duo the chevron sits under New. A bar too narrow for it, as on an iPhone, keeps the plain New button.
+- Spine Colour shows each cloth's colour beside its name, with the shelf's own ticked.
 
 ### Fixed
 
 - Backups saved in Files can be selected for restore even when their storage provider reports a generic file type. The contents are checked before anything is added to the library.
 - A palm resting on the page no longer opens PencilKit's Select All and Insert Space menu over handwriting. The menu opens for one fingertip held still, and never for a wide touch, a second finger or the hand holding the Pencil.
+- An empty shelf's two buttons stand one over the other when the screen is too narrow for both names, instead of cutting them short.
 
 ## [1.0.0-build.5] - 2026-11-02
 
@@ -215,7 +222,8 @@ The first build for TestFlight testers. No accounts, no ads and no tracking.
 
 - The app is now called OwlLuna. Notebooks and backups from before the rename still open.
 
-[Unreleased]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.5...HEAD
+[Unreleased]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.6...HEAD
+[1.0.0-build.6]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.5...v1.0.0-build.6
 [1.0.0-build.5]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.4...v1.0.0-build.5
 [1.0.0-build.4]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.3...v1.0.0-build.4
 [1.0.0-build.3]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.2...v1.0.0-build.3

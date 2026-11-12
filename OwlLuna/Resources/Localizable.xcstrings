@@ -7344,7 +7344,26 @@
       }
     },
     "All" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous"
+          }
+        }
+      }
     },
     "All %lld pages" : {
       "localizations" : {
@@ -11301,7 +11320,26 @@
       }
     },
     "Deleted" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gelöscht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminados"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimés"
+          }
+        }
+      }
     },
     "Deleted a flashcard" : {
       "localizations" : {
@@ -28137,7 +28175,26 @@
       }
     },
     "Shows every shelf, to add, rename or move them" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt alle Regale, zum Hinzufügen, Umbenennen oder Verschieben"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muestra todos los estantes, para añadir más, cambiarles el nombre o moverlos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Affiche toutes les étagères, pour en ajouter, les renommer ou les déplacer"
+          }
+        }
+      }
     },
     "Shows it" : {
       "localizations" : {
@@ -35952,7 +36009,26 @@
       }
     },
     "Type its password to use it as paper." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib sein Passwort ein, um es als Papier zu verwenden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribe su contraseña para usarlo como papel."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez son mot de passe pour l’utiliser comme papier."
+          }
+        }
+      }
     },
     "Typeface" : {
       "localizations" : {
@@ -36499,7 +36575,26 @@
       }
     },
     "View As" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anzeigen als"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver como"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher sous forme de"
+          }
+        }
+      }
     },
     "VOL." : {
       "localizations" : {
