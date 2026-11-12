@@ -981,7 +981,7 @@ struct ShelfView: View {
                        illustration: { ShelfIllustration(cloth: nil) })
         } else if case .folder = scope, let folder {
             EmptyShelf(title: String(localized: "Nothing on \(folder.name) yet."),
-                       message: String(localized: "Drag notebooks onto \(folder.name) in the sidebar, or start one here.")) {
+                       message: String(localized: "Start a notebook here, or add ones you already have.")) {
                 Button("New Notebook", action: onCreate).buttonStyle(.owlLuna(.primary))
                 Button("Add Notebooks…") { addingFromEmpty = true }
                     .buttonStyle(.owlLuna(.secondary))

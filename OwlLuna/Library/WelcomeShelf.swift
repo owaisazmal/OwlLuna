@@ -138,8 +138,16 @@ struct EmptyShelf<Actions: View, Illustration: View>: View {
                 .displayTextFont(17, relativeTo: .body)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Color.textSecondary)
-            (dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: Space.x3)) : AnyLayout(HStackLayout(spacing: Space.x3))) {
-                actions
+            Group {
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(spacing: Space.x3) { actions }
+                } else {
+                    // Side by side where both names fit whole, as on a phone's narrow shelf they may not.
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: Space.x3) { actions }
+                        VStack(spacing: Space.x3) { actions }
+                    }
+                }
             }
             .controlSize(.large)
         }

@@ -30,6 +30,7 @@ struct TabStrip: View {
     /// Moves a tab's notebook into a pane beside the first. Nil when the window has no room for one, or has one already.
     let openBeside: ((UUID) -> Void)?
     @Environment(EditorWindow.self) private var window
+    @Environment(LibraryStore.self) private var store
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(filter: #Predicate<NotebookRecord> { $0.deletedAt == nil }) private var records: [NotebookRecord]
     @Namespace private var thumb
@@ -127,7 +128,7 @@ struct TabStrip: View {
         .contentShape(.hoverEffect, RoundedRectangle.thumb.inset(by: 4))
         .hoverEffect(.highlight)
         .overlay { if dropTarget == id, dragging != id { insertionRule(at: index, of: count) } }
-        .heldMenu(Text(title), draggable: true) { menu(for: id, at: index, of: count) }
+        .heldMenu(Text(title), draggable: true) { menu(for: id, record: record, at: index, of: count) }
         .onDrag {
             dragging = id
             let provider = NSItemProvider()
@@ -163,7 +164,7 @@ struct TabStrip: View {
     }
 
     @ViewBuilder
-    private func menu(for id: UUID, at index: Int, of count: Int) -> some View {
+    private func menu(for id: UUID, record: NotebookRecord?, at index: Int, of count: Int) -> some View {
         if let openBeside {
             Button { openBeside(id) } label: { Label("Open Beside", systemImage: "rectangle.split.2x1") }
         }
@@ -172,6 +173,13 @@ struct TabStrip: View {
         }
         if index < count - 1 {
             Button { move(id, to: index + 1) } label: { Label("Move Right", systemImage: "arrow.right") }
+        }
+        if let record, !record.isReadOnly {
+            MenuBreak()
+            MoveToShelfMenu(current: record.folder?.id) { folder in
+                store.move([record], to: folder)
+                AccessibilityNotification.Announcement(folder.map { String(localized: "Moved to \($0.name)") } ?? String(localized: "Taken off its shelf")).post()
+            }
         }
         MenuBreak()
         Button { closeOthers(id) } label: { Label("Close Other Tabs", systemImage: "xmark.rectangle") }

@@ -11785,28 +11785,6 @@
         }
       }
     },
-    "Drag notebooks onto %@ in the sidebar, or start one here." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ziehe Notizbücher in der Seitenleiste auf %@ oder beginne hier ein neues."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Arrastra cuadernos a %@ en la barra lateral o empieza uno aquí."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Faites glisser des carnets sur %@ dans la barre latérale, ou commencez-en un ici."
-          }
-        }
-      }
-    },
     "Drop to import" : {
       "localizations" : {
         "de" : {
@@ -28927,6 +28905,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Commencer un journal"
+          }
+        }
+      }
+    },
+    "Start a notebook here, or add ones you already have." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beginne hier ein neues Notizbuch oder füge vorhandene hinzu."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empieza un cuaderno aquí o añade los que ya tienes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencez un carnet ici, ou ajoutez ceux que vous avez déjà."
           }
         }
       }

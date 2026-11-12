@@ -27,6 +27,7 @@ struct ThumbIndex: View {
     @Environment(\.undoManager) private var undoManager
     @Query(sort: \FolderRecord.sortIndex) private var folders: [FolderRecord]
     @Query(filter: #Predicate<NotebookRecord> { $0.deletedAt == nil }) private var notebooks: [NotebookRecord]
+    @State private var adding = false
 
     /// How far the chosen tab stands out over the shelf.
     private static let standOut: CGFloat = 8
@@ -71,7 +72,8 @@ struct ThumbIndex: View {
     }
 
     private var newMenu: some View {
-        OwlLunaMenu(split: .below(Text("New Menu"))) {
+        let folder: FolderRecord? = if case .folder(let id) = scope { folders.first { $0.id == id } } else { nil }
+        return OwlLunaMenu(split: .below(Text("New Menu"))) {
             Button(action: onCreate) { Label("New Notebook", systemImage: "book.closed") }
             Button(action: onQuickNote) { Label("Quick Note", systemImage: "square.and.pencil") }
             Button(action: onWhiteboard) { Label("Whiteboard", systemImage: "scribble.variable") }
@@ -79,12 +81,20 @@ struct ThumbIndex: View {
             if DocumentScan.isAvailable {
                 Button { requests.scan = true } label: { Label("Scan Documents…", systemImage: "doc.viewfinder") }
             }
+            if folder != nil {
+                MenuBreak()
+                Button { adding = true } label: { Label("Add Notebooks…", systemImage: "books.vertical") }
+                    .accessibilityIdentifier("index.new.addNotebooks")
+            }
         } label: {
             Label("New", systemImage: "plus").labelStyle(.iconOnly)
         } primaryAction: {
             onCreate()
         }
         .accessibilityIdentifier("index.new")
+        .addToShelf(folder, isPresented: $adding) { moved in
+            if let folder { changes.move(moved, to: folder, in: store, undoManager: undoManager) }
+        }
     }
 
     /// A folder's tab, then those of the folders inside it while the chosen place is somewhere among them.

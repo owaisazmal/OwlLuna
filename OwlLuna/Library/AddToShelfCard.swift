@@ -68,6 +68,7 @@ struct AddToShelfCard: View {
         }
         .scrollBounceBehavior(.basedOnSize)
         .scrollDismissesKeyboard(.immediately)
+        .scrollIndicatorsFlash(onAppear: true)
     }
 
     @ViewBuilder
@@ -102,6 +103,7 @@ struct AddToShelfCard: View {
             .padding(.vertical, -Space.x2)
         }
         .sectionBand()
+        .background(Color.surface)
     }
 
     private func row(_ record: NotebookRecord, tree: FolderTree) -> some View {
