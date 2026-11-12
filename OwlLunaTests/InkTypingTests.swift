@@ -81,9 +81,9 @@ final class InkTypingTests: XCTestCase {
     func testShortWordsAreReadHoweverTheyAreFramed() async throws {
         struct Unfinished: Error, CustomStringConvertible {
             let word: String
-            var description: String { "Vision did not finish reading \(word) within 60 s" }
+            var description: String { "Vision did not finish reading \(word) within 3 minutes" }
         }
-        // Vision has no timeout of its own: starved of CPU on a slow runner, a reading never comes back.
+        // Vision has no timeout of its own, and on a slow runner one reading in a run can take a minute and a half.
         func read(_ word: String) async throws -> String? {
             let piece = PKDrawing(strokes: BlockLetters.strokes(word, origin: CGPoint(x: 100, y: 140)))
             let finished = expectation(description: "Vision finished reading \(word)")
@@ -92,7 +92,7 @@ final class InkTypingTests: XCTestCase {
                 finished.fulfill()
                 return text?.uppercased()
             }
-            guard await XCTWaiter.fulfillment(of: [finished], timeout: 60) == .completed else { throw Unfinished(word: word) }
+            guard await XCTWaiter.fulfillment(of: [finished], timeout: 180) == .completed else { throw Unfinished(word: word) }
             return await reading.value
         }
         guard try await read("HELLO") == "HELLO" else { throw XCTSkip("Vision's text recogniser can't read block letters here") }

@@ -106,6 +106,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Before the simulator boots: its first boot keeps the runner busy, and the download then takes minutes.
+      - uses: actions/download-artifact@v8
+        with:
+          name: products
+          path: ${{ runner.temp }}
+
       - name: Boot an iPad simulator
         if: matrix.ipad
         uses: ./.github/actions/boot-ipad
@@ -131,12 +137,6 @@ jobs:
           fi
           echo "::notice title=iPadOS $IOS skipped::This runner image has no iOS $IOS simulator runtime (it has ${runtimes:-none})."
 
-      - uses: actions/download-artifact@v8
-        if: env.SIMULATOR_UDID != ''
-        with:
-          name: products
-          path: ${{ runner.temp }}
-
       - name: Unpack the products
         id: products
         if: env.SIMULATOR_UDID != ''
@@ -146,37 +146,24 @@ jobs:
 
       - name: Wait for the simulator
         if: steps.products.outcome == 'success'
-        run: xcrun simctl bootstatus "$SIMULATOR_UDID"
+        run: bash .github/scripts/wait-for-simulator.sh
 
+      # On a slow runner a different test misses a deadline each time, so a test fails the job only if it fails twice:
+      # run-tests.py runs what failed once more in a fresh test runner, and the report lists it as a warning.
       - name: Unit tests
         if: steps.products.outcome == 'success'
-        timeout-minutes: 40
+        timeout-minutes: 50
         run: |
-          set -o pipefail
-          xcodebuild test-without-building \
-            -xctestrun "$XCTESTRUN" \
-            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
-            -only-testing:OwlLunaTests \
-            -parallel-testing-enabled NO \
-            -test-timeouts-enabled YES -default-test-execution-time-allowance 600 \
-            -resultBundlePath "$RUNNER_TEMP/Unit.xcresult" \
-            2>&1 | tee "$RUNNER_TEMP/test.log"
+          python3 .github/scripts/run-tests.py Unit --select "-only-testing:OwlLunaTests" -- \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 600
 
       - name: UI smoke test
-        if: steps.products.outcome == 'success'
+        if: ${{ !cancelled() && steps.products.outcome == 'success' }}
         timeout-minutes: 30
         run: |
-          set -o pipefail
-          xcodebuild test-without-building \
-            -xctestrun "$XCTESTRUN" \
-            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
-            -only-testing:OwlLunaUITests/SliceUITests/testVerticalSlice \
-            -parallel-testing-enabled NO \
+          python3 .github/scripts/run-tests.py Smoke --beautify --select "-only-testing:OwlLunaUITests/SliceUITests/testVerticalSlice" -- \
             -retry-tests-on-failure -test-iterations 2 \
-            -test-timeouts-enabled YES -default-test-execution-time-allowance 600 \
-            -resultBundlePath "$RUNNER_TEMP/Smoke.xcresult" \
-            2>&1 | tee "$RUNNER_TEMP/smoke.log" \
-            | xcbeautify --renderer github-actions
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 600
 
       - name: Report
         if: always() && steps.products.outcome == 'success'
@@ -269,8 +256,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Each line of `runs` is one xcodebuild run. A run that fails is tried once more in a fresh test runner on a
-          # rebooted simulator: a runner session that has gone slow waits a minute for the app to go idle on every step.
+          # Each line of `runs` is one xcodebuild run. The tests that fail in it are run once more in a fresh test runner on
+          # a rebooted simulator: a runner session that has gone slow waits a minute for the app to go idle on every step.
           - part: tests
             runs: |
               -only-testing:OwlLunaUITests -skip-testing:OwlLunaUITests/AccessibilityAuditUITests
@@ -293,13 +280,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Boot an iPad simulator
-        uses: ./.github/actions/boot-ipad
-
       - uses: actions/download-artifact@v8
         with:
           name: products
           path: ${{ runner.temp }}
+
+      - name: Boot an iPad simulator
+        uses: ./.github/actions/boot-ipad
 
       - name: Unpack the products
         run: |
@@ -308,7 +295,7 @@ jobs:
           echo "XCTESTRUN=$(ls "$RUNNER_TEMP"/Products/*.xctestrun)" >> "$GITHUB_ENV"
 
       - name: Wait for the simulator
-        run: xcrun simctl bootstatus "$SIMULATOR_UDID"
+        run: bash .github/scripts/wait-for-simulator.sh
 
       - name: Set the appearance
         run: xcrun simctl ui "$SIMULATOR_UDID" appearance ${{ matrix.appearance }}
@@ -319,34 +306,14 @@ jobs:
           ALLOWANCE: ${{ matrix.allowance }}
           APPEARANCE: ${{ matrix.appearance }}
         run: |
-          set -o pipefail
           failed=0
           number=0
           while IFS= read -r selection; do
             [ -n "$selection" ] || continue
             number=$((number + 1))
-            for attempt in 1 2; do
-              if [ "$attempt" = 2 ]; then
-                echo "::warning title=UI run $number tried again::The first run failed, so it runs once more in a fresh test runner on a rebooted simulator."
-                xcrun simctl shutdown "$SIMULATOR_UDID"
-                xcrun simctl boot "$SIMULATOR_UDID"
-                xcrun simctl bootstatus "$SIMULATOR_UDID"
-                xcrun simctl ui "$SIMULATOR_UDID" appearance "$APPEARANCE"
-              fi
-              if xcodebuild test-without-building \
-                -xctestrun "$XCTESTRUN" \
-                -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
-                $selection \
-                -parallel-testing-enabled NO \
-                -retry-tests-on-failure -test-iterations 2 \
-                -test-timeouts-enabled YES -default-test-execution-time-allowance "$ALLOWANCE" \
-                -resultBundlePath "$RUNNER_TEMP/UI-$number-$attempt.xcresult" \
-                2>&1 | tee "$RUNNER_TEMP/ui-$number-$attempt.log" \
-                | xcbeautify --renderer github-actions; then
-                break
-              fi
-              [ "$attempt" = 2 ] && failed=1
-            done
+            python3 .github/scripts/run-tests.py "UI-$number" --beautify --select "$selection" -- \
+              -retry-tests-on-failure -test-iterations 2 \
+              -test-timeouts-enabled YES -default-test-execution-time-allowance "$ALLOWANCE" < /dev/null || failed=1
           done <<< "$RUNS"
           exit $failed
 
@@ -362,4 +329,4 @@ jobs:
           retention-days: 14
           path: |
             ${{ runner.temp }}/*.log
-            ${{ runner.temp }}/UI.xcresult
+            ${{ runner.temp }}/*.xcresult

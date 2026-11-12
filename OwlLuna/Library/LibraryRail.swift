@@ -23,6 +23,8 @@ struct ThumbIndex: View {
     let onSettings: () -> Void
     @Environment(LibraryStore.self) private var store
     @Environment(ShelfRequests.self) private var requests
+    @Environment(LibraryChangeCenter.self) private var changes
+    @Environment(\.undoManager) private var undoManager
     @Query(sort: \FolderRecord.sortIndex) private var folders: [FolderRecord]
     @Query(filter: #Predicate<NotebookRecord> { $0.deletedAt == nil }) private var notebooks: [NotebookRecord]
 
@@ -91,6 +93,12 @@ struct ThumbIndex: View {
         let opens: Bool = if case .folder(let chosen) = scope { tree.subtree(id).contains(chosen) } else { false }
         return AnyView(Group {
             tab(.folder(id), title: folder.name, cloth: folder.cloth, depth: depth)
+                .dropDestination(for: NotebookReference.self) { items, _ in
+                    let ids = Set(items.map(\.id))
+                    let moved = notebooks.filter { ids.contains($0.id) }
+                    changes.move(moved, to: folder, in: store, undoManager: undoManager)
+                    return !moved.isEmpty
+                }
             if opens {
                 ForEach(tree.children(of: id), id: \.self) { child in folderTabs(child, depth: depth + 1, tree: tree, byID: byID) }
             }
@@ -125,6 +133,7 @@ struct ThumbIndex: View {
             .contentShape(Self.shape)
         }
         .buttonStyle(.plain)
+        .springLoadingBehavior(.enabled)
         .padding(.leading, indent)
         .accessibilityLabel(Text(title))
         .accessibilityAddTraits(chosen ? .isSelected : [])

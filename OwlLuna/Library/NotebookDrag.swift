@@ -4,9 +4,13 @@ import UniformTypeIdentifiers
 /// What a notebook carries when it is dragged: a reference that the sidebar's folders take, and a PDF for Files, Mail
 /// or another app, written only when a drop asks for it. A locked notebook, or one in Recently Deleted, carries no PDF.
 enum NotebookDrag {
+    /// The notebook lifted last, so a shelf can turn down one of its own while it is dragged across it.
+    @MainActor static var lifted: UUID?
+
     @MainActor
     static func provider(for record: NotebookRecord, root: StorageRoot) -> NSItemProvider {
         let provider = NSItemProvider(), id = record.id
+        lifted = id
         provider.register(NotebookReference(id: id))
         guard offersPDF(record) else { return provider }
         provider.suggestedName = record.title.orUntitled

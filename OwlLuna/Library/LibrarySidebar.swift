@@ -21,6 +21,8 @@ struct LibrarySidebar: View {
     @State private var renamingTag: String?
     @State private var removingTag: String?
     @State private var tagName = ""
+    @State private var hovering: UUID?
+    @State private var addingTo: UUID?
     @AppStorage("sidebar.collapsedFolders") private var collapsedRaw = ""
 
     private var collapsed: Set<UUID> { Set(collapsedRaw.split(separator: ",").compactMap { UUID(uuidString: String($0)) }) }
@@ -62,8 +64,11 @@ struct LibrarySidebar: View {
                             let moved = notebooks.filter { ids.contains($0.id) }
                             changes.move(moved, to: folder, in: store, undoManager: undoManager)
                             return !moved.isEmpty
-                        }
+                        } isTargeted: { springLoad(folder.id, held: $0) }
                         .heldMenu(Text(folder.name)) { folderMenu(folder, tree: tree) }
+                        .addToShelf(folder, isPresented: Binding(get: { addingTo == folder.id }, set: { if !$0 { addingTo = nil } })) {
+                            changes.move($0, to: folder, in: store, undoManager: undoManager)
+                        }
                 }
                 .onMove { store.moveFolders(rows.map(\.folder), from: $0, to: $1) }
                 Button { folderName = ""; creatingInside = nil; creatingFolder = true } label: {
@@ -165,6 +170,16 @@ struct LibrarySidebar: View {
                 }
             }
             .presentationCornerRadius(Radius.sheet)
+        }
+    }
+
+    /// A notebook held over a shelf for a moment opens it, so it can be dropped in among the others there.
+    private func springLoad(_ id: UUID, held: Bool) {
+        if held { hovering = id } else if hovering == id { hovering = nil }
+        guard held, scope != .folder(id) else { return }
+        Task {
+            try? await Task.sleep(for: .milliseconds(700))
+            if hovering == id { scope = .folder(id) }
         }
     }
 
@@ -273,6 +288,7 @@ struct LibrarySidebar: View {
 
     @ViewBuilder
     private func folderMenu(_ folder: FolderRecord, tree: FolderTree) -> some View {
+        Button { addingTo = folder.id } label: { Label("Add Notebooks…", systemImage: "books.vertical") }
         Button { folderName = folder.name; editingFolder = folder } label: { Label("Rename", systemImage: "pencil") }
         if tree.canAddFolder(inside: folder.id) {
             Button { folderName = ""; creatingInside = folder; creatingFolder = true } label: { Label("New Folder Inside", systemImage: "folder.badge.plus") }
@@ -290,9 +306,9 @@ struct LibrarySidebar: View {
         }
         Button { store.sortFoldersByName(folders) } label: { Label("Sort Shelves A to Z", systemImage: "textformat") }
         OwlLunaMenu {
-            ForEach(ClothColor.allCases) { cloth in
-                Button { store.setCloth(cloth, for: folder) } label: {
-                    Label(cloth.displayName, systemImage: folder.cloth == cloth ? "checkmark" : "circle.fill")
+            OwlLunaPicker(selection: Binding(get: { folder.cloth }, set: { store.setCloth($0, for: folder) })) {
+                ForEach(ClothColor.allCases) { cloth in
+                    Label { Text(cloth.displayName) } icon: { SpineChip(cloth: cloth, width: 12) }.tag(cloth)
                 }
             }
         } label: { Label("Spine Colour", systemImage: "paintpalette") }
@@ -404,10 +420,11 @@ private struct SidebarHeader<Buttons: View>: ViewModifier {
 
 struct SpineChip: View {
     let cloth: ClothColor
+    var width: CGFloat = 7
     var body: some View {
         RoundedRectangle(cornerRadius: 1.5)
             .fill(cloth.color)
-            .frame(width: 7, height: 20)
+            .frame(width: width, height: 20)
             .overlay(alignment: .leading) { Rectangle().fill(.black.opacity(0.2)).frame(width: 2) }
             .clipShape(RoundedRectangle(cornerRadius: 1.5))
             .overlay { RoundedRectangle(cornerRadius: 1.5).strokeBorder(RowInk(resting: .hairline), lineWidth: 1) }

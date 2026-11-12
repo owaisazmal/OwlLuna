@@ -108,7 +108,7 @@ def report_bundle(bundle, rerun_passed=False):
             failed.append(line)
         elif messages:
             retried.append(f"{label(case)}: {messages[0][:300]}")
-    # A UI run that failed and then passed in a fresh test runner is a warning, with the first run's failures.
+    # A run whose failed tests then passed in a fresh test runner is a warning, with the first run's failures.
     failures = ("Failed on the first run", "warning") if rerun_passed else ("Failed tests", "error")
     for title, level, lines in ((*failures, failed), ("Passed on a retry", "warning", retried)):
         if lines:
@@ -226,7 +226,7 @@ def main():
     stems = {bundle.stem for bundle in bundles}
     readable = set()
     for bundle in bundles:
-        # UI-<run>-1 is a first attempt; its rerun is UI-<run>-2.
+        # <name>-1 is a first run; <name>-2 is run-tests.py running what failed in it again.
         rerun = folder / f"{bundle.stem[:-2]}-2.xcresult" if bundle.stem.endswith("-1") and f"{bundle.stem[:-2]}-2" in stems else None
         if report_bundle(bundle, rerun_passed=rerun is not None and passed(rerun)):
             readable.add(bundle.stem)

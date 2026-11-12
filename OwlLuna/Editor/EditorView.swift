@@ -718,6 +718,7 @@ fileprivate struct EditorContent: View {
                 let locked = document.manifest.library.isLocked
                 Button { toggleLock() } label: { Label(locked ? "Remove Lock…" : "Lock…", systemImage: locked ? "lock.open" : "lock") }
                 Button { tagging = .notebook } label: { Label("Tags…", systemImage: "tag") }
+                MoveToShelfMenu(current: document.manifest.library.folderID, move: moveToShelf)
             }
             OwlLunaMenu {
                 let here = session.shownPage == nil ? nil : session.currentPage
@@ -1542,6 +1543,12 @@ extension EditorContent {
                 errorMessage = error.localizedDescription
             }
         }
+    }
+
+    private func moveToShelf(_ folder: FolderRecord?) {
+        guard let record = store.record(document.id) else { return }
+        store.move([record], to: folder)
+        AccessibilityNotification.Announcement(folder.map { String(localized: "Moved to \($0.name)") } ?? String(localized: "Taken off its shelf")).post()
     }
 
     fileprivate func toggleLock() {

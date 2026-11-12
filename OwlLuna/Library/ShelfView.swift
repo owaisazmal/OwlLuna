@@ -53,8 +53,10 @@ struct ShelfView: View {
     @State private var selection: Set<UUID> = []
     @State private var importingPDF = false
     @State private var pdfImport: PDFImportRun?
-    /// A PDF is being dragged over the shelf.
-    @State private var droppingPDFs = false
+    /// What is being dragged over the shelf, when the shelf would take it.
+    @State private var dropping: ShelfDrop.Kind?
+    @State private var addingFromEmpty = false
+    @State private var addingFromNew = false
     @State private var scanning = false
     @State private var renaming: NotebookRecord?
     @State private var renameText = ""
@@ -170,12 +172,11 @@ struct ShelfView: View {
         }
         .background(Color.paper)
         .overlay { if visible.isEmpty, !showsTagPages, !searchPending { emptyState } }
-        .overlay { if droppingPDFs { dropHint } }
-        .onDrop(of: scope == .trash ? [] : [.pdf], isTargeted: $droppingPDFs) { providers in
-            guard providers.contains(where: { $0.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) }) else { return false }
+        .overlay { if let dropping { dropHint(dropping) } }
+        .onDrop(of: [.notebookReference, .pdf], delegate: ShelfDrop(takesPDFs: scope != .trash, dropping: $dropping,
+                                                                     takesNotebook: takesNotebook, moveHere: moveHere) { providers in
             Task { importPDFs(.success(await IncomingPDFs.receive(providers))) }
-            return true
-        }
+        })
         .safeAreaInset(edge: .top, spacing: 0) {
             if verticalBar != nil {
                 HStack(spacing: Space.x2) {
@@ -284,14 +285,28 @@ struct ShelfView: View {
         .task { importLaunchPDFs() }
     }
 
-    /// Over the shelf while a PDF is held over it: where it will go.
-    private var dropHint: some View {
+    /// A notebook can be dropped on the shelf on show when it isn't on it, or on a shelf inside it, already.
+    private func takesNotebook(_ id: UUID?) -> Bool {
+        guard case .folder(let shelf) = scope else { return false }
+        guard let id, let record = records.first(where: { $0.id == id }) else { return true }
+        return !record.isTrashed && !(record.folder.map { tree.subtree(shelf).contains($0.id) } ?? false)
+    }
+
+    private func moveHere(_ ids: [UUID]) {
+        guard let folder else { return }
+        let moved = records.filter { ids.contains($0.id) && takesNotebook($0.id) }
+        if !moved.isEmpty { move(moved, to: folder) }
+    }
+
+    /// Over the shelf while something it takes is held over it: where it will go.
+    private func dropHint(_ kind: ShelfDrop.Kind) -> some View {
         ZStack {
             Color.accentColor.opacity(0.08)
             VStack(spacing: Space.x3) {
-                Image(systemName: "doc.richtext")
+                Image(systemName: kind == .notebooks ? "books.vertical" : "doc.richtext")
                     .font(.title)
-                Text(folder.map { String(localized: "Drop to import into \($0.name)") } ?? String(localized: "Drop to import"))
+                Text(kind == .notebooks ? String(localized: "Drop to put on \(folder?.name ?? "")")
+                     : folder.map { String(localized: "Drop to import into \($0.name)") } ?? String(localized: "Drop to import"))
                     .displayFont(22, relativeTo: .title2)
                     .multilineTextAlignment(.center)
             }
@@ -809,12 +824,18 @@ struct ShelfView: View {
                             if DocumentScan.isAvailable {
                                 Button(action: startScan) { Label("Scan Documents…", systemImage: "doc.viewfinder") }
                             }
+                            if let folder {
+                                MenuBreak()
+                                Button { addingFromNew = true } label: { Label("Add Notebooks…", systemImage: "books.vertical") }
+                                    .accessibilityIdentifier("library.new.addNotebooks")
+                            }
                         } label: {
                             Label("New", systemImage: "plus").symbolOnly(compactActions)
                         } primaryAction: {
                             onCreate()
                         }
                         .buttonStyle(.owlLuna(.primary, inBar: true))
+                        .addToShelf(folder, isPresented: $addingFromNew) { if let folder { move($0, to: folder) } }
                     }
                 }
                 .buttonStyle(.owlLuna(.secondary, inBar: true))
@@ -858,14 +879,7 @@ struct ShelfView: View {
             Button { changes.setFavorite(!record.isFavorite, for: [record], in: store, undoManager: undoManager) } label: {
                 Label(record.isFavorite ? "Unfavourite" : "Favourite", systemImage: record.isFavorite ? "star.slash" : "star")
             }
-            OwlLunaMenu {
-                Button { move([record], to: nil) } label: { Label("Not on a shelf", systemImage: record.folder == nil ? "checkmark" : "tray") }
-                ForEach(folders) { folder in
-                    Button { move([record], to: folder) } label: {
-                        Label(tree.path(of: folder.id), systemImage: record.folder?.id == folder.id ? "checkmark" : "folder")
-                    }
-                }
-            } label: { Label("Move to Shelf", systemImage: "folder") }
+            MoveToShelfMenu(current: record.folder?.id) { move([record], to: $0) }
             Button {
                 Task { do { try await store.duplicate(record) } catch { errorMessage = error.localizedDescription } }
             } label: { Label("Duplicate", systemImage: "plus.square.on.square") }
@@ -965,10 +979,14 @@ struct ShelfView: View {
             EmptyShelf(title: String(localized: "Nothing on this shelf yet."),
                        message: String(localized: "Notebooks and pages stand here once their tags match the shelf's."),
                        illustration: { ShelfIllustration(cloth: nil) })
-        } else if case .folder = scope, let name = folder?.name {
-            EmptyShelf(title: String(localized: "Nothing on \(name) yet."),
-                       message: String(localized: "Drag notebooks onto \(name) in the sidebar, or start one here.")) {
+        } else if case .folder = scope, let folder {
+            EmptyShelf(title: String(localized: "Nothing on \(folder.name) yet."),
+                       message: String(localized: "Drag notebooks onto \(folder.name) in the sidebar, or start one here.")) {
                 Button("New Notebook", action: onCreate).buttonStyle(.owlLuna(.primary))
+                Button("Add Notebooks…") { addingFromEmpty = true }
+                    .buttonStyle(.owlLuna(.secondary))
+                    .accessibilityIdentifier("shelf.addNotebooks")
+                    .addToShelf(folder, isPresented: $addingFromEmpty) { move($0, to: folder) }
             } illustration: {
                 ShelfIllustration(cloth: nil)
             }
@@ -1047,5 +1065,67 @@ private extension View {
     /// Just the symbol, its name still read out, when `on`.
     @ViewBuilder func symbolOnly(_ on: Bool) -> some View {
         if on { labelStyle(.iconOnly) } else { self }
+    }
+}
+
+/// What a shelf takes. A notebook dragged onto a shelf it isn't on goes onto it; a PDF from elsewhere comes in. A notebook
+/// carries a PDF too, for other apps, so the library never takes one of its own for a file to import.
+struct ShelfDrop: DropDelegate {
+    enum Kind { case notebooks, pdfs }
+
+    let takesPDFs: Bool
+    @Binding var dropping: Kind?
+    let takesNotebook: @MainActor (UUID?) -> Bool
+    let moveHere: @MainActor ([UUID]) -> Void
+    let importPDFs: @MainActor ([NSItemProvider]) -> Void
+
+    private func kind(_ info: DropInfo) -> Kind? {
+        if info.hasItemsConforming(to: [.notebookReference]) {
+            return takesNotebook(NotebookDrag.lifted) ? .notebooks : nil
+        }
+        return takesPDFs && info.hasItemsConforming(to: [.pdf]) ? .pdfs : nil
+    }
+
+    func validateDrop(info: DropInfo) -> Bool { kind(info) != nil }
+
+    func dropEntered(info: DropInfo) { dropping = kind(info) }
+
+    func dropExited(info: DropInfo) { dropping = nil }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        switch kind(info) {
+        case .notebooks: DropProposal(operation: .move)
+        case .pdfs: DropProposal(operation: .copy)
+        case nil: DropProposal(operation: .forbidden)
+        }
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        let kind = kind(info)
+        dropping = nil
+        switch kind {
+        case .notebooks:
+            let providers = info.itemProviders(for: [.notebookReference])
+            Task { @MainActor in
+                var ids: [UUID] = []
+                for provider in providers {
+                    if let reference = await provider.notebookReference() { ids.append(reference.id) }
+                }
+                moveHere(ids)
+            }
+        case .pdfs:
+            importPDFs(info.itemProviders(for: [.pdf]))
+        case nil:
+            return false
+        }
+        return true
+    }
+}
+
+private extension NSItemProvider {
+    @MainActor func notebookReference() async -> NotebookReference? {
+        await withCheckedContinuation { done in
+            _ = loadTransferable(type: NotebookReference.self) { done.resume(returning: try? $0.get()) }
+        }
     }
 }
