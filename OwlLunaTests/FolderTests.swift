@@ -70,6 +70,12 @@ final class FolderTests: XCTestCase {
         XCTAssertTrue(tree.rows().allSatisfy { $0.depth == 0 })
     }
 
+    func testNamesakesAtTheSamePlaceKeepTheirOrder() {
+        let one = node("Test", 0), two = node("Test", 0), child = node("Inside", 1, in: one)
+        let trees = (0..<40).map { FolderTree($0.isMultiple(of: 2) ? [one, two, child] : [two, child, one]) }
+        XCTAssertEqual(Set(trees.map { $0.rows().map(\.id) }).count, 1, "the sidebar doesn't swap them as it redraws")
+    }
+
     func testFoldersNestMoveAndAreDeletedWithoutLosingAnything() async throws {
         let store = try makeStore()
         let science = try XCTUnwrap(store.createFolder(name: "Science", cloth: .jade))

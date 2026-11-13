@@ -34,7 +34,10 @@ struct FolderTree: Sendable {
             children[key]?.sort { a, b in
                 let first = nodes[a]!, second = nodes[b]!
                 if first.sortIndex != second.sortIndex { return first.sortIndex < second.sortIndex }
-                return first.name.localizedStandardCompare(second.name) == .orderedAscending
+                let byName = first.name.localizedStandardCompare(second.name)
+                // Two devices can number their folders alike; the ID keeps namesakes from swapping on every redraw.
+                if byName != .orderedSame { return byName == .orderedAscending }
+                return a.uuidString < b.uuidString
             }
         }
     }
