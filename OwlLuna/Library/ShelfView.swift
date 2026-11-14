@@ -602,6 +602,14 @@ struct ShelfView: View {
     private func groups(_ visible: [NotebookRecord]) -> [Shelf] {
         guard !visible.isEmpty else { return [] }
         if !searchText.isEmpty { return [Shelf(id: "results", title: String(localized: "Results"), records: visible)] }
+        let (favourites, rest) = ShelfGrouping.favouritesFirst(visible, in: scope)
+        let top = favourites.isEmpty ? [] : [Shelf(id: "favourites", title: String(localized: "Favourites"), records: favourites)]
+        return top + filed(rest)
+    }
+
+    /// The shelves the notebooks stand on: one in title order, one per folder, or by when they were last used.
+    private func filed(_ visible: [NotebookRecord]) -> [Shelf] {
+        guard !visible.isEmpty else { return [] }
         if scope == .trash || sort == .title {
             return [Shelf(id: "all", title: sort == .title ? sort.directionName(reversed: sortReversed) : title, records: visible)]
         }
@@ -983,7 +991,7 @@ struct ShelfView: View {
             EmptyShelf(title: String(localized: "Nothing in the bin"), message: String(localized: "Deleted notebooks stay here for \(trashLength.days) days."))
         } else if scope == .favorites {
             EmptyShelf(title: String(localized: "No favourites yet"), message: String(localized: "Touch and hold a notebook, then choose Favourite."),
-                       illustration: { RibbonIllustration() })
+                       illustration: { FlagIllustration() })
         } else if case .tag(let name) = scope {
             EmptyShelf(title: String(localized: "Nothing tagged “\(name)”."),
                        message: String(localized: "Tag a notebook or a page with it and it stands here."),

@@ -123,6 +123,31 @@ final class LibraryShelfTests: XCTestCase {
         await store.finishWritingNotebooks()
     }
 
+    // MARK: Favourites first
+
+    func testFavouritesStandFirstExceptInFavouritesAndRecentlyDeleted() async throws {
+        let store = try makeStore()
+        let optics = try await makeNotebook("Optics", in: store)
+        let waves = try await makeNotebook("Waves", in: store, favorite: true)
+        let atoms = try await makeNotebook("Atoms", in: store)
+        let lenses = try await makeNotebook("Lenses", in: store, favorite: true)
+        let shown = [optics, waves, atoms, lenses]
+
+        func split(_ scope: LibraryScope) -> [[String]] {
+            let shelves = ShelfGrouping.favouritesFirst(shown, in: scope)
+            return [shelves.favourites.map(\.title), shelves.rest.map(\.title)]
+        }
+
+        for scope in [LibraryScope.all, .folder(UUID()), .tag("exam"), .smart(UUID())] {
+            XCTAssertEqual(split(scope), [["Waves", "Lenses"], ["Optics", "Atoms"]], "each keeps the order it was shown in, \(scope)")
+        }
+        for scope in [LibraryScope.favorites, .trash] {
+            XCTAssertEqual(split(scope), [[], ["Optics", "Waves", "Atoms", "Lenses"]], "\(scope)")
+        }
+        XCTAssertTrue(ShelfGrouping.favouritesFirst([optics, atoms], in: .all).favourites.isEmpty)
+        await store.finishWritingNotebooks()
+    }
+
     // MARK: Tags
 
     func testTagsAreAddedAndTakenOffAcrossNotebooksEachKeepingItsOthers() async throws {

@@ -9,7 +9,7 @@ The look is Clothbound: the library is a shelf of cloth-bound notebooks, and the
 - We draw our own menus, alerts, lists, switches, progress and empty states. Only the library sidebar (a `List`, for its selection and drag and drop) and the share sheet are system.
 - Cut square. Controls use the corner scale below, never capsules.
 - Each control lives in one place. The exceptions: the tool tray's shortcuts are also in the Add and More menus, and a text box's Bold, Italic and Underline are on its Text Style card and in the arrange bar where it has room.
-- Colour never carries meaning alone. Favourites get a ribbon and a spoken label, selection gets stitching and a check mark, and a wash that marks something has an edge too.
+- Colour never carries meaning alone. Favourites get a starred flag and a spoken label, selection gets stitching and a check mark, and a wash that marks something has an edge too.
 - Printed matter keeps its colours at night: covers, labels, tags, stickers, index cards, the splash tiles.
 
 ## Colour tokens
@@ -26,7 +26,7 @@ Tokens live in `OwlLuna/Assets.xcassets` with light, dark and Increase Contrast 
 | InkSecondary | `#5A6070` | `#A8A194` | Thumb and knob edges with Increase Contrast |
 | AccentColor | `#2747B8` | `#8FA8FF` | Cobalt ink: tint, links, focus, the tool in hand |
 | SidebarTint | `#2747B8` | `#4466DD` | Sidebar icons on Surface (3:1) |
-| Tomato | `#C9452F` | `#FF7B61` | Favourite ribbon, recording, destructive icons |
+| Tomato | `#C9452F` | `#FF7B61` | Favourite flag, recording, destructive icons |
 | OnTomato | `#FFFFFF` | `#181613` | Text on Tomato. White fails on dark tomato (2.5:1) |
 | Mustard | `#E8B023` | `#F0BE45` | Highlights, stitched selection, chosen tags |
 | OnMustard | `#1B2230` | `#1B2230` | Text on Mustard |
@@ -66,7 +66,7 @@ The fonts are bundled unmodified from google/fonts in `OwlLuna/Resources/Fonts`,
 - Spacing: a 4 pt grid, `Space.x1` (4) to `Space.x12` (48).
 - Corners (`Radius`, and the shapes `RoundedRectangle.plate`, `.thumb`, `.track`, `.bar`): `plate` 4 for buttons, chips, fields, cards, menus and notices; `thumb` 3 for what slides inside something; `track` 6 for the well it slides in; `bar` 8 for boards floating over a page; `sheet` 12, which every `.sheet` gets through `.presentationCornerRadius(Radius.sheet)`. No other radii for controls.
 - Covers: 3:4. Spine corners 1.3% of the width and fore-edge corners 3.5% in the renderer; `Radius.coverSpine` and `Radius.coverEdge` in SwiftUI.
-- Motion: `Motion.standard` (0.18 s ease-out), `Motion.quick` (0.15 s), and a spring for the favourite ribbon and the ink dish (`Motion.ribbon`). Opening a notebook zooms out of what was touched: a cover, the open spread, a search result. With Reduce Motion, `Motion.adaptive` makes all of it a short cross-fade.
+- Motion: `Motion.standard` (0.18 s ease-out), `Motion.quick` (0.15 s), and a spring for the favourite flag and the ink dish (`Motion.ribbon`). Opening a notebook zooms out of what was touched: a cover, the open spread, a search result. With Reduce Motion, `Motion.adaptive` makes all of it a short cross-fade.
 
 ## Materials
 
@@ -97,7 +97,7 @@ Each was picked from a set of mocks and replaces the system piece.
 - Stamp alerts (`.notice` in `Design/Notices.swift`): every alert and confirmation. A plate with a cloth edge down its leading side (tomato when something is destroyed), a flat Cancel and one cloth button. Write Cancel first and the main button last. A cancel-role button is its only way out.
 - Ledger lists (`Ledger`, `.ledgerSwipe` in `Design/Ledger.swift`): lists in sheets. One ink-ruled plate per run of rows under a well band; a swipe uncovers cloth blocks.
 - Thread progress (`ThreadProgressStyle`): every `ProgressView` wears `.thread`, set at the app root. A thin well with a cobalt thread.
-- Bookplate empty states (`EmptyPlate`): an empty sheet or list. A plate with the symbol in a small square, a Fraunces title, one line. The library's own empty states are drawings (`ShelfIllustration`, `RibbonIllustration`).
+- Bookplate empty states (`EmptyPlate`): an empty sheet or list. A plate with the symbol in a small square, a Fraunces title, one line. The library's own empty states are drawings (`ShelfIllustration`, `FlagIllustration`).
 - Mixing strips (`InkMixer` in `Editor/PenOptions.swift`): a pen's custom colour, as a hue strip and a shade strip with square knobs beside a blot of the ink.
 - Cloth sidebar row (`RowCloth`, `scoped(_:chosen:)` in `Library/LibrarySidebar.swift`): the chosen shelf on a woven PrimaryCloth plate. `CellFocusRing` removes UIKit's focus ring there.
 - Bar-plate sync notice (`SyncNoticeButton` in `Library/SyncNotice.swift`): failures and conflicted copies, as a worded "iCloud" plate in the library bar with a count square (tomato for trouble) that opens a Card.
@@ -109,7 +109,7 @@ Each was picked from a set of mocks and replaces the system piece.
 
 ## Covers
 
-`CoverRenderer` draws each cover once per request, off the main thread, into an 80 MB LRU and `Caches/Covers` on disk. A render or disk read fades in (0.15 s); a memory hit appears at once. Nothing is blended or shadowed live in a scrolling grid. The ribbon (`FavoriteRibbon`) and selection are SwiftUI overlays, so they can animate.
+`CoverRenderer` draws each cover once per request, off the main thread, into an 80 MB LRU and `Caches/Covers` on disk. A render or disk read fades in (0.15 s); a memory hit appears at once. Nothing is blended or shadowed live in a scrolling grid. The favourite flag (`FavoriteFlag`, tucked behind the cover and out past its fore-edge) and selection are SwiftUI views, so they can animate. Ribbons mark places in a notebook, never favourites.
 
 From 100 pt wide, a cover is a closed notebook: cream leaves past the board, a 1 px bevel, and a shadow baked into a 9-slice plate (`CoverShadowPlate`).
 

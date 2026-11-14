@@ -32,28 +32,15 @@ struct NotebookCoverItem: View {
     @Environment(LibraryChangeCenter.self) private var changes
     @Environment(AppModel.self) private var app: AppModel?
     @Environment(\.undoManager) private var undoManager
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let renderWidth = ShelfMetrics.renderWidth(for: width)
-        let renderSize = CGSize(width: renderWidth, height: (renderWidth * 4 / 3).rounded())
         // The line under the cover is part of the button: it says what the button's label says, and is read with it.
         Button(action: action) {
             VStack(alignment: .leading, spacing: ShelfLedge.height + Space.x2) {
                 RecordCover(record: record, width: renderWidth)
                     .frame(width: width)
-                    .overlay {
-                        ZStack(alignment: .topTrailing) {
-                            if record.isFavorite {
-                                FavoriteRibbon()
-                                    .padding(.trailing, Space.x5 + CoverRenderer.pageBlockInsets(for: renderSize).right * width / renderWidth)
-                                    .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
-                            }
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                        .clipped()
-                        .animation(Motion.adaptive(Motion.ribbon, reduceMotion: reduceMotion), value: record.isFavorite)
-                    }
+                    .favoriteFlag(record.isFavorite, coverWidth: width)
                     .overlay { if isSelected { StitchedSelection() } }
                     .zoomSource(id: "cover-\(record.id.uuidString)", in: zoomNamespace)
                     .contentShape(Rectangle())

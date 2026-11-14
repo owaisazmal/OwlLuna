@@ -129,6 +129,7 @@ struct NotebookCatalogueRow: View {
             HStack(spacing: Space.x4) {
                 RecordCover(record: record, width: CoverWidth.row, showsShadow: false)
                     .frame(width: min(Self.coverWidth * scale, CoverWidth.row))
+                    .favoriteFlag(record.isFavorite, coverWidth: min(Self.coverWidth * scale, CoverWidth.row))
                     .overlay(alignment: .bottomTrailing) {
                         if isSelected { SelectionBox(isSelected: true).offset(x: Space.x2, y: Space.x2) }
                     }
@@ -259,6 +260,7 @@ struct NotebookLedgerRow: View {
                 if isSelecting { SelectionBox(isSelected: isSelected) }
                 RecordCover(record: record, width: CoverWidth.row, showsShadow: false)
                     .frame(width: min(coverWidth, CoverWidth.row))
+                    .favoriteFlag(record.isFavorite, coverWidth: min(coverWidth, CoverWidth.row))
                 VStack(alignment: .leading, spacing: Space.x1) {
                     Text(record.title.orUntitled)
                         .font(.headline)

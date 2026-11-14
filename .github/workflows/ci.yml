@@ -208,6 +208,36 @@ jobs:
           retention-days: 14
           path: ${{ runner.temp }}/release.log
 
+  mac:
+    name: Mac build
+    runs-on: xcode-27
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      # The Mac version is the same app built with Mac Catalyst; this catches code that only breaks there.
+      - name: Build Release for the Mac with warnings as errors
+        run: |
+          set -o pipefail
+          xcodebuild -version
+          xcodebuild build \
+            -project OwlLuna.xcodeproj \
+            -scheme OwlLuna \
+            -configuration Release \
+            -destination 'generic/platform=macOS,variant=Mac Catalyst' \
+            CODE_SIGNING_ALLOWED=NO \
+            SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
+            GCC_TREAT_WARNINGS_AS_ERRORS=YES \
+            2>&1 | tee "$RUNNER_TEMP/mac.log" \
+            | xcbeautify --renderer github-actions
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: mac-build-log
+          retention-days: 14
+          path: ${{ runner.temp }}/mac.log
+
   nightly-check:
     name: Nightly check
     if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.ui-suite)

@@ -84,4 +84,13 @@ enum ShelfGrouping {
         let parts = calendar.dateComponents([.year, .month], from: date)
         return "\(parts.year ?? 0)-\(parts.month ?? 0)"
     }
+
+    /// Favourites stand on a shelf of their own at the top, in the order shown, and leave the shelves below.
+    /// Not in Favourites itself, where every notebook is one, nor in Recently Deleted.
+    static func favouritesFirst(_ records: [NotebookRecord], in scope: LibraryScope) -> (favourites: [NotebookRecord], rest: [NotebookRecord]) {
+        switch scope {
+        case .favorites, .trash: ([], records)
+        case .all, .folder, .tag, .smart: (records.filter(\.isFavorite), records.filter { !$0.isFavorite })
+        }
+    }
 }

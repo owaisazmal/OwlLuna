@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Favourite notebooks stand on their own Favourites shelf at the top of All notebooks, each folder, tag and smart shelf, in the order chosen, and leave the shelves below. Search results, Favourites and Recently Deleted are as before.
+
+### Changed
+
+- A favourite notebook now has a red flag with a star sticking out of its pages, in place of the ribbon, which looked like a bookmark. List rows show the flag too.
+
 ## [1.0.0-build.6] - 2026-11-12
 
 ### Added

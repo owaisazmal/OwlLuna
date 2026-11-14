@@ -23,20 +23,15 @@ struct ShelfIllustration: View {
     }
 }
 
-/// Favourites before there are any: an empty cover's outline with the ribbon a favourite gets.
-struct RibbonIllustration: View {
+/// Favourites before there are any: an empty cover's outline with the flag a favourite gets.
+struct FlagIllustration: View {
     var body: some View {
-        UnevenRoundedRectangle(topLeadingRadius: Radius.coverSpine, bottomLeadingRadius: Radius.coverSpine,
-                               bottomTrailingRadius: Radius.coverEdge, topTrailingRadius: Radius.coverEdge)
-            .strokeBorder(Color.hairline, lineWidth: 1.5)
+        let outline = UnevenRoundedRectangle(topLeadingRadius: Radius.coverSpine, bottomLeadingRadius: Radius.coverSpine,
+                                             bottomTrailingRadius: Radius.coverEdge, topTrailingRadius: Radius.coverEdge)
+        outline.fill(Color.paper)
+            .overlay { outline.strokeBorder(Color.hairline, lineWidth: 1.5) }
             .frame(width: 66, height: 88)
-            .overlay(alignment: .topTrailing) {
-                RibbonShape()
-                    .fill(Color.tomato)
-                    .overlay { RibbonShape().stroke(Color.labelCream, lineWidth: 1.5) }
-                    .frame(width: 16, height: 50)
-                    .padding(.trailing, Space.x3)
-            }
+            .favoriteFlag(true, coverWidth: 140)
             .padding(.horizontal, Space.x8)
             .onLedge()
     }
@@ -82,7 +77,13 @@ private struct ClothNotebook: View {
                     .padding(.top, 15)
             }
             .clipShape(board)
-            .overlay(alignment: .topTrailing) { FavoriteRibbon().scaleEffect(0.8, anchor: .top).padding(.trailing, Space.x2) }
+            .overlay(alignment: .topTrailing) {
+                RibbonShape()
+                    .fill(Color.tomato)
+                    .overlay { RibbonShape().stroke(Color.labelCream, lineWidth: 1.2) }
+                    .frame(width: 11, height: 34)
+                    .padding(.trailing, Space.x2)
+            }
             .padding(.trailing, 2)
             .padding(.bottom, 1.5)
             .background { board.fill(Color.labelCream).overlay { board.strokeBorder(Color.hairline, lineWidth: 0.5) } }

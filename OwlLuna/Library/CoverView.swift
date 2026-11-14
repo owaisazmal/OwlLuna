@@ -92,14 +92,53 @@ struct CoverView: View {
     }
 }
 
-struct FavoriteRibbon: View {
+/// A favourite's index flag, tucked between the pages behind a cover and sticking out of its fore-edge.
+struct FavoriteFlag: View {
+    let coverWidth: CGFloat
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    static func reach(for coverWidth: CGFloat) -> CGFloat { min(max(coverWidth * 0.07, 8), 14) }
+
     var body: some View {
-        RibbonShape()
-            .fill(Color.tomato)
-            .overlay { RibbonShape().stroke(Color.labelCream, lineWidth: 1.5) }
-            .frame(width: 14, height: 42)
-            .shadow(color: .black.opacity(0.2), radius: 0.5, y: 0.5)
+        let reach = Self.reach(for: coverWidth)
+        let height = min(max(coverWidth * 0.15, 16), 30)
+        let shape = UnevenRoundedRectangle(bottomTrailingRadius: 2, topTrailingRadius: 2)
+        shape.fill(Color.tomato)
+            .overlay { if contrast == .increased { shape.strokeBorder(Color.ink.opacity(0.6), lineWidth: 1) } }
+            .overlay(alignment: .trailing) {
+                Image(systemName: "star.fill")
+                    .font(.system(size: height * 0.46, weight: .bold))
+                    .foregroundStyle(Color.onTomato)
+                    .frame(width: reach)
+            }
+            .frame(width: reach * 2, height: height)
+            .offset(x: reach, y: max((coverWidth * 0.13).rounded(), Radius.coverEdge + 1))
             .accessibilityHidden(true)
+    }
+}
+
+extension View {
+    /// The favourite flag behind a cover this wide, sliding out from between the pages when it is favourited.
+    func favoriteFlag(_ shown: Bool, coverWidth: CGFloat) -> some View {
+        modifier(FavoriteFlagBehind(shown: shown, coverWidth: coverWidth))
+    }
+}
+
+private struct FavoriteFlagBehind: ViewModifier {
+    let shown: Bool
+    let coverWidth: CGFloat
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content.background(alignment: .topTrailing) {
+            ZStack {
+                if shown {
+                    FavoriteFlag(coverWidth: coverWidth)
+                        .transition(reduceMotion ? .opacity : .offset(x: -FavoriteFlag.reach(for: coverWidth) * 2))
+                }
+            }
+            .animation(Motion.adaptive(Motion.ribbon, reduceMotion: reduceMotion), value: shown)
+        }
     }
 }
 
