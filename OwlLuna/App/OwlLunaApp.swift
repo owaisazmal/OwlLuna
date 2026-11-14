@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 import CoreSpotlight
 
-/// Only here to give a second screen its own scene, and every window the chosen appearance; every other scene is SwiftUI's.
+/// Only here to give a second screen its own scene, a Mac window its title bar, and every window the chosen appearance; every other scene is SwiftUI's.
 final class OwlLunaAppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         LaunchOptions.forgetSavedSettings()
@@ -14,6 +14,9 @@ final class OwlLunaAppDelegate: NSObject, UIApplicationDelegate {
                      options: UIScene.ConnectionOptions) -> UISceneConfiguration {
         let configuration = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
         if connectingSceneSession.role == .windowExternalDisplayNonInteractive { configuration.delegateClass = ExternalDisplaySceneDelegate.self }
+        #if targetEnvironment(macCatalyst)
+        if connectingSceneSession.role == .windowApplication { configuration.delegateClass = MacWindowSceneDelegate.self }
+        #endif
         return configuration
     }
 }
@@ -69,6 +72,7 @@ struct OwlLunaRoot: View {
             }
         }
         .background(Color.paper.ignoresSafeArea())
+        .risesIntoTitlebar()
         .progressViewStyle(.thread)
         .environment(curtain)
         .appModels(app)

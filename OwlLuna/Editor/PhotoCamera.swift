@@ -137,7 +137,7 @@ struct PhotoCamera: View {
                 .font(.subheadline)
                 .foregroundStyle(.white.opacity(0.75))
                 .multilineTextAlignment(.center)
-            if settings, let url = URL(string: UIApplication.openSettingsURLString) {
+            if settings, let url = URL(string: Device.isMac ? "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera" : UIApplication.openSettingsURLString) {
                 Button { openURL(url) } label: { Device.isMac ? Text("Open System Settings") : Text("Open Settings") }
                     .buttonStyle(.owlLuna(.secondary))
                     .padding(.top, Space.x2)
@@ -414,7 +414,9 @@ final class CameraEngine: NSObject, @unchecked Sendable {
         session.addInput(input)
         session.addOutput(output)
         output.maxPhotoQualityPrioritization = .balanced
+        #if !targetEnvironment(macCatalyst)
         if session.isMultitaskingCameraAccessSupported { session.isMultitaskingCameraAccessEnabled = true }
+        #endif
         device = camera
         return true
     }

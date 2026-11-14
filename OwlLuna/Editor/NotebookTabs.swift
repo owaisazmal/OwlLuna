@@ -75,6 +75,7 @@ struct TabStrip: View {
                 .accessibilityIdentifier("tabs.add")
         }
         .padding(.horizontal, Space.x4)
+        .clearsTrafficLights()
         .padding(.top, Space.x1)
         .padding(.bottom, Space.x2)
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)

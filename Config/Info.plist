@@ -30,8 +30,6 @@
 	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<false/>
 	<key>OwlLunaAppGroup</key>
 	<string>$(APP_GROUP)</string>
 	<key>UIBackgroundModes</key>

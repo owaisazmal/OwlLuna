@@ -130,7 +130,8 @@ extension TextBox {
             let cut = UIFont(descriptor: italic, size: font.pointSize)
             if cut.fontDescriptor.symbolicTraits.contains(.traitItalic) { return cut }
         }
-        return UIFont(descriptor: descriptor.withMatrix(CGAffineTransform(a: 1, b: 0, c: 0.2, d: 1, tx: 0, ty: 0)), size: font.pointSize)
+        let lean = NSValue(cgAffineTransform: CGAffineTransform(a: 1, b: 0, c: 0.2, d: 1, tx: 0, ty: 0))
+        return UIFont(descriptor: descriptor.addingAttributes([.matrix: lean]), size: font.pointSize)
     }
 
     /// The text as it is measured and drawn, and where a checklist's boxes go in it.

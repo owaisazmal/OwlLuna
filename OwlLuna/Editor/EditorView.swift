@@ -199,6 +199,7 @@ fileprivate struct EditorContent: View {
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar(session.mode == .writing && railBar == nil ? .visible : .hidden, for: .navigationBar)
         }
+        .makesRoomForTrafficLights()
         .onChange(of: railBar != nil, initial: true) { _, railed in
             guard session.toolsInRail != railed else { return }
             session.toolsInRail = railed
@@ -596,6 +597,7 @@ fileprivate struct EditorContent: View {
     /// Each menu is a value of several kilobytes and the bar is built deep in the stack, so they go in behind `AnyView`.
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
+        if MacTitlebar.barsRise { TrafficLightsBarItem() }
         ToolbarItem(placement: .topBarLeading) {
             Button(action: leave) {
                 if pane == .secondary { Label("Close", systemImage: "xmark") } else { Label("Library", systemImage: "chevron.backward") }

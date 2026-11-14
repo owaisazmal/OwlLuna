@@ -88,7 +88,7 @@ The App Store version comes later. To build it yourself, see [Getting started](#
 
 - Xcode 27 or later (iOS 27 SDK, Swift 6). The app uses newer APIs where the iPad has them, so older Xcodes fail to compile.
 - iPadOS 18 or later.
-- Runs on iPad and on Apple silicon Macs ("Designed for iPad").
+- Runs on iPad, and on the Mac as a Mac Catalyst app (macOS 26 or later).
 
 ## Privacy
 
@@ -116,7 +116,7 @@ To run on a device, copy the signing settings, which git ignores:
 cp Config/Signing.local.xcconfig.example Config/Signing.local.xcconfig
 ```
 
-Set your team ID and a bundle ID prefix you own. The bundle IDs, App Group and iCloud container follow the prefix (`<prefix>.OwlLuna`, `group.<prefix>.OwlLuna`, `iCloud.<prefix>.OwlLuna`); set `APP_GROUP` or `ICLOUD_CONTAINER` if yours differ. Set the team there, not in Signing & Capabilities, which writes it into the project. A free developer account can't sign the iCloud capability: uncomment `APP_ENTITLEMENTS` in the same file and the app runs with sync shown as unavailable.
+Set your team ID and a bundle ID prefix you own. The bundle IDs, App Group and iCloud container follow the prefix (`<prefix>.OwlLuna`, `group.<prefix>.OwlLuna`, `iCloud.<prefix>.OwlLuna`); set `APP_GROUP` or `ICLOUD_CONTAINER` if yours differ. Set the team there, not in Signing & Capabilities, which writes it into the project. A free developer account can't sign the iCloud capability: uncomment `APP_ENTITLEMENTS` and `MAC_APP_ENTITLEMENTS` in the same file and the app runs with sync shown as unavailable.
 
 Run the tests with ⌘U, or from Terminal with any iPad simulator:
 

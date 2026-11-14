@@ -4,5 +4,6 @@ BUNDLE_ID_PREFIX = com.owais
 APP_GROUP = group.$(BUNDLE_ID_PREFIX).OwlLuna
 ICLOUD_CONTAINER = iCloud.$(BUNDLE_ID_PREFIX).OwlLuna
 APP_ENTITLEMENTS = Config/OwlLuna-iCloud.entitlements
+MAC_APP_ENTITLEMENTS = Config/OwlLuna-iCloud-Mac.entitlements
 
 #include? "Signing.local.xcconfig"

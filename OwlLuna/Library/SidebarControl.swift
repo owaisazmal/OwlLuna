@@ -37,6 +37,7 @@ struct BoardSidebarToggle: ViewModifier {
                 .toolbar(removing: .sidebarToggle)
                 .toolbar {
                     if shows {
+                        if MacTitlebar.barsRise { TrafficLightsBarItem() }
                         ToolbarItem(placement: .topBarLeading) {
                             Button(action: action) { Label("Show Sidebar", systemImage: "sidebar.leading") }
                                 .buttonStyle(.plateIcon)

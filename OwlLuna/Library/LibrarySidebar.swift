@@ -403,7 +403,7 @@ private struct SidebarHeader<Buttons: View>: ViewModifier {
                 .toolbar(.hidden, for: .navigationBar)
                 .safeAreaInset(edge: .top, spacing: 0) {
                     HStack(spacing: Space.x2) {
-                        // A Mac names the app in the title bar just above.
+                        // On a Mac the traffic lights are here.
                         if !Device.isMac {
                             Text("OwlLuna")
                                 .font(.headline)
@@ -417,6 +417,7 @@ private struct SidebarHeader<Buttons: View>: ViewModifier {
                     .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     .padding(.leading, Space.x5)
                     .padding(.trailing, Space.x3)
+                    .padding(.top, MacTitlebar.headerTopPadding)
                     .padding(.bottom, Space.x2)
                     .background(Color.surface)
                 }

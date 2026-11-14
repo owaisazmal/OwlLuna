@@ -173,7 +173,7 @@ enum SecondScreenInset {
     static func window() -> UIWindow? {
         guard LaunchOptions.arguments.contains("-secondScreenInset"), let scene = UIApplication.shared.appWindowScenes.first else { return nil }
         let window = PassThroughWindow.overlay(on: scene)
-        window.frame = CGRect(x: scene.coordinateSpace.bounds.width - 496, y: 110, width: 480, height: 270)
+        window.frame = CGRect(x: window.bounds.width - 496, y: 110, width: 480, height: 270)
         window.layer.borderColor = UIColor.white.cgColor
         window.layer.borderWidth = 1
         return window
@@ -249,7 +249,7 @@ private final class PassThroughWindow: UIWindow {
         let stack = UIStackView(arrangedSubviews: views)
         stack.alpha = 0.3
         stack.spacing = 4
-        stack.frame = CGRect(x: 8, y: scene.coordinateSpace.bounds.height - 40, width: width, height: 28)
+        stack.frame = CGRect(x: 8, y: window.bounds.height - 40, width: width, height: 28)
         stack.autoresizingMask = [.flexibleTopMargin]
         controller.view.addSubview(stack)
         window.rootViewController = controller

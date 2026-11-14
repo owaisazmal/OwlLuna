@@ -41,6 +41,7 @@ struct EditorPanes: View {
             if showsTabs {
                 TabStrip(select: selectTab, close: closeTab, closeOthers: closeOtherTabs, openBeside: hasRoomBeside ? { openBeside($0) } : nil)
                     .disabled(window.isLeaving)
+                    .makesRoomForTrafficLights()
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
             panes

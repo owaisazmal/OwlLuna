@@ -8,3 +8,4 @@ BUNDLE_ID_PREFIX = com.example
 
 // A free developer account can't sign iCloud. Sign without it, and Settings says sync is unavailable.
 // APP_ENTITLEMENTS = Config/OwlLuna.entitlements
+// MAC_APP_ENTITLEMENTS = Config/OwlLuna-Mac.entitlements

@@ -6,7 +6,7 @@ enum DrawingInput: String, CaseIterable, Identifiable {
 
     /// What draws until the setting is changed.
     @MainActor static var initial: DrawingInput {
-        initial(isMac: ProcessInfo.processInfo.isiOSAppOnMac, isPhone: Device.isPhone,
+        initial(isMac: Device.isMac, isPhone: Device.isPhone,
                 pencilSeen: UserDefaults.standard.bool(forKey: SettingsKey.pencilSeen))
     }
 

@@ -95,6 +95,7 @@ struct LibraryRootView: View {
                     shelf.modifier(BoardSidebarToggle(shows: sizeClass == .regular && !sidebarBeside) { sidebar.toggle() })
                         .modifier(PlateBack(shows: Device.isPhone && sizeClass == .compact) { scope = nil })
                 }
+                .makesRoomForTrafficLights()
                 .background(SidebarAnchor(control: sidebar))
                 .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { detailWidth = $0 }
             }
@@ -135,6 +136,7 @@ struct LibraryRootView: View {
             EditorPanes(primary: item, sceneID: sceneID) { open = nil }
                 .environment(window)
                 .appModels(app)
+                .risesIntoTitlebar()
                 .environment(\.verticalBar, verticalBar)
                 .navigationTransition(.zoom(sourceID: item.zoomSource, in: zoom))
                 // A sideways finger drag on the page would otherwise pull the editor shut without its save-and-close.
