@@ -18,7 +18,9 @@ enum SyncQuestion {
     }
 
     static var accountChangedMessage: String {
-        String(localized: "This iPad's notebooks were last synced with another account's iCloud. Syncing with this account copies them to its iCloud storage and brings in the notebooks it holds.")
+        (Device.isMac
+            ? String(localized: "This Mac's notebooks were last synced with another account's iCloud. Syncing with this account copies them to its iCloud storage and brings in the notebooks it holds.")
+            : String(localized: "This iPad's notebooks were last synced with another account's iCloud. Syncing with this account copies them to its iCloud storage and brings in the notebooks it holds."))
     }
 
     static func allow(_ question: SyncCenter.Question) -> String {
@@ -60,10 +62,16 @@ extension SyncReport {
 extension SyncFailure.Reason {
     var message: String {
         switch self {
-        case .noRoom: String(localized: "There isn't enough room on this iPad.")
+        case .noRoom: (Device.isMac
+            ? String(localized: "There isn't enough room on this Mac.")
+            : String(localized: "There isn't enough room on this iPad."))
         case .unreadable(inICloud: true): String(localized: "Its copy in iCloud can't be read.")
-        case .unreadable(inICloud: false): String(localized: "Its copy on this iPad can't be read.")
-        case .newerVersion: String(localized: "It was saved by a newer version of OwlLuna. Update OwlLuna on this iPad to sync it.")
+        case .unreadable(inICloud: false): (Device.isMac
+            ? String(localized: "Its copy on this Mac can't be read.")
+            : String(localized: "Its copy on this iPad can't be read."))
+        case .newerVersion: (Device.isMac
+            ? String(localized: "It was saved by a newer version of OwlLuna. Update OwlLuna on this Mac to sync it.")
+            : String(localized: "It was saved by a newer version of OwlLuna. Update OwlLuna on this iPad to sync it."))
         case .coordination(let detail): String(localized: "iCloud Drive didn't let OwlLuna reach its files: \(detail)")
         case .other(let detail): detail
         }
@@ -80,8 +88,12 @@ struct CloudUploads: Sendable, Equatable {
         var message: String {
             switch self {
             case .full:
-                String(localized: "Your iCloud storage is full, so changes made on this iPad can't be uploaded. Free up space, or choose a bigger plan in Settings › your name › iCloud.")
-            case .unreachable: String(localized: "iCloud can't be reached right now. Changes made on this iPad will upload when it's back.")
+                (Device.isMac
+                    ? String(localized: "Your iCloud storage is full, so changes made on this Mac can't be uploaded. Free up space, or choose a bigger plan in System Settings › your name › iCloud.")
+                    : String(localized: "Your iCloud storage is full, so changes made on this iPad can't be uploaded. Free up space, or choose a bigger plan in Settings › your name › iCloud."))
+            case .unreachable: (Device.isMac
+                ? String(localized: "iCloud can't be reached right now. Changes made on this Mac will upload when it's back.")
+                : String(localized: "iCloud can't be reached right now. Changes made on this iPad will upload when it's back."))
             case .other(let detail): String(localized: "iCloud couldn't upload some files: \(detail)")
             }
         }

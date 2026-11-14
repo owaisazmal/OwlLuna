@@ -51,8 +51,12 @@ enum LibraryBackup {
             case .notABackup: String(localized: "This file isn't an OwlLuna backup.")
             case .newer: String(localized: "This backup was made by a newer version of OwlLuna. Update the app, then restore it.")
             case .archive: String(localized: "The backup couldn't be written.")
-            case .needsPasscode: String(localized: "This library has locked notebooks. To back them up, set a passcode on this iPad in Settings first.")
-            case .noRoom: String(localized: "There isn't enough free space on this iPad. Free some up in Settings › General › iPad Storage, then try again.")
+            case .needsPasscode: (Device.isMac
+                ? String(localized: "This library has locked notebooks. To back them up, set a login password for this Mac in System Settings first.")
+                : String(localized: "This library has locked notebooks. To back them up, set a passcode on this iPad in Settings first."))
+            case .noRoom: (Device.isMac
+                ? String(localized: "There isn't enough free space on this Mac. Free some up in System Settings › General › Storage, then try again.")
+                : String(localized: "There isn't enough free space on this iPad. Free some up in Settings › General › iPad Storage, then try again."))
             case .unreadable: String(localized: "This backup couldn't be read. It may be damaged or not fully downloaded yet.")
             case .unverified: String(localized: "The finished backup didn't match your library when it was checked, so it wasn't kept. Try again.")
             case .unsaved(let titles):

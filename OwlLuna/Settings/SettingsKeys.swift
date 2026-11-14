@@ -10,8 +10,8 @@ enum DrawingInput: String, CaseIterable, Identifiable {
                 pencilSeen: UserDefaults.standard.bool(forKey: SettingsKey.pencilSeen))
     }
 
-    /// Whether the Pencil's choices apply: always on an iPad, and on an iPhone once a Pencil has touched it.
-    @MainActor static var hasPencil: Bool { !Device.isPhone || UserDefaults.standard.bool(forKey: SettingsKey.pencilSeen) }
+    /// Whether the Pencil's choices apply: always on an iPad, on an iPhone once a Pencil has touched it, and never on a Mac.
+    @MainActor static var hasPencil: Bool { !Device.isMac && (!Device.isPhone || UserDefaults.standard.bool(forKey: SettingsKey.pencilSeen)) }
 
     /// A Mac has no Pencil to draw with, so there the pointer and fingers draw from the start. So do they on an iPhone,
     /// until a Pencil has touched its pages; from then on it is as on an iPad.

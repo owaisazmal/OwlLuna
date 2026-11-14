@@ -57,7 +57,9 @@ struct PhotoCamera: View {
         ZStack {
             switch feed.state {
             case .denied:
-                blocked("OwlLuna can't use the camera", "Turn on Camera for OwlLuna in Settings to take photos for your pages.", settings: true)
+                blocked("OwlLuna can't use the camera", Device.isMac
+                        ? "Allow OwlLuna to use the camera in System Settings › Privacy & Security › Camera to take photos for your pages."
+                        : "Turn on Camera for OwlLuna in Settings to take photos for your pages.", settings: true)
             case .failed:
                 blocked("The camera couldn't start", "Close the camera and try again.", settings: false)
             case .starting, .running, .paused:
@@ -136,7 +138,7 @@ struct PhotoCamera: View {
                 .foregroundStyle(.white.opacity(0.75))
                 .multilineTextAlignment(.center)
             if settings, let url = URL(string: UIApplication.openSettingsURLString) {
-                Button("Open Settings") { openURL(url) }
+                Button { openURL(url) } label: { Device.isMac ? Text("Open System Settings") : Text("Open Settings") }
                     .buttonStyle(.owlLuna(.secondary))
                     .padding(.top, Space.x2)
             }

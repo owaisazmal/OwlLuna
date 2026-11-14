@@ -40,7 +40,9 @@ struct SyncNoticeButton: View {
             Button("Delete", role: .destructive) { Task { await sync.letHeldGo() } }
         }
         .notice(Text("Replace the folder list in iCloud?"), isPresented: $confirmingReplace,
-                message: Text("A new one is made from this iPad's folders, and your other devices add theirs to it, so no folder is lost. A folder deleted while folders weren't syncing may come back.")) {
+                message: (Device.isMac
+                    ? Text("A new one is made from this Mac's folders, and your other devices add theirs to it, so no folder is lost. A folder deleted while folders weren't syncing may come back.")
+                    : Text("A new one is made from this iPad's folders, and your other devices add theirs to it, so no folder is lost. A folder deleted while folders weren't syncing may come back."))) {
             Button("Cancel", role: .cancel) {}
             Button("Replace") { Task { await sync.replaceFolders() } }
         }
@@ -109,7 +111,9 @@ private struct SyncNoticeCard: View {
         }
         if !news.held.isEmpty {
             SyncNoticeRow(systemImage: "trash.slash", trouble: true, title: Text("\(news.held.count) notebooks weren't deleted"),
-                          message: Text("They went missing from this iPad or another device all at once, which looks like a mistake, so sync left them as they are. Keep brings them back everywhere, and Delete lets the deletions go through.")) {
+                          message: (Device.isMac
+                              ? Text("They went missing from this Mac or another device all at once, which looks like a mistake, so sync left them as they are. Keep brings them back everywhere, and Delete lets the deletions go through.")
+                              : Text("They went missing from this iPad or another device all at once, which looks like a mistake, so sync left them as they are. Keep brings them back everywhere, and Delete lets the deletions go through."))) {
                 VStack(spacing: 0) {
                     Button { closing { Task { await sync.keepHeld() } } } label: { Text("Keep").frame(maxWidth: .infinity) }
                         .buttonStyle(.owlLuna(.secondary, compact: true))
@@ -123,7 +127,9 @@ private struct SyncNoticeCard: View {
         }
         if news.foldersUnreadable {
             SyncNoticeRow(systemImage: "folder.badge.questionmark", trouble: true, title: Text("Folders aren't syncing"),
-                          message: Text("The folder list in iCloud can't be read, so folder changes aren't sent or received. Folders on this iPad stay as they are, and notebooks still sync.")) {
+                          message: (Device.isMac
+                              ? Text("The folder list in iCloud can't be read, so folder changes aren't sent or received. Folders on this Mac stay as they are, and notebooks still sync.")
+                              : Text("The folder list in iCloud can't be read, so folder changes aren't sent or received. Folders on this iPad stay as they are, and notebooks still sync."))) {
                 Button("Replace") { closing(then: onReplace) }
                     .buttonStyle(.owlLuna(.secondary, compact: true))
                     .accessibilityIdentifier("library.sync.replaceFolders")
@@ -140,7 +146,9 @@ private struct SyncNoticeCard: View {
         }
         ForEach(news.journals.compactMap { store.record($0) }, id: \.id) { notebook in
             SyncNoticeRow(systemImage: "calendar", trouble: false, title: Text(notebook.title),
-                          message: Text("Two devices each had a daily journal. The one begun first is now the journal on every device, and this one, which this iPad was using, is kept as an ordinary notebook.")) {
+                          message: (Device.isMac
+                              ? Text("Two devices each had a daily journal. The one begun first is now the journal on every device, and this one, which this Mac was using, is kept as an ordinary notebook.")
+                              : Text("Two devices each had a daily journal. The one begun first is now the journal on every device, and this one, which this iPad was using, is kept as an ordinary notebook."))) {
                 Button("Open") { closing { onOpen(notebook) } }
                     .buttonStyle(.owlLuna(.secondary, compact: true))
             }

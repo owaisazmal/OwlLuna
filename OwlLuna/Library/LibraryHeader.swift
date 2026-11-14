@@ -204,6 +204,8 @@ private struct WritingCalendarPresenter: ViewModifier {
                 isPresented = false
             }
             .presentationCornerRadius(Radius.sheet)
+            .appModels()
+            .presentationSizing(.page)
         }
     }
 

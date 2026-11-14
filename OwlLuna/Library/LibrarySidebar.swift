@@ -77,7 +77,7 @@ struct LibrarySidebar: View {
                 .background(CellFocusRing(shown: true))
                 .listRowBackground(Color.clear)
             } header: {
-                Text("Shelves").metaStyle(.footnote)
+                Text("Shelves").metaStyle(.footnote).sidebarInset()
             }
             // Tags appear once something is tagged; a shelf saved earlier stays reachable after its tags have gone.
             if !tags.isEmpty || !store.smartShelves.isEmpty {
@@ -96,7 +96,7 @@ struct LibrarySidebar: View {
                         .listRowBackground(Color.clear)
                     }
                 } header: {
-                    Text("Smart shelves").metaStyle(.footnote)
+                    Text("Smart shelves").metaStyle(.footnote).sidebarInset()
                 }
             }
             if !tags.isEmpty {
@@ -107,7 +107,7 @@ struct LibrarySidebar: View {
                             .heldMenu(Text(tag.name)) { tagMenu(tag) }
                     }
                 } header: {
-                    Text("Tags").metaStyle(.footnote)
+                    Text("Tags").metaStyle(.footnote).sidebarInset()
                 }
             }
         }
@@ -170,6 +170,7 @@ struct LibrarySidebar: View {
                 }
             }
             .presentationCornerRadius(Radius.sheet)
+            .appModels()
         }
     }
 
@@ -243,13 +244,15 @@ struct LibrarySidebar: View {
     }
 
     /// The words of a button that adds a shelf, with its symbol unless the text is at an accessibility size.
-    @ViewBuilder
     private func addLabel(_ title: LocalizedStringKey, systemImage: String) -> some View {
-        if dynamicTypeSize.isAccessibilitySize {
-            Text(title)
-        } else {
-            Label(title, systemImage: systemImage)
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                Text(title)
+            } else {
+                Label(title, systemImage: systemImage)
+            }
         }
+        .sidebarInset()
     }
 
     /// A folder inside another is indented under it; one that holds folders has a chevron that folds them away.
@@ -322,10 +325,16 @@ struct LibrarySidebar: View {
 private extension View {
     /// Tags a row with its scope, and lays the one on show on cloth cut as square as the controls. The cloth stands in for the focus ring.
     func scoped(_ value: LibraryScope, chosen: LibraryScope?) -> some View {
-        tag(value)
+        sidebarInset()
+            .tag(value)
             .environment(\.rowChosen, value == chosen)
             .background(CellFocusRing(shown: false))
             .listRowBackground(RowCloth().opacity(value == chosen ? 1 : 0).padding(.horizontal, Space.x2))
+    }
+
+    /// A Mac's list sets a row's words on the edge of the chosen row's cloth; this keeps them inside it, as an iPad's margins do.
+    func sidebarInset() -> some View {
+        padding(.horizontal, Device.isMac ? Space.x2 : 0)
     }
 }
 
@@ -394,11 +403,14 @@ private struct SidebarHeader<Buttons: View>: ViewModifier {
                 .toolbar(.hidden, for: .navigationBar)
                 .safeAreaInset(edge: .top, spacing: 0) {
                     HStack(spacing: Space.x2) {
-                        Text("OwlLuna")
-                            .font(.headline)
-                            .foregroundStyle(Color.ink)
-                            .lineLimit(1)
-                            .accessibilityAddTraits(.isHeader)
+                        // A Mac names the app in the title bar just above.
+                        if !Device.isMac {
+                            Text("OwlLuna")
+                                .font(.headline)
+                                .foregroundStyle(Color.ink)
+                                .lineLimit(1)
+                                .accessibilityAddTraits(.isHeader)
+                        }
                         Spacer(minLength: Space.x2)
                         buttons.buttonStyle(.plateIcon)
                     }

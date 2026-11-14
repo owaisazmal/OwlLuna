@@ -54,8 +54,6 @@ struct StickerDrawer: View {
                 CancelToolbarItem { dismiss() }
             }
         }
-        .presentationDetents([.medium, .large])
-        .presentationBackground(Color.surface)
         .photosPicker(isPresented: $pickingPhoto, selection: $photo, matching: .images)
         .onChange(of: photo) { _, item in
             guard let item else { return }

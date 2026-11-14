@@ -84,6 +84,7 @@ struct LibraryRootView: View {
                     }
                     .environment(changes)
                     .presentationCornerRadius(Radius.sheet)
+                    .appModels()
                 }
                 .onChange(of: scope) { showingShelves = false }
         } else {
@@ -133,6 +134,7 @@ struct LibraryRootView: View {
         .fullScreenCover(item: Binding(get: { usesZoom ? open : nil }, set: { open = $0 })) { item in
             EditorPanes(primary: item, sceneID: sceneID) { open = nil }
                 .environment(window)
+                .appModels(app)
                 .environment(\.verticalBar, verticalBar)
                 .navigationTransition(.zoom(sourceID: item.zoomSource, in: zoom))
                 // A sideways finger drag on the page would otherwise pull the editor shut without its save-and-close.
@@ -143,10 +145,15 @@ struct LibraryRootView: View {
                 openNotebook(id)
             }
             .presentationCornerRadius(Radius.sheet)
+            .appModels()
+            .presentationDetents([.large])
+            .presentationSizing(.page)
         }
         .sheet(isPresented: $showingSettings) {
             OwlLunaSettingsView()
                 .presentationCornerRadius(Radius.sheet)
+                .appModels()
+                .presentationSizing(.page)
         }
         .notice("The note couldn't be created", message: $quickNoteError)
         .onChange(of: app.sync.question, initial: true) { _, question in syncQuestion = question }

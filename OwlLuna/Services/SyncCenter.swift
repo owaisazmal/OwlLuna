@@ -158,7 +158,9 @@ final class SyncCenter {
             return await use(CloudFolder(url: url), account: LaunchOptions.value("-cloudAccount"))
         }
         #endif
-        let signedOut = String(localized: "iCloud isn't available. Sign in to iCloud and turn on iCloud Drive in Settings; this copy of OwlLuna also has to be built with the iCloud capability.")
+        let signedOut = (Device.isMac
+            ? String(localized: "iCloud isn't available. Sign in to iCloud and turn on iCloud Drive in System Settings; this copy of OwlLuna also has to be built with the iCloud capability.")
+            : String(localized: "iCloud isn't available. Sign in to iCloud and turn on iCloud Drive in Settings; this copy of OwlLuna also has to be built with the iCloud capability."))
         // A test's storage root never syncs with real iCloud.
         guard !LaunchOptions.usesTestStorage else { return leave(signedOut) }
         if identityObserver == nil {

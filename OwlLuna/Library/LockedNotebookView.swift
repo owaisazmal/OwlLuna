@@ -9,7 +9,9 @@ struct LockedNotebookView: View {
 
     var body: some View {
         EmptyShelf(title: String(localized: "“\(title)” is locked"),
-                   message: String(localized: "Unlock it with Face ID, Touch ID or this iPad's passcode.")) {
+                   message: (Device.isMac
+                       ? String(localized: "Unlock it with Touch ID or this Mac's password.")
+                       : String(localized: "Unlock it with Face ID, Touch ID or this iPad's passcode."))) {
             Button("Unlock", action: unlock)
                 .buttonStyle(.owlLuna(.primary))
                 .accessibilityIdentifier("lock.unlock")

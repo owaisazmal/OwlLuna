@@ -68,7 +68,6 @@ struct WritingCalendarView: View {
             .onAppear { if selected == nil { selected = defaultSelection(in: month) } }
             .task(id: selected) { await loadDetail() }
         }
-        .presentationSizing(.page)
     }
 
     // MARK: Layout

@@ -215,6 +215,7 @@ struct ShelfView: View {
                 importScan(images)
             }
             .ignoresSafeArea()
+            .appModels()
         }
         .notice("Rename Notebook", isPresented: Binding(isPresent: $renaming)) {
             TextField("Title", text: $renameText)
@@ -238,13 +239,22 @@ struct ShelfView: View {
         .onChange(of: sort) { _, _ in sortReversed = false }
         .task(id: "\(store.searchVersion)|\(records.count)|\(scope)|\(searchText)") { await runSearch() }
         .task(id: tagPagesKey) { await loadTagPages() }
-        .sheet(item: $export) { job in ExportSheet(job: job).presentationCornerRadius(Radius.sheet) }
-        .sheet(item: $editingCover) { record in CoverEditorView(record: record).presentationCornerRadius(Radius.sheet) }
+        .sheet(item: $export) { job in ExportSheet(job: job).presentationCornerRadius(Radius.sheet).appModels() }
+        .sheet(item: $editingCover) { record in
+            CoverEditorView(record: record)
+                .presentationCornerRadius(Radius.sheet)
+                .appModels()
+                .presentationDetents([.large])
+                .presentationSizing(.page)
+        }
         .sheet(item: $tagging) { record in
             TagSheet(subject: record.title.orUntitled, initial: record.tags) { tags in
                 changes.setTags(tags, for: record, in: store, undoManager: undoManager)
             }
             .presentationCornerRadius(Radius.sheet)
+            .appModels()
+            .presentationDetents([.medium, .large])
+            .presentationBackground(Color.surface)
         }
         .sheet(item: $taggingSelection) { tagging in
             TagSheet(subject: String(localized: "\(tagging.ids.count) notebooks"), initial: tagging.common, mixed: tagging.mixed) { tags, stillMixed in
@@ -253,6 +263,9 @@ struct ShelfView: View {
                 endSelection()
             }
             .presentationCornerRadius(Radius.sheet)
+            .appModels()
+            .presentationDetents([.medium, .large])
+            .presentationBackground(Color.surface)
         }
         .notice(Text(permanentDeleteTitle), isPresented: Binding(get: { !changes.pendingPermanentDelete.isEmpty },
                                                                  set: { if !$0 { changes.pendingPermanentDelete = [] } }),

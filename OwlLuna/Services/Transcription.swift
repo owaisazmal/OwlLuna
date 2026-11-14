@@ -85,9 +85,13 @@ enum TranscriptionError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notAllowed:
-            String(localized: "Speech recognition is off for OwlLuna. Turn it on in Settings › Privacy & Security › Speech Recognition.")
+            (Device.isMac
+                ? String(localized: "Speech recognition is off for OwlLuna. Turn it on in System Settings › Privacy & Security › Speech Recognition.")
+                : String(localized: "Speech recognition is off for OwlLuna. Turn it on in Settings › Privacy & Security › Speech Recognition."))
         case .unavailable(let language):
-            String(localized: "This iPad can't transcribe \(language) on the device. OwlLuna never sends a recording away to be transcribed, so it was left as it is.")
+            (Device.isMac
+                ? String(localized: "This Mac can't transcribe \(language) on the device. OwlLuna never sends a recording away to be transcribed, so it was left as it is.")
+                : String(localized: "This iPad can't transcribe \(language) on the device. OwlLuna never sends a recording away to be transcribed, so it was left as it is."))
         case .nothingHeard:
             String(localized: "No speech was found in this recording.")
         case .failed(let reason):

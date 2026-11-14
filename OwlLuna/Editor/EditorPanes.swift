@@ -55,6 +55,7 @@ struct EditorPanes: View {
                 window.active = id
             }
             .presentationCornerRadius(Radius.sheet)
+            .appModels()
         }
         .onReceive(NotificationCenter.default.publisher(for: .owlLunaSelectTab)) { note in
             guard let id = note.object as? UUID, id != window.beside?.id, !window.isLeaving else { return }

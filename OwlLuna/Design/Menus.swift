@@ -192,11 +192,25 @@ private struct HoldProbe: UIViewRepresentable {
             return press
         }()
 
+        /// A right-click opens the menu at once, as a Mac's context menus do.
+        private lazy var secondaryClick: UITapGestureRecognizer = {
+            let click = UITapGestureRecognizer(target: self, action: #selector(clicked))
+            click.buttonMaskRequired = .secondary
+            // Only a pointer's clicks, and never at the cost of a touch meant for what lies under it.
+            click.allowedTouchTypes = [NSNumber(value: UITouch.TouchType.indirectPointer.rawValue)]
+            click.cancelsTouchesInView = false
+            click.delaysTouchesEnded = false
+            click.delegate = self
+            return click
+        }()
+
         override func didMoveToWindow() {
             super.didMoveToWindow()
             isUserInteractionEnabled = false
-            press.view?.removeGestureRecognizer(press)
-            window?.addGestureRecognizer(press)
+            for recognizer in [press, secondaryClick] {
+                recognizer.view?.removeGestureRecognizer(recognizer)
+                window?.addGestureRecognizer(recognizer)
+            }
         }
 
         @objc private func pressed() {
@@ -204,6 +218,8 @@ private struct HoldProbe: UIViewRepresentable {
             if !draggable { takeTouch() }
             held?()
         }
+
+        @objc private func clicked() { held?() }
 
         /// The screen's own gestures let go of a held touch, so a button under it doesn't take its lifting for a tap.
         private func takeTouch() {

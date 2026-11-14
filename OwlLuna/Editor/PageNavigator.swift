@@ -114,7 +114,13 @@ struct PageNavigator: View {
                 Button("Cancel", role: .cancel) {}
                 Button("Delete Page", role: .destructive) { if let pendingDelete { document.removePages([pendingDelete]) } }
             }
-            .sheet(item: $tagging) { target in EditorTagSheet(document: document, target: target).presentationCornerRadius(Radius.sheet) }
+            .sheet(item: $tagging) { target in
+                EditorTagSheet(document: document, target: target)
+                    .presentationCornerRadius(Radius.sheet)
+                    .appModels()
+                    .presentationDetents([.medium, .large])
+                    .presentationBackground(Color.surface)
+            }
         }
     }
 

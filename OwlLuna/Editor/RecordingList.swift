@@ -76,6 +76,7 @@ struct RecordingList: View {
         .sheet(item: $sharing) { files in
             ShareSheet(items: files.urls)
                 .presentationCornerRadius(Radius.sheet)
+                .appModels()
                 .onDisappear { ExportFolder.discard(files.urls) }
         }
     }

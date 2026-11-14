@@ -106,8 +106,6 @@ struct NewNotebookView: View {
                 titleFocused = true
             }
         }
-        .presentationDetents([.large])
-        .presentationSizing(.page)
     }
 
     /// The notebook lying open: its cover, then its first page.

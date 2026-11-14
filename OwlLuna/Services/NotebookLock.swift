@@ -91,7 +91,9 @@ final class NotebookLock {
     func keepOpen(_ id: UUID) { unlocked.insert(id) }
     func lock(_ id: UUID) { unlocked.remove(id) }
 
-    static let unavailableMessage = String(localized: "To lock notebooks, set a passcode on this iPad in Settings first.")
+    static let unavailableMessage = (Device.isMac
+        ? String(localized: "To lock notebooks, set a login password for this Mac in System Settings first.")
+        : String(localized: "To lock notebooks, set a passcode on this iPad in Settings first."))
 }
 
 extension LibraryStore {

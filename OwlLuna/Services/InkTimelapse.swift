@@ -120,7 +120,9 @@ enum InkTimelapse {
         let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: video, sourcePixelBufferAttributes: [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA, kCVPixelBufferWidthKey as String: width, kCVPixelBufferHeightKey as String: height,
         ])
-        guard writer.canAdd(video) else { throw Failure.writer(String(localized: "this iPad can't encode it")) }
+        guard writer.canAdd(video) else { throw Failure.writer((Device.isMac
+            ? String(localized: "this Mac can't encode it")
+            : String(localized: "this iPad can't encode it"))) }
         writer.add(video)
         guard writer.startWriting() else { throw Failure.writer(writer.error?.localizedDescription ?? "") }
         writer.startSession(atSourceTime: .zero)

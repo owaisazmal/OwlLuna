@@ -54,6 +54,7 @@ struct StudyCard: View {
                     onOpenPage(notebook, page)
                 }
             }
+            .appModels()
         }
     }
 }

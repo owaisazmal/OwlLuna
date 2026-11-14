@@ -63,6 +63,7 @@ struct PanelPresenter<Panel: View>: ViewModifier {
                                  onDismiss: finish) {
                     stage
                         .environment(\.panelClose, PanelClose(close: close))
+                        .appModels()
                         .presentationBackground(.clear)
                 }
                 .transaction { $0.disablesAnimations = true }
@@ -265,7 +266,7 @@ private struct AdaptingPanel<Panel: View>: ViewModifier {
     func body(content anchor: Content) -> some View {
         if adapts, sizeClass == .compact {
             anchor.sheet(isPresented: $isPresented) {
-                content().presentationBackground(Color.surface).presentationCornerRadius(Radius.sheet)
+                content().presentationBackground(Color.surface).presentationCornerRadius(Radius.sheet).appModels()
             }
         } else {
             anchor.modifier(PanelPresenter(isPresented: $isPresented) {

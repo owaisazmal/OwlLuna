@@ -348,7 +348,7 @@ fileprivate struct EditorContent: View {
     /// The editor's sheets, alerts and observers, kept apart from the layout so each stays quick to type-check.
     private func sheets<Content: View>(_ content: Content) -> some View {
         content
-        .sheet(item: $editingNotes) { target in PresenterNotesSheet(document: document, pageID: target.id).presentationCornerRadius(Radius.sheet) }
+        .sheet(item: $editingNotes) { target in PresenterNotesSheet(document: document, pageID: target.id).presentationCornerRadius(Radius.sheet).appModels() }
         .sheet(item: $readingInk) { target in
             InkTextSheet(ink: target.ink) { text in
                 guard let placed = session.canvas?.replaceInkSelection(with: text) else { return }
@@ -357,6 +357,7 @@ fileprivate struct EditorContent: View {
                 announce(String(localized: "Handwriting replaced with text"))
             }
             .presentationCornerRadius(Radius.sheet)
+            .appModels()
         }
         .sheet(isPresented: $pickingBeside) {
             BesidePicker(current: document.id, exclude: Set(window?.tabs.map(\.id) ?? [])) { id in
@@ -365,23 +366,33 @@ fileprivate struct EditorContent: View {
                 window?.active = id
             }
             .presentationCornerRadius(Radius.sheet)
+            .appModels()
         }
         .sheet(isPresented: $showingRecordingsSheet) {
             recordingList { showingRecordingsSheet = false }
                 .presentationDetents([.medium, .large])
                 .presentationBackground(Color.surface)
                 .presentationCornerRadius(Radius.sheet)
+                .appModels()
         }
         .sheet(isPresented: $showingPages) {
             PageNavigator(session: session)
                 .presentationCornerRadius(Radius.sheet)
+                .appModels()
         }
         .sheet(isPresented: Binding(get: { showingBoardGuide && !showsBoardMenu }, set: { showingBoardGuide = $0 })) {
             WhiteboardGuide().presentationBackground(Color.surface)
                 .presentationCornerRadius(Radius.sheet)
+                .appModels()
         }
-        .sheet(item: $export) { job in ExportSheet(job: job).presentationCornerRadius(Radius.sheet) }
-        .sheet(item: $editingCover) { record in CoverEditorView(record: record).presentationCornerRadius(Radius.sheet) }
+        .sheet(item: $export) { job in ExportSheet(job: job).presentationCornerRadius(Radius.sheet).appModels() }
+        .sheet(item: $editingCover) { record in
+            CoverEditorView(record: record)
+                .presentationCornerRadius(Radius.sheet)
+                .appModels()
+                .presentationDetents([.large])
+                .presentationSizing(.page)
+        }
         .fileImporter(isPresented: $importingPDF, allowedContentTypes: [.pdf]) { result in
             insertPDF(result, at: session.currentPage + 1)
         }
@@ -395,6 +406,7 @@ fileprivate struct EditorContent: View {
                 insertScan(images)
             }
             .ignoresSafeArea()
+            .appModels()
         }
         .fullScreenCover(isPresented: $takingPhotos, onDismiss: { session.endPhotos() }) {
             PhotoCamera { data in
@@ -402,6 +414,7 @@ fileprivate struct EditorContent: View {
             } done: {
                 takingPhotos = false
             }
+            .appModels()
         }
         .onChange(of: photoItem) { _, item in
             guard let item else { return }
@@ -417,6 +430,9 @@ fileprivate struct EditorContent: View {
                 document.perform { await addSticker(sticker) }
             }
             .presentationCornerRadius(Radius.sheet)
+            .appModels()
+            .presentationDetents([.medium, .large])
+            .presentationBackground(Color.surface)
         }
         .sheet(isPresented: $pickingLink) {
             LinkSheet(session: session) { link in
@@ -425,6 +441,7 @@ fileprivate struct EditorContent: View {
                 announce(String(localized: "Link added to the page"))
             }
             .presentationCornerRadius(Radius.sheet)
+            .appModels()
         }
         .notice("Rename Link", isPresented: $renamingLink, message: Text("Leave it empty to name the link after what it opens.")) {
             TextField("Name", text: $linkLabel)
@@ -493,16 +510,30 @@ fileprivate struct EditorContent: View {
     /// Flashcards and the study guide.
     private func studySheets<Content: View>(_ content: Content) -> some View {
         content
-        .sheet(isPresented: $showingDeck) { DeckSheet(session: session).presentationCornerRadius(Radius.sheet) }
+        .sheet(isPresented: $showingDeck) {
+            DeckSheet(session: session).presentationCornerRadius(Radius.sheet).appModels().presentationBackground(Color.surface)
+        }
         .sheet(item: $cardDraft) { draft in
             CardComposer(notebook: document.id, draft: draft) { _ in announce(String(localized: "Flashcard saved")) }
                 .presentationCornerRadius(Radius.sheet)
+                .appModels()
+                .presentationDetents([.medium, .large])
+                .presentationBackground(Color.surface)
         }
         .sheet(item: $studyGuide) { request in
             StudyGuideSheet(session: session, request: request)
                 .presentationCornerRadius(Radius.sheet)
+                .appModels()
+                .presentationDetents([.large])
+                .presentationBackground(Color.surface)
         }
-        .sheet(item: $tagging) { target in EditorTagSheet(document: document, target: target).presentationCornerRadius(Radius.sheet) }
+        .sheet(item: $tagging) { target in
+            EditorTagSheet(document: document, target: target)
+                .presentationCornerRadius(Radius.sheet)
+                .appModels()
+                .presentationDetents([.medium, .large])
+                .presentationBackground(Color.surface)
+        }
     }
 
     private func makeCardFromInk() {

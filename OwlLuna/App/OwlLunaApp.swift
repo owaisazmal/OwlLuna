@@ -70,12 +70,8 @@ struct OwlLunaRoot: View {
         }
         .background(Color.paper.ignoresSafeArea())
         .progressViewStyle(.thread)
-        .environment(app)
         .environment(curtain)
-        .environment(app.library)
-        .environment(app.activity)
-        .environment(app.flashcards)
-        .modelContainer(app.container)
+        .appModels(app)
         .task {
             let enabled = LaunchAnimation.isEnabled
             app.takeControlAction()
@@ -106,5 +102,14 @@ struct OwlLunaRoot: View {
                 Task { await WidgetBridge.update(app) }
             }
         }
+    }
+}
+
+extension View {
+    /// The models every window's views read. Each sheet and cover is given them again: on a Mac, SwiftUI lays out
+    /// what it presents before the environment it inherits arrives, and a view reading one of these would stop the app.
+    @MainActor
+    func appModels(_ app: AppModel = .shared) -> some View {
+        environment(app).environment(app.library).environment(app.activity).environment(app.flashcards).modelContainer(app.container)
     }
 }

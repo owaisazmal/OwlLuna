@@ -112,8 +112,6 @@ struct TagSheet: View {
                 .boardBackground()
             }
         }
-        .presentationDetents([.medium, .large])
-        .presentationBackground(Color.surface)
         .onAppear {
             guard !loaded else { return }
             loaded = true

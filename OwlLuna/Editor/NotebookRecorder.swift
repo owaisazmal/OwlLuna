@@ -25,7 +25,9 @@ enum RecordingStop: Sendable {
         return switch self {
         case .locked: String(localized: "Recording stopped at \(time) when the notebook locked.")
         case .windowClosed: String(localized: "Recording stopped at \(time) when its window was closed.")
-        case .coverClosed: String(localized: "Recording stopped at \(time) when the iPad's cover was closed.")
+        case .coverClosed: (Device.isMac
+            ? String(localized: "Recording stopped at \(time) when the Mac's lid was closed.")
+            : String(localized: "Recording stopped at \(time) when the iPad's cover was closed."))
         case .interrupted: String(localized: "Recording stopped at \(time) when another app needed the microphone.")
         case .failed: String(localized: "Recording stopped at \(time) because the audio couldn't be written. What came before is kept.")
         case .quit: String(localized: "Recording stopped at \(time) when OwlLuna quit. What came before is kept.")
@@ -158,7 +160,9 @@ final class NotebookRecorder: NSObject {
         startingRecording = request
         Task {
             guard await AVAudioApplication.requestRecordPermission() else {
-                errorMessage = String(localized: "Microphone access is off. Turn it on in Settings › Privacy & Security › Microphone.")
+                errorMessage = (Device.isMac
+                    ? String(localized: "Microphone access is off. Turn it on in System Settings › Privacy & Security › Microphone.")
+                    : String(localized: "Microphone access is off. Turn it on in Settings › Privacy & Security › Microphone."))
                 return
             }
             do {

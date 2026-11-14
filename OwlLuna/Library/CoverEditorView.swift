@@ -59,7 +59,5 @@ struct CoverEditorView: View {
             }
             .onChange(of: inkPair) { _, index in spec.inks = RisoInk.pairs[index] }
         }
-        .presentationDetents([.large])
-        .presentationSizing(.page)
     }
 }

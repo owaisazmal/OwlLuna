@@ -136,7 +136,9 @@ struct InkTextSheet: View {
                 ProgressView().controlSize(.small)
                 Text("Translating…").foregroundStyle(Color.textSecondary)
             } else if let target {
-                Text("Translated into \(InkTranslation.name(of: target)) on this iPad.")
+                (Device.isMac
+                    ? Text("Translated into \(InkTranslation.name(of: target)) on this Mac.")
+                    : Text("Translated into \(InkTranslation.name(of: target)) on this iPad."))
                     .foregroundStyle(Color.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)

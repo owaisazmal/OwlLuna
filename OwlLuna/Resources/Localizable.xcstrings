@@ -143,7 +143,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "„System“ folgt dem hellen oder dunklen Erscheinungsbild des iPad. Ist „Papier hell lassen“ an, bleiben Seiten, Papierfarben und Vorlagen im Dunkelmodus hell, und Tinte sieht aus wie auf hellem Papier. PDFs, Fotos und alles, was du exportierst, behalten ihre eigenen Farben."
+                  "value" : "„System“ folgt dem hellen oder dunklen Erscheinungsbild des Mac. Ist „Papier hell lassen“ an, bleiben Seiten, Papierfarben und Vorlagen im Dunkelmodus hell, und Tinte sieht aus wie auf hellem Papier. PDFs, Fotos und alles, was du exportierst, behalten ihre eigenen Farben."
                 }
               },
               "other" : {
@@ -179,7 +179,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "“System” follows the iPad's Light or Dark appearance. With Keep Paper Light on, pages, paper colours and templates stay light in Dark Mode, and ink looks as it does on light paper. A PDF, a photo and everything you export keep their own colours."
+                  "value" : "“System” follows the Mac's Light or Dark appearance. With Keep Paper Light on, pages, paper colours and templates stay light in Dark Mode, and ink looks as it does on light paper. A PDF, a photo and everything you export keep their own colours."
                 }
               },
               "other" : {
@@ -215,7 +215,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "«Sistema» sigue el aspecto claro u oscuro del iPad. Con «Mantener el papel claro» activado, las páginas, los colores del papel y las plantillas siguen claros en modo oscuro, y la tinta se ve como sobre papel claro. Los PDF, las fotos y todo lo que exportes conservan sus propios colores."
+                  "value" : "«Sistema» sigue el aspecto claro u oscuro del Mac. Con «Mantener el papel claro» activado, las páginas, los colores del papel y las plantillas siguen claros en modo oscuro, y la tinta se ve como sobre papel claro. Los PDF, las fotos y todo lo que exportes conservan sus propios colores."
                 }
               },
               "other" : {
@@ -251,7 +251,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "« Système » suit l’apparence claire ou sombre de l’iPad. Avec « Garder le papier clair » activé, les pages, les couleurs de papier et les modèles restent clairs en mode sombre, et l’encre apparaît comme sur du papier clair. Les PDF, les photos et tout ce que vous exportez conservent leurs propres couleurs."
+                  "value" : "« Système » suit l’apparence claire ou sombre du Mac. Avec « Garder le papier clair » activé, les pages, les couleurs de papier et les modèles restent clairs en mode sombre, et l’encre apparaît comme sur du papier clair. Les PDF, les photos et tout ce que vous exportez conservent leurs propres couleurs."
                 }
               },
               "other" : {
@@ -261,6 +261,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "“System” follows the Mac's Light or Dark appearance. With Keep Paper Light on, pages, paper colours and templates stay light in Dark Mode, and ink looks as it does on light paper. A PDF, a photo and everything you export keep their own colours." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„System“ folgt dem hellen oder dunklen Erscheinungsbild des Mac. Ist „Papier hell lassen“ an, bleiben Seiten, Papierfarben und Vorlagen im Dunkelmodus hell, und Tinte sieht aus wie auf hellem Papier. PDFs, Fotos und alles, was du exportierst, behalten ihre eigenen Farben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«Sistema» sigue el aspecto claro u oscuro del Mac. Con «Mantener el papel claro» activado, las páginas, los colores del papel y las plantillas siguen claros en modo oscuro, y la tinta se ve como sobre papel claro. Los PDF, las fotos y todo lo que exportes conservan sus propios colores."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« Système » suit l’apparence claire ou sombre du Mac. Avec « Garder le papier clair » activé, les pages, les couleurs de papier et les modèles restent clairs en mode sombre, et l’encre apparaît comme sur du papier clair. Les PDF, les photos et tout ce que vous exportez conservent leurs propres couleurs."
           }
         }
       }
@@ -6199,7 +6221,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Eine neue wird aus den Ordnern dieses iPads erstellt, und deine anderen Geräte fügen ihre hinzu, sodass kein Ordner verloren geht. Ein Ordner, der gelöscht wurde, während Ordner nicht synchronisiert wurden, kann wieder auftauchen."
+                  "value" : "Eine neue wird aus den Ordnern dieses Mac erstellt, und deine anderen Geräte fügen ihre hinzu, sodass kein Ordner verloren geht. Ein Ordner, der gelöscht wurde, während Ordner nicht synchronisiert wurden, kann wieder auftauchen."
                 }
               },
               "other" : {
@@ -6235,7 +6257,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "A new one is made from this iPad's folders, and your other devices add theirs to it, so no folder is lost. A folder deleted while folders weren't syncing may come back."
+                  "value" : "A new one is made from this Mac's folders, and your other devices add theirs to it, so no folder is lost. A folder deleted while folders weren't syncing may come back."
                 }
               },
               "other" : {
@@ -6271,7 +6293,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Se crea una nueva con las carpetas de este iPad y tus otros dispositivos le añaden las suyas, así que no se pierde ninguna carpeta. Una carpeta eliminada mientras las carpetas no se sincronizaban puede volver a aparecer."
+                  "value" : "Se crea una nueva con las carpetas de este Mac y tus otros dispositivos le añaden las suyas, así que no se pierde ninguna carpeta. Una carpeta eliminada mientras las carpetas no se sincronizaban puede volver a aparecer."
                 }
               },
               "other" : {
@@ -6307,7 +6329,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Une nouvelle liste est créée à partir des dossiers de cet iPad, et vos autres appareils y ajoutent les leurs, donc aucun dossier n’est perdu. Un dossier supprimé pendant que les dossiers ne se synchronisaient pas peut réapparaître."
+                  "value" : "Une nouvelle liste est créée à partir des dossiers de ce Mac, et vos autres appareils y ajoutent les leurs, donc aucun dossier n’est perdu. Un dossier supprimé pendant que les dossiers ne se synchronisaient pas peut réapparaître."
                 }
               },
               "other" : {
@@ -6317,6 +6339,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "A new one is made from this Mac's folders, and your other devices add theirs to it, so no folder is lost. A folder deleted while folders weren't syncing may come back." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine neue wird aus den Ordnern dieses Mac erstellt, und deine anderen Geräte fügen ihre hinzu, sodass kein Ordner verloren geht. Ein Ordner, der gelöscht wurde, während Ordner nicht synchronisiert wurden, kann wieder auftauchen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se crea una nueva con las carpetas de este Mac y tus otros dispositivos le añaden las suyas, así que no se pierde ninguna carpeta. Una carpeta eliminada mientras las carpetas no se sincronizaban puede volver a aparecer."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une nouvelle liste est créée à partir des dossiers de ce Mac, et vos autres appareils y ajoutent les leurs, donc aucun dossier n’est perdu. Un dossier supprimé pendant que les dossiers ne se synchronisaient pas peut réapparaître."
           }
         }
       }
@@ -7573,6 +7617,28 @@
         }
       }
     },
+    "Allow OwlLuna to use the camera in System Settings › Privacy & Security › Camera to take photos for your pages." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erlaube OwlLuna unter Systemeinstellungen › Datenschutz & Sicherheit › Kamera, die Kamera zu verwenden, um Fotos für deine Seiten aufzunehmen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite que OwlLuna use la cámara en Ajustes del Sistema › Privacidad y seguridad › Cámara para hacer fotos para tus páginas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisez OwlLuna à utiliser la caméra dans Réglages Système › Confidentialité et sécurité › Caméra pour prendre des photos pour vos pages."
+          }
+        }
+      }
+    },
     "Another Notebook" : {
       "localizations" : {
         "de" : {
@@ -7731,7 +7797,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Apple Intelligence wird auf diesem iPad noch vorbereitet. Versuche es gleich noch einmal."
+                  "value" : "Apple Intelligence wird auf diesem Mac noch vorbereitet. Versuche es gleich noch einmal."
                 }
               },
               "other" : {
@@ -7767,7 +7833,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Apple Intelligence is still getting ready on this iPad. Try again in a little while."
+                  "value" : "Apple Intelligence is still getting ready on this Mac. Try again in a little while."
                 }
               },
               "other" : {
@@ -7803,7 +7869,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Apple Intelligence aún se está preparando en este iPad. Inténtalo de nuevo dentro de un rato."
+                  "value" : "Apple Intelligence aún se está preparando en este Mac. Inténtalo de nuevo dentro de un rato."
                 }
               },
               "other" : {
@@ -7839,7 +7905,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Apple Intelligence est encore en préparation sur cet iPad. Réessayez dans un moment."
+                  "value" : "Apple Intelligence est encore en préparation sur ce Mac. Réessayez dans un moment."
                 }
               },
               "other" : {
@@ -7849,6 +7915,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Apple Intelligence is still getting ready on this Mac. Try again in a little while." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligence wird auf diesem Mac noch vorbereitet. Versuche es gleich noch einmal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligence aún se está preparando en este Mac. Inténtalo de nuevo dentro de un rato."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligence est encore en préparation sur ce Mac. Réessayez dans un moment."
           }
         }
       }
@@ -12197,6 +12285,28 @@
         }
       }
     },
+    "Each notebook is copied whole to your private iCloud storage and from there to your other devices, with your folders, smart shelves, stickers and pens. A notebook open here is sent a few seconds after you stop writing, and one open on another device then shows the newer version, unless it has changes of its own. If one was changed on two devices before they could sync, the newer version is kept and the older is saved beside it as a conflicted copy. Writing history is not synced. Turning sync off leaves the copy in iCloud. To remove it, turn sync off on every device, then delete OwlLuna's data in System Settings › your name › iCloud." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jedes Notizbuch wird als Ganzes in deinen privaten iCloud-Speicher kopiert und von dort auf deine anderen Geräte, zusammen mit deinen Ordnern, intelligenten Regalen, Stickern und Stiften. Ein hier geöffnetes Notizbuch wird einige Sekunden, nachdem du aufhörst zu schreiben, gesendet, und ist es auf einem anderen Gerät geöffnet, zeigt es dort die neuere Version, sofern es dort keine eigenen Änderungen hat. Wurde eines auf zwei Geräten geändert, bevor sie synchronisieren konnten, bleibt die neuere Version erhalten und die ältere wird als Konfliktkopie daneben gesichert. Der Schreibverlauf wird nicht synchronisiert. Wenn du die Synchronisierung ausschaltest, bleibt die Kopie in iCloud. Um sie zu entfernen, schalte die Synchronisierung auf jedem Gerät aus und lösche dann die Daten von OwlLuna unter Systemeinstellungen › dein Name › iCloud."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada cuaderno se copia entero en tu almacenamiento privado de iCloud y, desde allí, en tus otros dispositivos, junto con tus carpetas, estantes inteligentes, pegatinas y bolígrafos. Un cuaderno abierto aquí se envía unos segundos después de que dejes de escribir, y si está abierto en otro dispositivo, allí muestra la versión más reciente, salvo que tenga cambios propios. Si se modificó en dos dispositivos antes de que pudieran sincronizarse, se conserva la versión más reciente y la anterior se guarda a su lado como copia en conflicto. El historial de escritura no se sincroniza. Al desactivar la sincronización, la copia se queda en iCloud. Para eliminarla, desactiva la sincronización en todos los dispositivos y luego borra los datos de OwlLuna en Ajustes del Sistema › tu nombre › iCloud."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque carnet est copié en entier dans votre espace de stockage iCloud privé, puis de là vers vos autres appareils, avec vos dossiers, étagères intelligentes, autocollants et stylos. Un carnet ouvert ici est envoyé quelques secondes après que vous avez cessé d’écrire, et s’il est ouvert sur un autre appareil, il y affiche la version la plus récente, sauf s’il a des modifications qui lui sont propres. S’il a été modifié sur deux appareils avant qu’ils aient pu se synchroniser, la version la plus récente est conservée et l’ancienne est enregistrée à côté sous forme de copie en conflit. L’historique d’écriture n’est pas synchronisé. Désactiver la synchronisation laisse la copie dans iCloud. Pour la supprimer, désactivez la synchronisation sur chaque appareil, puis supprimez les données d’OwlLuna dans Réglages Système › votre nom › iCloud."
+          }
+        }
+      }
+    },
     "Each photo goes straight onto the page." : {
       "localizations" : {
         "de" : {
@@ -14932,7 +15042,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "iCloud ist gerade nicht erreichbar. Änderungen auf diesem iPad werden hochgeladen, sobald es wieder erreichbar ist."
+                  "value" : "iCloud ist gerade nicht erreichbar. Änderungen auf diesem Mac werden hochgeladen, sobald es wieder erreichbar ist."
                 }
               },
               "other" : {
@@ -14968,7 +15078,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "iCloud can't be reached right now. Changes made on this iPad will upload when it's back."
+                  "value" : "iCloud can't be reached right now. Changes made on this Mac will upload when it's back."
                 }
               },
               "other" : {
@@ -15004,7 +15114,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "No se puede conectar con iCloud ahora. Los cambios hechos en este iPad se subirán cuando vuelva a estar disponible."
+                  "value" : "No se puede conectar con iCloud ahora. Los cambios hechos en este Mac se subirán cuando vuelva a estar disponible."
                 }
               },
               "other" : {
@@ -15040,7 +15150,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "iCloud est injoignable pour le moment. Les modifications faites sur cet iPad seront envoyées dès son retour."
+                  "value" : "iCloud est injoignable pour le moment. Les modifications faites sur ce Mac seront envoyées dès son retour."
                 }
               },
               "other" : {
@@ -15050,6 +15160,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "iCloud can't be reached right now. Changes made on this Mac will upload when it's back." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud ist gerade nicht erreichbar. Änderungen auf diesem Mac werden hochgeladen, sobald es wieder erreichbar ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se puede conectar con iCloud ahora. Los cambios hechos en este Mac se subirán cuando vuelva a estar disponible."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud est injoignable pour le moment. Les modifications faites sur ce Mac seront envoyées dès son retour."
           }
         }
       }
@@ -15138,6 +15270,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iCloud n’est pas disponible. Connectez-vous à iCloud et activez iCloud Drive dans Réglages ; cette copie d’OwlLuna doit aussi être compilée avec la fonctionnalité iCloud."
+          }
+        }
+      }
+    },
+    "iCloud isn't available. Sign in to iCloud and turn on iCloud Drive in System Settings; this copy of OwlLuna also has to be built with the iCloud capability." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud ist nicht verfügbar. Melde dich bei iCloud an und aktiviere iCloud Drive in den Systemeinstellungen. Außerdem muss diese Kopie von OwlLuna mit der iCloud-Funktion erstellt sein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud no está disponible. Inicia sesión en iCloud y activa iCloud Drive en Ajustes del Sistema; además, esta copia de OwlLuna debe estar compilada con la capacidad de iCloud."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud n’est pas disponible. Connectez-vous à iCloud et activez iCloud Drive dans Réglages Système ; cette copie d’OwlLuna doit aussi être compilée avec la fonctionnalité iCloud."
           }
         }
       }
@@ -15782,7 +15936,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Es wurde mit einer neueren Version von OwlLuna gesichert. Aktualisiere OwlLuna auf diesem iPad, um es zu synchronisieren."
+                  "value" : "Es wurde mit einer neueren Version von OwlLuna gesichert. Aktualisiere OwlLuna auf diesem Mac, um es zu synchronisieren."
                 }
               },
               "other" : {
@@ -15818,7 +15972,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "It was saved by a newer version of OwlLuna. Update OwlLuna on this iPad to sync it."
+                  "value" : "It was saved by a newer version of OwlLuna. Update OwlLuna on this Mac to sync it."
                 }
               },
               "other" : {
@@ -15854,7 +16008,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Se guardó con una versión más reciente de OwlLuna. Actualiza OwlLuna en este iPad para sincronizarlo."
+                  "value" : "Se guardó con una versión más reciente de OwlLuna. Actualiza OwlLuna en este Mac para sincronizarlo."
                 }
               },
               "other" : {
@@ -15890,7 +16044,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Il a été enregistré par une version plus récente d’OwlLuna. Mettez à jour OwlLuna sur cet iPad pour le synchroniser."
+                  "value" : "Il a été enregistré par une version plus récente d’OwlLuna. Mettez à jour OwlLuna sur ce Mac pour le synchroniser."
                 }
               },
               "other" : {
@@ -15900,6 +16054,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "It was saved by a newer version of OwlLuna. Update OwlLuna on this Mac to sync it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es wurde mit einer neueren Version von OwlLuna gesichert. Aktualisiere OwlLuna auf diesem Mac, um es zu synchronisieren."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se guardó con una versión más reciente de OwlLuna. Actualiza OwlLuna en este Mac para sincronizarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il a été enregistré par une version plus récente d’OwlLuna. Mettez à jour OwlLuna sur ce Mac pour le synchroniser."
           }
         }
       }
@@ -15974,7 +16150,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Seine Kopie auf diesem iPad kann nicht gelesen werden."
+                  "value" : "Seine Kopie auf diesem Mac kann nicht gelesen werden."
                 }
               },
               "other" : {
@@ -16010,7 +16186,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Its copy on this iPad can't be read."
+                  "value" : "Its copy on this Mac can't be read."
                 }
               },
               "other" : {
@@ -16046,7 +16222,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Su copia en este iPad no se puede leer."
+                  "value" : "Su copia en este Mac no se puede leer."
                 }
               },
               "other" : {
@@ -16082,7 +16258,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Sa copie sur cet iPad est illisible."
+                  "value" : "Sa copie sur ce Mac est illisible."
                 }
               },
               "other" : {
@@ -16092,6 +16268,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Its copy on this Mac can't be read." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seine Kopie auf diesem Mac kann nicht gelesen werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Su copia en este Mac no se puede leer."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sa copie sur ce Mac est illisible."
           }
         }
       }
@@ -17922,6 +18120,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’accès au micro est désactivé. Activez-le dans Réglages › Confidentialité et sécurité › Micro."
+          }
+        }
+      }
+    },
+    "Microphone access is off. Turn it on in System Settings › Privacy & Security › Microphone." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mikrofonzugriff ist deaktiviert. Aktiviere ihn unter Systemeinstellungen › Datenschutz & Sicherheit › Mikrofon."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El acceso al micrófono está desactivado. Actívalo en Ajustes del Sistema › Privacidad y seguridad › Micrófono."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’accès au micro est désactivé. Activez-le dans Réglages Système › Confidentialité et sécurité › Micro."
           }
         }
       }
@@ -19932,7 +20152,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Noch nicht auf diesem iPad"
+                  "value" : "Noch nicht auf diesem Mac"
                 }
               },
               "other" : {
@@ -19968,7 +20188,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Not on This iPad Yet"
+                  "value" : "Not on This Mac Yet"
                 }
               },
               "other" : {
@@ -20004,7 +20224,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Aún no en este iPad"
+                  "value" : "Aún no en este Mac"
                 }
               },
               "other" : {
@@ -20040,7 +20260,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Pas encore sur cet iPad"
+                  "value" : "Pas encore sur ce Mac"
                 }
               },
               "other" : {
@@ -20050,6 +20270,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Not on This Mac Yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nicht auf diesem Mac"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no en este Mac"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore sur ce Mac"
           }
         }
       }
@@ -20354,7 +20596,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Notizbücher lassen sich vom Home-Bildschirm aus über ihren Titel oder die darin enthaltenen Wörter finden. Dieser Index wird von iPadOS auf diesem iPad geführt. Gesperrte Notizbücher sind nie darin."
+                  "value" : "Notizbücher lassen sich mit Spotlight über ihren Titel oder die darin enthaltenen Wörter finden. Dieser Index wird von macOS auf diesem Mac geführt. Gesperrte Notizbücher sind nie darin."
                 }
               },
               "other" : {
@@ -20390,7 +20632,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Notebooks can be found from the Home Screen by their title or by the words in them. That index is kept by iPadOS on this iPad. Locked notebooks are never in it."
+                  "value" : "Notebooks can be found with Spotlight by their title or by the words in them. That index is kept by macOS on this Mac. Locked notebooks are never in it."
                 }
               },
               "other" : {
@@ -20426,7 +20668,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Los cuadernos se pueden encontrar desde la pantalla de inicio por su título o por las palabras que contienen. Ese índice lo guarda iPadOS en este iPad. Los cuadernos bloqueados nunca están en él."
+                  "value" : "Los cuadernos se pueden encontrar con Spotlight por su título o por las palabras que contienen. Ese índice lo guarda macOS en este Mac. Los cuadernos bloqueados nunca están en él."
                 }
               },
               "other" : {
@@ -20462,7 +20704,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Les carnets peuvent être trouvés depuis l’écran d’accueil par leur titre ou par les mots qu’ils contiennent. Cet index est conservé par iPadOS sur cet iPad. Les carnets verrouillés n’y figurent jamais."
+                  "value" : "Les carnets peuvent être trouvés avec Spotlight par leur titre ou par les mots qu’ils contiennent. Cet index est conservé par macOS sur ce Mac. Les carnets verrouillés n’y figurent jamais."
                 }
               },
               "other" : {
@@ -20472,6 +20714,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Notebooks can be found with Spotlight by their title or by the words in them. That index is kept by macOS on this Mac. Locked notebooks are never in it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notizbücher lassen sich mit Spotlight über ihren Titel oder die darin enthaltenen Wörter finden. Dieser Index wird von macOS auf diesem Mac geführt. Gesperrte Notizbücher sind nie darin."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los cuadernos se pueden encontrar con Spotlight por su título o por las palabras que contienen. Ese índice lo guarda macOS en este Mac. Los cuadernos bloqueados nunca están en él."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les carnets peuvent être trouvés avec Spotlight par leur titre ou par les mots qu’ils contiennent. Cet index est conservé par macOS sur ce Mac. Les carnets verrouillés n’y figurent jamais."
           }
         }
       }
@@ -21444,6 +21708,28 @@
         }
       }
     },
+    "Open System Settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systemeinstellungen öffnen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Ajustes del Sistema"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir Réglages Système"
+          }
+        }
+      }
+    },
     "Open Today's Journal Page" : {
       "localizations" : {
         "de" : {
@@ -22042,7 +22328,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "OwlLuna kann aufschreiben, was gesagt wurde, damit du es lesen, durchsuchen und zu jedem Moment springen kannst. Die Aufnahme wird auf diesem iPad transkribiert."
+                  "value" : "OwlLuna kann aufschreiben, was gesagt wurde, damit du es lesen, durchsuchen und zu jedem Moment springen kannst. Die Aufnahme wird auf diesem Mac transkribiert."
                 }
               },
               "other" : {
@@ -22078,7 +22364,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "OwlLuna can write down what was said, so you can read it, search for it and jump to any moment. The recording is transcribed on this iPad."
+                  "value" : "OwlLuna can write down what was said, so you can read it, search for it and jump to any moment. The recording is transcribed on this Mac."
                 }
               },
               "other" : {
@@ -22114,7 +22400,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "OwlLuna puede poner por escrito lo que se dijo, para que puedas leerlo, buscarlo y saltar a cualquier momento. La grabación se transcribe en este iPad."
+                  "value" : "OwlLuna puede poner por escrito lo que se dijo, para que puedas leerlo, buscarlo y saltar a cualquier momento. La grabación se transcribe en este Mac."
                 }
               },
               "other" : {
@@ -22150,7 +22436,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "OwlLuna peut mettre par écrit ce qui a été dit, pour que vous puissiez le lire, le rechercher et aller à n’importe quel moment. L’enregistrement est transcrit sur cet iPad."
+                  "value" : "OwlLuna peut mettre par écrit ce qui a été dit, pour que vous puissiez le lire, le rechercher et aller à n’importe quel moment. L’enregistrement est transcrit sur ce Mac."
                 }
               },
               "other" : {
@@ -22160,6 +22446,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "OwlLuna can write down what was said, so you can read it, search for it and jump to any moment. The recording is transcribed on this Mac." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OwlLuna kann aufschreiben, was gesagt wurde, damit du es lesen, durchsuchen und zu jedem Moment springen kannst. Die Aufnahme wird auf diesem Mac transkribiert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OwlLuna puede poner por escrito lo que se dijo, para que puedas leerlo, buscarlo y saltar a cualquier momento. La grabación se transcribe en este Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OwlLuna peut mettre par écrit ce qui a été dit, pour que vous puissiez le lire, le rechercher et aller à n’importe quel moment. L’enregistrement est transcrit sur ce Mac."
           }
         }
       }
@@ -22278,7 +22586,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "OwlLuna ist kostenlos und Open Source. Keine Werbung, keine Abos, kein Tracking. Deine Notizen bleiben auf deinem iPad und, wenn du die Synchronisierung aktivierst, in deinem eigenen iCloud-Speicher."
+                  "value" : "OwlLuna ist kostenlos und Open Source. Keine Werbung, keine Abos, kein Tracking. Deine Notizen bleiben auf deinem Mac und, wenn du die Synchronisierung aktivierst, in deinem eigenen iCloud-Speicher."
                 }
               },
               "other" : {
@@ -22314,7 +22622,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "OwlLuna is free and open source. No ads, no subscriptions, no tracking. Your notes stay on your iPad, and in your own iCloud if you turn sync on."
+                  "value" : "OwlLuna is free and open source. No ads, no subscriptions, no tracking. Your notes stay on your Mac, and in your own iCloud if you turn sync on."
                 }
               },
               "other" : {
@@ -22350,7 +22658,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "OwlLuna es gratis y de código abierto. Sin anuncios, sin suscripciones, sin rastreo. Tus notas se quedan en tu iPad y, si activas la sincronización, en tu propio iCloud."
+                  "value" : "OwlLuna es gratis y de código abierto. Sin anuncios, sin suscripciones, sin rastreo. Tus notas se quedan en tu Mac y, si activas la sincronización, en tu propio iCloud."
                 }
               },
               "other" : {
@@ -22386,7 +22694,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "OwlLuna est gratuit et open source. Pas de publicité, pas d’abonnement, pas de suivi. Vos notes restent sur votre iPad et, si vous activez la synchronisation, dans votre propre espace iCloud."
+                  "value" : "OwlLuna est gratuit et open source. Pas de publicité, pas d’abonnement, pas de suivi. Vos notes restent sur votre Mac et, si vous activez la synchronisation, dans votre propre espace iCloud."
                 }
               },
               "other" : {
@@ -22396,6 +22704,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "OwlLuna is free and open source. No ads, no subscriptions, no tracking. Your notes stay on your Mac, and in your own iCloud if you turn sync on." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OwlLuna ist kostenlos und Open Source. Keine Werbung, keine Abos, kein Tracking. Deine Notizen bleiben auf deinem Mac und, wenn du die Synchronisierung aktivierst, in deinem eigenen iCloud-Speicher."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OwlLuna es gratis y de código abierto. Sin anuncios, sin suscripciones, sin rastreo. Tus notas se quedan en tu Mac y, si activas la sincronización, en tu propio iCloud."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OwlLuna est gratuit et open source. Pas de publicité, pas d’abonnement, pas de suivi. Vos notes restent sur votre Mac et, si vous activez la synchronisation, dans votre propre espace iCloud."
           }
         }
       }
@@ -22418,6 +22748,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OwlLuna n’est pas autorisé à lire votre calendrier. Autorisez-le dans Réglages › Confidentialité et sécurité › Calendriers."
+          }
+        }
+      }
+    },
+    "OwlLuna isn't allowed to read your calendar. Allow it in System Settings › Privacy & Security › Calendars." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OwlLuna darf deinen Kalender nicht lesen. Erlaube es unter Systemeinstellungen › Datenschutz & Sicherheit › Kalender."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OwlLuna no tiene permiso para leer tu calendario. Permítelo en Ajustes del Sistema › Privacidad y seguridad › Calendarios."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OwlLuna n’est pas autorisé à lire votre calendrier. Autorisez-le dans Réglages Système › Confidentialité et sécurité › Calendriers."
           }
         }
       }
@@ -24900,7 +25252,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Die Aufnahme endete bei %@, als die Hülle des iPad geschlossen wurde."
+                  "value" : "Die Aufnahme endete bei %@, als der Deckel des Mac geschlossen wurde."
                 }
               },
               "other" : {
@@ -24936,7 +25288,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Recording stopped at %@ when the iPad's cover was closed."
+                  "value" : "Recording stopped at %@ when the Mac's lid was closed."
                 }
               },
               "other" : {
@@ -24972,7 +25324,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "La grabación se detuvo en %@ al cerrar la funda del iPad."
+                  "value" : "La grabación se detuvo en %@ al cerrar la tapa del Mac."
                 }
               },
               "other" : {
@@ -25008,7 +25360,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "L’enregistrement s’est arrêté à %@, quand l’étui de l’iPad a été fermé."
+                  "value" : "L’enregistrement s’est arrêté à %@, quand le Mac a été refermé."
                 }
               },
               "other" : {
@@ -25018,6 +25370,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Recording stopped at %@ when the Mac's lid was closed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Aufnahme endete bei %@, als der Deckel des Mac geschlossen wurde."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La grabación se detuvo en %@ al cerrar la tapa del Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’enregistrement s’est arrêté à %@, quand le Mac a été refermé."
           }
         }
       }
@@ -25092,7 +25466,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Aufnahmen werden auf diesem iPad transkribiert, in dieser Sprache, außer du wählst für eine Aufnahme eine andere. Aufgeführt sind nur die Sprachen, die dieses iPad transkribieren kann, ohne eine Aufnahme wegzuschicken."
+                  "value" : "Aufnahmen werden auf diesem Mac transkribiert, in dieser Sprache, außer du wählst für eine Aufnahme eine andere. Aufgeführt sind nur die Sprachen, die dieser Mac transkribieren kann, ohne eine Aufnahme wegzuschicken."
                 }
               },
               "other" : {
@@ -25128,7 +25502,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Recordings are transcribed on this iPad, in this language unless you pick another for one. Only the languages this iPad can transcribe without sending a recording away are listed."
+                  "value" : "Recordings are transcribed on this Mac, in this language unless you pick another for one. Only the languages this Mac can transcribe without sending a recording away are listed."
                 }
               },
               "other" : {
@@ -25164,7 +25538,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Las grabaciones se transcriben en este iPad, en este idioma, salvo que elijas otro para alguna. Solo aparecen los idiomas que este iPad puede transcribir sin enviar la grabación fuera."
+                  "value" : "Las grabaciones se transcriben en este Mac, en este idioma, salvo que elijas otro para alguna. Solo aparecen los idiomas que este Mac puede transcribir sin enviar la grabación fuera."
                 }
               },
               "other" : {
@@ -25200,7 +25574,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Les enregistrements sont transcrits sur cet iPad, dans cette langue, sauf si vous en choisissez une autre pour l’un d’eux. Seules les langues que cet iPad peut transcrire sans envoyer l’enregistrement ailleurs sont proposées."
+                  "value" : "Les enregistrements sont transcrits sur ce Mac, dans cette langue, sauf si vous en choisissez une autre pour l’un d’eux. Seules les langues que ce Mac peut transcrire sans envoyer l’enregistrement ailleurs sont proposées."
                 }
               },
               "other" : {
@@ -25210,6 +25584,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Recordings are transcribed on this Mac, in this language unless you pick another for one. Only the languages this Mac can transcribe without sending a recording away are listed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufnahmen werden auf diesem Mac transkribiert, in dieser Sprache, außer du wählst für eine Aufnahme eine andere. Aufgeführt sind nur die Sprachen, die dieser Mac transkribieren kann, ohne eine Aufnahme wegzuschicken."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las grabaciones se transcriben en este Mac, en este idioma, salvo que elijas otro para alguna. Solo aparecen los idiomas que este Mac puede transcribir sin enviar la grabación fuera."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les enregistrements sont transcrits sur ce Mac, dans cette langue, sauf si vous en choisissez une autre pour l’un d’eux. Seules les langues que ce Mac peut transcrire sans envoyer l’enregistrement ailleurs sont proposées."
           }
         }
       }
@@ -26574,6 +26970,28 @@
         }
       }
     },
+    "Right-click a notebook, then choose Use as Daily Journal. Press ⌘T in the library to open today's page. With Print Today's Events on, each new day's page starts with that day's events from your calendar, as text you can move or delete. They are read on this Mac." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klicke mit der rechten Maustaste auf ein Notizbuch und wähle dann „Als Tagebuch verwenden“. Drücke in der Bibliothek ⌘T, um die heutige Seite zu öffnen. Ist „Heutige Termine drucken“ aktiviert, beginnt die Seite jedes neuen Tages mit den Terminen dieses Tages aus deinem Kalender, als Text, den du bewegen oder löschen kannst. Sie werden auf diesem Mac gelesen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz clic con el botón derecho en un cuaderno y elige Usar como diario. Pulsa ⌘T en la biblioteca para abrir la página de hoy. Con Imprimir los eventos de hoy activado, la página de cada nuevo día empieza con los eventos de ese día de tu calendario, como texto que puedes mover o eliminar. Se leen en este Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez avec le bouton droit sur un carnet, puis choisissez « Utiliser comme journal ». Appuyez sur ⌘T dans la bibliothèque pour ouvrir la page du jour. Lorsque « Imprimer les événements du jour » est activé, la page de chaque nouveau jour commence par les événements de ce jour dans votre calendrier, sous forme de texte que vous pouvez déplacer ou supprimer. Ils sont lus sur ce Mac."
+          }
+        }
+      }
+    },
     "Ring" : {
       "localizations" : {
         "de" : {
@@ -26754,7 +27172,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Wie iPad"
+                  "value" : "Wie Mac"
                 }
               },
               "other" : {
@@ -26790,7 +27208,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Same as iPad"
+                  "value" : "Same as Mac"
                 }
               },
               "other" : {
@@ -26826,7 +27244,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Igual que el iPad"
+                  "value" : "Igual que el Mac"
                 }
               },
               "other" : {
@@ -26862,7 +27280,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Comme l’iPad"
+                  "value" : "Comme le Mac"
                 }
               },
               "other" : {
@@ -26872,6 +27290,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Same as Mac" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie Mac"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Igual que el Mac"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comme le Mac"
           }
         }
       }
@@ -28856,6 +29296,28 @@
         }
       }
     },
+    "Speech recognition is off for OwlLuna. Turn it on in System Settings › Privacy & Security › Speech Recognition." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Spracherkennung ist für OwlLuna deaktiviert. Aktiviere sie unter Systemeinstellungen › Datenschutz & Sicherheit › Spracherkennung."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El reconocimiento de voz está desactivado para OwlLuna. Actívalo en Ajustes del Sistema › Privacidad y seguridad › Reconocimiento de voz."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La reconnaissance vocale est désactivée pour OwlLuna. Activez-la dans Réglages Système › Confidentialité et sécurité › Reconnaissance vocale."
+          }
+        }
+      }
+    },
     "Spine" : {
       "localizations" : {
         "de" : {
@@ -29586,7 +30048,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Lernhilfen werden von Apple Intelligence auf dem iPad selbst geschrieben, und dieses iPad hat es nicht. OwlLuna hat keinen anderen Weg, eine zu schreiben."
+                  "value" : "Lernhilfen werden von Apple Intelligence auf dem Mac selbst geschrieben, und dieser Mac hat es nicht. OwlLuna hat keinen anderen Weg, eine zu schreiben."
                 }
               },
               "other" : {
@@ -29622,7 +30084,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Study guides are written by Apple Intelligence on the iPad itself, and this iPad doesn't have it. OwlLuna has no other way to write one."
+                  "value" : "Study guides are written by Apple Intelligence on the Mac itself, and this Mac doesn't have it. OwlLuna has no other way to write one."
                 }
               },
               "other" : {
@@ -29658,7 +30120,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Las guías de estudio las escribe Apple Intelligence en el propio iPad, y este iPad no lo tiene. OwlLuna no tiene otra forma de escribirlas."
+                  "value" : "Las guías de estudio las escribe Apple Intelligence en el propio Mac, y este Mac no lo tiene. OwlLuna no tiene otra forma de escribirlas."
                 }
               },
               "other" : {
@@ -29694,7 +30156,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Les guides d'étude sont rédigés par Apple Intelligence sur l'iPad lui-même, et cet iPad n'en dispose pas. OwlLuna n'a aucun autre moyen d'en rédiger un."
+                  "value" : "Les guides d'étude sont rédigés par Apple Intelligence sur le Mac lui-même, et ce Mac n'en dispose pas. OwlLuna n'a aucun autre moyen d'en rédiger un."
                 }
               },
               "other" : {
@@ -29734,7 +30196,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Lernhilfen werden von Apple Intelligence auf dem iPad selbst geschrieben, wofür iPadOS 26 oder neuer nötig ist. OwlLuna hat keinen anderen Weg, eine zu schreiben."
+                  "value" : "Lernhilfen werden von Apple Intelligence auf dem Mac selbst geschrieben, wofür macOS 26 oder neuer nötig ist. OwlLuna hat keinen anderen Weg, eine zu schreiben."
                 }
               },
               "other" : {
@@ -29770,7 +30232,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Study guides are written by Apple Intelligence on the iPad itself, which needs iPadOS 26 or later. OwlLuna has no other way to write one."
+                  "value" : "Study guides are written by Apple Intelligence on the Mac itself, which needs macOS 26 or later. OwlLuna has no other way to write one."
                 }
               },
               "other" : {
@@ -29806,7 +30268,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Las guías de estudio las escribe Apple Intelligence en el propio iPad, que necesita iPadOS 26 o posterior. OwlLuna no tiene otra forma de escribirlas."
+                  "value" : "Las guías de estudio las escribe Apple Intelligence en el propio Mac, que necesita macOS 26 o posterior. OwlLuna no tiene otra forma de escribirlas."
                 }
               },
               "other" : {
@@ -29842,7 +30304,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Les guides d'étude sont rédigés par Apple Intelligence sur l'iPad lui-même, ce qui nécessite iPadOS 26 ou ultérieur. OwlLuna n'a aucun autre moyen d'en rédiger un."
+                  "value" : "Les guides d'étude sont rédigés par Apple Intelligence sur le Mac lui-même, ce qui nécessite macOS 26 ou ultérieur. OwlLuna n'a aucun autre moyen d'en rédiger un."
                 }
               },
               "other" : {
@@ -29882,7 +30344,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Lernhilfen werden von Apple Intelligence auf dem iPad selbst geschrieben. Schalte es in den Einstellungen unter „Apple Intelligence & Siri“ ein und komm zurück. Deine Notizen werden auf diesem iPad gelesen."
+                  "value" : "Lernhilfen werden von Apple Intelligence auf dem Mac selbst geschrieben. Schalte es in den Systemeinstellungen unter „Apple Intelligence & Siri“ ein und komm zurück. Deine Notizen werden auf diesem Mac gelesen."
                 }
               },
               "other" : {
@@ -29918,7 +30380,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Study guides are written by Apple Intelligence on the iPad itself. Turn it on in Settings, under Apple Intelligence and Siri, and come back. Your notes are read on this iPad."
+                  "value" : "Study guides are written by Apple Intelligence on the Mac itself. Turn it on in System Settings, under Apple Intelligence and Siri, and come back. Your notes are read on this Mac."
                 }
               },
               "other" : {
@@ -29954,7 +30416,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Las guías de estudio las escribe Apple Intelligence en el propio iPad. Actívalo en Ajustes, en Apple Intelligence y Siri, y vuelve. Tus notas se leen en este iPad."
+                  "value" : "Las guías de estudio las escribe Apple Intelligence en el propio Mac. Actívalo en Ajustes del Sistema, en Apple Intelligence y Siri, y vuelve. Tus notas se leen en este Mac."
                 }
               },
               "other" : {
@@ -29990,7 +30452,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Les guides d'étude sont rédigés par Apple Intelligence sur l'iPad lui-même. Activez-le dans Réglages, sous Apple Intelligence et Siri, puis revenez. Vos notes sont lues sur cet iPad."
+                  "value" : "Les guides d'étude sont rédigés par Apple Intelligence sur le Mac lui-même. Activez-le dans Réglages Système, sous Apple Intelligence et Siri, puis revenez. Vos notes sont lues sur ce Mac."
                 }
               },
               "other" : {
@@ -30000,6 +30462,72 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Study guides are written by Apple Intelligence on the Mac itself, and this Mac doesn't have it. OwlLuna has no other way to write one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lernhilfen werden von Apple Intelligence auf dem Mac selbst geschrieben, und dieser Mac hat es nicht. OwlLuna hat keinen anderen Weg, eine zu schreiben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las guías de estudio las escribe Apple Intelligence en el propio Mac, y este Mac no lo tiene. OwlLuna no tiene otra forma de escribirlas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les guides d'étude sont rédigés par Apple Intelligence sur le Mac lui-même, et ce Mac n'en dispose pas. OwlLuna n'a aucun autre moyen d'en rédiger un."
+          }
+        }
+      }
+    },
+    "Study guides are written by Apple Intelligence on the Mac itself, which needs macOS 26 or later. OwlLuna has no other way to write one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lernhilfen werden von Apple Intelligence auf dem Mac selbst geschrieben, wofür macOS 26 oder neuer nötig ist. OwlLuna hat keinen anderen Weg, eine zu schreiben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las guías de estudio las escribe Apple Intelligence en el propio Mac, que necesita macOS 26 o posterior. OwlLuna no tiene otra forma de escribirlas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les guides d'étude sont rédigés par Apple Intelligence sur le Mac lui-même, ce qui nécessite macOS 26 ou ultérieur. OwlLuna n'a aucun autre moyen d'en rédiger un."
+          }
+        }
+      }
+    },
+    "Study guides are written by Apple Intelligence on the Mac itself. Turn it on in System Settings, under Apple Intelligence and Siri, and come back. Your notes are read on this Mac." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lernhilfen werden von Apple Intelligence auf dem Mac selbst geschrieben. Schalte es in den Systemeinstellungen unter „Apple Intelligence & Siri“ ein und komm zurück. Deine Notizen werden auf diesem Mac gelesen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las guías de estudio las escribe Apple Intelligence en el propio Mac. Actívalo en Ajustes del Sistema, en Apple Intelligence y Siri, y vuelve. Tus notas se leen en este Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les guides d'étude sont rédigés par Apple Intelligence sur le Mac lui-même. Activez-le dans Réglages Système, sous Apple Intelligence et Siri, puis revenez. Vos notes sont lues sur ce Mac."
           }
         }
       }
@@ -31350,7 +31878,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Die Ordnerliste in iCloud kann nicht gelesen werden, daher werden Änderungen an Ordnern weder gesendet noch empfangen. Die Ordner auf diesem iPad bleiben, wie sie sind, und Notizbücher werden weiter synchronisiert."
+                  "value" : "Die Ordnerliste in iCloud kann nicht gelesen werden, daher werden Änderungen an Ordnern weder gesendet noch empfangen. Die Ordner auf diesem Mac bleiben, wie sie sind, und Notizbücher werden weiter synchronisiert."
                 }
               },
               "other" : {
@@ -31386,7 +31914,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "The folder list in iCloud can't be read, so folder changes aren't sent or received. Folders on this iPad stay as they are, and notebooks still sync."
+                  "value" : "The folder list in iCloud can't be read, so folder changes aren't sent or received. Folders on this Mac stay as they are, and notebooks still sync."
                 }
               },
               "other" : {
@@ -31422,7 +31950,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "No se puede leer la lista de carpetas de iCloud, así que los cambios en las carpetas no se envían ni se reciben. Las carpetas de este iPad se quedan como están y los cuadernos se siguen sincronizando."
+                  "value" : "No se puede leer la lista de carpetas de iCloud, así que los cambios en las carpetas no se envían ni se reciben. Las carpetas de este Mac se quedan como están y los cuadernos se siguen sincronizando."
                 }
               },
               "other" : {
@@ -31458,7 +31986,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "La liste des dossiers dans iCloud ne peut pas être lue, donc les modifications des dossiers ne sont ni envoyées ni reçues. Les dossiers de cet iPad restent tels quels et les carnets continuent de se synchroniser."
+                  "value" : "La liste des dossiers dans iCloud ne peut pas être lue, donc les modifications des dossiers ne sont ni envoyées ni reçues. Les dossiers de ce Mac restent tels quels et les carnets continuent de se synchroniser."
                 }
               },
               "other" : {
@@ -31468,6 +31996,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "The folder list in iCloud can't be read, so folder changes aren't sent or received. Folders on this Mac stay as they are, and notebooks still sync." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Ordnerliste in iCloud kann nicht gelesen werden, daher werden Änderungen an Ordnern weder gesendet noch empfangen. Die Ordner auf diesem Mac bleiben, wie sie sind, und Notizbücher werden weiter synchronisiert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se puede leer la lista de carpetas de iCloud, así que los cambios en las carpetas no se envían ni se reciben. Las carpetas de este Mac se quedan como están y los cuadernos se siguen sincronizando."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La liste des dossiers dans iCloud ne peut pas être lue, donc les modifications des dossiers ne sont ni envoyées ni reçues. Les dossiers de ce Mac restent tels quels et les carnets continuent de se synchroniser."
           }
         }
       }
@@ -31658,7 +32208,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Das Modell auf diesem iPad kann die Sprache dieser Notizen noch nicht lesen."
+                  "value" : "Das Modell auf diesem Mac kann die Sprache dieser Notizen noch nicht lesen."
                 }
               },
               "other" : {
@@ -31694,7 +32244,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "The model on this iPad can't read the language of these notes yet."
+                  "value" : "The model on this Mac can't read the language of these notes yet."
                 }
               },
               "other" : {
@@ -31730,7 +32280,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "El modelo de este iPad aún no puede leer el idioma de estas notas."
+                  "value" : "El modelo de este Mac aún no puede leer el idioma de estas notas."
                 }
               },
               "other" : {
@@ -31766,7 +32316,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Le modèle de cet iPad ne sait pas encore lire la langue de ces notes."
+                  "value" : "Le modèle de ce Mac ne sait pas encore lire la langue de ces notes."
                 }
               },
               "other" : {
@@ -31806,7 +32356,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Das Modell auf diesem iPad wollte nicht über diese Notizen schreiben."
+                  "value" : "Das Modell auf diesem Mac wollte nicht über diese Notizen schreiben."
                 }
               },
               "other" : {
@@ -31842,7 +32392,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "The model on this iPad wouldn't write about these notes."
+                  "value" : "The model on this Mac wouldn't write about these notes."
                 }
               },
               "other" : {
@@ -31878,7 +32428,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "El modelo de este iPad no quiso escribir sobre estas notas."
+                  "value" : "El modelo de este Mac no quiso escribir sobre estas notas."
                 }
               },
               "other" : {
@@ -31914,7 +32464,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Le modèle de cet iPad n'a pas voulu écrire sur ces notes."
+                  "value" : "Le modèle de ce Mac n'a pas voulu écrire sur ces notes."
                 }
               },
               "other" : {
@@ -31924,6 +32474,50 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "The model on this Mac can't read the language of these notes yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Modell auf diesem Mac kann die Sprache dieser Notizen noch nicht lesen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El modelo de este Mac aún no puede leer el idioma de estas notas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le modèle de ce Mac ne sait pas encore lire la langue de ces notes."
+          }
+        }
+      }
+    },
+    "The model on this Mac wouldn't write about these notes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Modell auf diesem Mac wollte nicht über diese Notizen schreiben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El modelo de este Mac no quiso escribir sobre estas notas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le modèle de ce Mac n'a pas voulu écrire sur ces notes."
           }
         }
       }
@@ -32394,7 +32988,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Auf diesem iPad ist nicht genug Speicherplatz frei. Gib unter Einstellungen › Allgemein › iPad-Speicher etwas frei und versuche es dann noch einmal."
+                  "value" : "Auf diesem Mac ist nicht genug Speicherplatz frei. Gib unter Systemeinstellungen › Allgemein › Speicher etwas frei und versuche es dann noch einmal."
                 }
               },
               "other" : {
@@ -32430,7 +33024,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "There isn't enough free space on this iPad. Free some up in Settings › General › iPad Storage, then try again."
+                  "value" : "There isn't enough free space on this Mac. Free some up in System Settings › General › Storage, then try again."
                 }
               },
               "other" : {
@@ -32466,7 +33060,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "No hay suficiente espacio libre en este iPad. Libera espacio en Ajustes › General › Almacenamiento del iPad y vuelve a intentarlo."
+                  "value" : "No hay suficiente espacio libre en este Mac. Libera espacio en Ajustes del Sistema › General › Almacenamiento y vuelve a intentarlo."
                 }
               },
               "other" : {
@@ -32502,7 +33096,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Il n’y a pas assez d’espace libre sur cet iPad. Libérez-en dans Réglages › Général › Stockage iPad, puis réessayez."
+                  "value" : "Il n’y a pas assez d’espace libre sur ce Mac. Libérez-en dans Réglages Système › Général › Stockage, puis réessayez."
                 }
               },
               "other" : {
@@ -32512,6 +33106,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "There isn't enough free space on this Mac. Free some up in System Settings › General › Storage, then try again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf diesem Mac ist nicht genug Speicherplatz frei. Gib unter Systemeinstellungen › Allgemein › Speicher etwas frei und versuche es dann noch einmal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay suficiente espacio libre en este Mac. Libera espacio en Ajustes del Sistema › General › Almacenamiento y vuelve a intentarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il n’y a pas assez d’espace libre sur ce Mac. Libérez-en dans Réglages Système › Général › Stockage, puis réessayez."
           }
         }
       }
@@ -32542,7 +33158,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Auf diesem iPad ist nicht genug Platz."
+                  "value" : "Auf diesem Mac ist nicht genug Platz."
                 }
               },
               "other" : {
@@ -32578,7 +33194,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "There isn't enough room on this iPad."
+                  "value" : "There isn't enough room on this Mac."
                 }
               },
               "other" : {
@@ -32614,7 +33230,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "No hay suficiente espacio en este iPad."
+                  "value" : "No hay suficiente espacio en este Mac."
                 }
               },
               "other" : {
@@ -32650,7 +33266,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Il n’y a pas assez d’espace sur cet iPad."
+                  "value" : "Il n’y a pas assez d’espace sur ce Mac."
                 }
               },
               "other" : {
@@ -32660,6 +33276,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "There isn't enough room on this Mac." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf diesem Mac ist nicht genug Platz."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay suficiente espacio en este Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il n’y a pas assez d’espace sur ce Mac."
           }
         }
       }
@@ -32734,7 +33372,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Diese Notizen sind zu lang, als dass das Modell auf diesem iPad sie auf einmal lesen könnte."
+                  "value" : "Diese Notizen sind zu lang, als dass das Modell auf diesem Mac sie auf einmal lesen könnte."
                 }
               },
               "other" : {
@@ -32770,7 +33408,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "These notes are too long for the model on this iPad to read at once."
+                  "value" : "These notes are too long for the model on this Mac to read at once."
                 }
               },
               "other" : {
@@ -32806,7 +33444,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Estas notas son demasiado largas para que el modelo de este iPad las lea de una vez."
+                  "value" : "Estas notas son demasiado largas para que el modelo de este Mac las lea de una vez."
                 }
               },
               "other" : {
@@ -32842,7 +33480,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Ces notes sont trop longues pour que le modèle de cet iPad les lise d'un coup."
+                  "value" : "Ces notes sont trop longues pour que le modèle de ce Mac les lise d'un coup."
                 }
               },
               "other" : {
@@ -32852,6 +33490,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "These notes are too long for the model on this Mac to read at once." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Notizen sind zu lang, als dass das Modell auf diesem Mac sie auf einmal lesen könnte."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estas notas son demasiado largas para que el modelo de este Mac las lea de una vez."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ces notes sont trop longues pour que le modèle de ce Mac les lise d'un coup."
           }
         }
       }
@@ -32882,7 +33542,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Sie sind auf diesem iPad oder einem anderen Gerät alle auf einmal verschwunden, was nach einem Fehler aussieht. Deshalb hat die Synchronisierung sie gelassen, wie sie sind. „Behalten“ holt sie überall zurück, „Löschen“ lässt die Löschungen zu."
+                  "value" : "Sie sind auf diesem Mac oder einem anderen Gerät alle auf einmal verschwunden, was nach einem Fehler aussieht. Deshalb hat die Synchronisierung sie gelassen, wie sie sind. „Behalten“ holt sie überall zurück, „Löschen“ lässt die Löschungen zu."
                 }
               },
               "other" : {
@@ -32918,7 +33578,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "They went missing from this iPad or another device all at once, which looks like a mistake, so sync left them as they are. Keep brings them back everywhere, and Delete lets the deletions go through."
+                  "value" : "They went missing from this Mac or another device all at once, which looks like a mistake, so sync left them as they are. Keep brings them back everywhere, and Delete lets the deletions go through."
                 }
               },
               "other" : {
@@ -32954,7 +33614,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Desaparecieron todos a la vez de este iPad o de otro dispositivo, lo que parece un error, así que la sincronización los dejó como estaban. «Conservar» los recupera en todas partes y «Eliminar» deja que se eliminen."
+                  "value" : "Desaparecieron todos a la vez de este Mac o de otro dispositivo, lo que parece un error, así que la sincronización los dejó como estaban. «Conservar» los recupera en todas partes y «Eliminar» deja que se eliminen."
                 }
               },
               "other" : {
@@ -32990,7 +33650,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Ils ont tous disparu en même temps de cet iPad ou d’un autre appareil, ce qui ressemble à une erreur. La synchronisation les a donc laissés tels quels. « Conserver » les rétablit partout et « Supprimer » laisse passer les suppressions."
+                  "value" : "Ils ont tous disparu en même temps de ce Mac ou d’un autre appareil, ce qui ressemble à une erreur. La synchronisation les a donc laissés tels quels. « Conserver » les rétablit partout et « Supprimer » laisse passer les suppressions."
                 }
               },
               "other" : {
@@ -33000,6 +33660,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "They went missing from this Mac or another device all at once, which looks like a mistake, so sync left them as they are. Keep brings them back everywhere, and Delete lets the deletions go through." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie sind auf diesem Mac oder einem anderen Gerät alle auf einmal verschwunden, was nach einem Fehler aussieht. Deshalb hat die Synchronisierung sie gelassen, wie sie sind. „Behalten“ holt sie überall zurück, „Löschen“ lässt die Löschungen zu."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desaparecieron todos a la vez de este Mac o de otro dispositivo, lo que parece un error, así que la sincronización los dejó como estaban. «Conservar» los recupera en todas partes y «Eliminar» deja que se eliminen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ils ont tous disparu en même temps de ce Mac ou d’un autre appareil, ce qui ressemble à une erreur. La synchronisation les a donc laissés tels quels. « Conserver » les rétablit partout et « Supprimer » laisse passer les suppressions."
           }
         }
       }
@@ -33140,7 +33822,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "dieses iPad kann es nicht codieren"
+                  "value" : "dieser Mac kann es nicht codieren"
                 }
               },
               "other" : {
@@ -33176,7 +33858,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "this iPad can't encode it"
+                  "value" : "this Mac can't encode it"
                 }
               },
               "other" : {
@@ -33212,7 +33894,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "este iPad no puede codificarlo"
+                  "value" : "este Mac no puede codificarlo"
                 }
               },
               "other" : {
@@ -33248,7 +33930,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "cet iPad ne peut pas l’encoder"
+                  "value" : "ce Mac ne peut pas l’encoder"
                 }
               },
               "other" : {
@@ -33288,7 +33970,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Dieses iPad kann %@ nicht auf dem Gerät transkribieren. OwlLuna sendet eine Aufnahme nie zum Transkribieren weg, daher wurde sie unverändert gelassen."
+                  "value" : "Dieser Mac kann %@ nicht auf dem Gerät transkribieren. OwlLuna sendet eine Aufnahme nie zum Transkribieren weg, daher wurde sie unverändert gelassen."
                 }
               },
               "other" : {
@@ -33324,7 +34006,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "This iPad can't transcribe %@ on the device. OwlLuna never sends a recording away to be transcribed, so it was left as it is."
+                  "value" : "This Mac can't transcribe %@ on the device. OwlLuna never sends a recording away to be transcribed, so it was left as it is."
                 }
               },
               "other" : {
@@ -33360,7 +34042,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Este iPad no puede transcribir %@ en el dispositivo. OwlLuna nunca envía una grabación fuera para transcribirla, así que se dejó como está."
+                  "value" : "Este Mac no puede transcribir %@ en el dispositivo. OwlLuna nunca envía una grabación fuera para transcribirla, así que se dejó como está."
                 }
               },
               "other" : {
@@ -33396,7 +34078,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Cet iPad ne peut pas transcrire %@ sur l’appareil. OwlLuna n’envoie jamais un enregistrement ailleurs pour le transcrire ; il a donc été laissé tel quel."
+                  "value" : "Ce Mac ne peut pas transcrire %@ sur l’appareil. OwlLuna n’envoie jamais un enregistrement ailleurs pour le transcrire ; il a donc été laissé tel quel."
                 }
               },
               "other" : {
@@ -33436,7 +34118,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Die Notizbücher auf diesem iPad wurden zuletzt mit der iCloud eines anderen Accounts synchronisiert. Beim Synchronisieren mit diesem Account werden sie in dessen iCloud-Speicher kopiert, und die dort vorhandenen Notizbücher kommen hinzu."
+                  "value" : "Die Notizbücher auf diesem Mac wurden zuletzt mit der iCloud eines anderen Accounts synchronisiert. Beim Synchronisieren mit diesem Account werden sie in dessen iCloud-Speicher kopiert, und die dort vorhandenen Notizbücher kommen hinzu."
                 }
               },
               "other" : {
@@ -33472,7 +34154,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "This iPad's notebooks were last synced with another account's iCloud. Syncing with this account copies them to its iCloud storage and brings in the notebooks it holds."
+                  "value" : "This Mac's notebooks were last synced with another account's iCloud. Syncing with this account copies them to its iCloud storage and brings in the notebooks it holds."
                 }
               },
               "other" : {
@@ -33508,7 +34190,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Los cuadernos de este iPad se sincronizaron por última vez con el iCloud de otra cuenta. Al sincronizar con esta cuenta, se copian en su almacenamiento de iCloud y se añaden los cuadernos que contiene."
+                  "value" : "Los cuadernos de este Mac se sincronizaron por última vez con el iCloud de otra cuenta. Al sincronizar con esta cuenta, se copian en su almacenamiento de iCloud y se añaden los cuadernos que contiene."
                 }
               },
               "other" : {
@@ -33544,7 +34226,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Les carnets de cet iPad ont été synchronisés pour la dernière fois avec l’iCloud d’un autre compte. La synchronisation avec ce compte les copie dans son espace de stockage iCloud et ajoute les carnets qu’il contient."
+                  "value" : "Les carnets de ce Mac ont été synchronisés pour la dernière fois avec l’iCloud d’un autre compte. La synchronisation avec ce compte les copie dans son espace de stockage iCloud et ajoute les carnets qu’il contient."
                 }
               },
               "other" : {
@@ -33602,6 +34284,28 @@
         }
       }
     },
+    "This library has locked notebooks. To back them up, set a login password for this Mac in System Settings first." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Bibliothek enthält gesperrte Notizbücher. Um sie zu sichern, richte zuerst in den Systemeinstellungen ein Anmeldepasswort für diesen Mac ein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta biblioteca tiene cuadernos bloqueados. Para incluirlos en una copia de seguridad, configura primero una contraseña de inicio de sesión para este Mac en Ajustes del Sistema."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette bibliothèque contient des carnets verrouillés. Pour les sauvegarder, définissez d’abord un mot de passe de session pour ce Mac dans Réglages Système."
+          }
+        }
+      }
+    },
     "This library has locked notebooks. To back them up, set a passcode on this iPad in Settings first." : {
       "localizations" : {
         "de" : {
@@ -33628,7 +34332,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Diese Bibliothek enthält gesperrte Notizbücher. Um sie zu sichern, richte zuerst in den Einstellungen einen Code auf diesem iPad ein."
+                  "value" : "Diese Bibliothek enthält gesperrte Notizbücher. Um sie zu sichern, richte zuerst in den Systemeinstellungen ein Anmeldepasswort für diesen Mac ein."
                 }
               },
               "other" : {
@@ -33664,7 +34368,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "This library has locked notebooks. To back them up, set a passcode on this iPad in Settings first."
+                  "value" : "This library has locked notebooks. To back them up, set a login password for this Mac in System Settings first."
                 }
               },
               "other" : {
@@ -33700,7 +34404,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Esta biblioteca tiene cuadernos bloqueados. Para incluirlos en una copia de seguridad, configura primero un código en este iPad en Ajustes."
+                  "value" : "Esta biblioteca tiene cuadernos bloqueados. Para incluirlos en una copia de seguridad, configura primero una contraseña de inicio de sesión para este Mac en Ajustes del Sistema."
                 }
               },
               "other" : {
@@ -33736,7 +34440,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Cette bibliothèque contient des carnets verrouillés. Pour les sauvegarder, définissez d’abord un code sur cet iPad dans Réglages."
+                  "value" : "Cette bibliothèque contient des carnets verrouillés. Pour les sauvegarder, définissez d’abord un mot de passe de session pour ce Mac dans Réglages Système."
                 }
               },
               "other" : {
@@ -33746,6 +34450,72 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "this Mac can't encode it" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dieser Mac kann es nicht codieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "este Mac no puede codificarlo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ce Mac ne peut pas l’encoder"
+          }
+        }
+      }
+    },
+    "This Mac can't transcribe %@ on the device. OwlLuna never sends a recording away to be transcribed, so it was left as it is." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Mac kann %@ nicht auf dem Gerät transkribieren. OwlLuna sendet eine Aufnahme nie zum Transkribieren weg, daher wurde sie unverändert gelassen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este Mac no puede transcribir %@ en el dispositivo. OwlLuna nunca envía una grabación fuera para transcribirla, así que se dejó como está."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce Mac ne peut pas transcrire %@ sur l’appareil. OwlLuna n’envoie jamais un enregistrement ailleurs pour le transcrire ; il a donc été laissé tel quel."
+          }
+        }
+      }
+    },
+    "This Mac's notebooks were last synced with another account's iCloud. Syncing with this account copies them to its iCloud storage and brings in the notebooks it holds." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Notizbücher auf diesem Mac wurden zuletzt mit der iCloud eines anderen Accounts synchronisiert. Beim Synchronisieren mit diesem Account werden sie in dessen iCloud-Speicher kopiert, und die dort vorhandenen Notizbücher kommen hinzu."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los cuadernos de este Mac se sincronizaron por última vez con el iCloud de otra cuenta. Al sincronizar con esta cuenta, se copian en su almacenamiento de iCloud y se añaden los cuadernos que contiene."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les carnets de ce Mac ont été synchronisés pour la dernière fois avec l’iCloud d’un autre compte. La synchronisation avec ce compte les copie dans son espace de stockage iCloud et ajoute les carnets qu’il contient."
           }
         }
       }
@@ -34404,6 +35174,28 @@
         }
       }
     },
+    "To lock notebooks, set a login password for this Mac in System Settings first." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um Notizbücher zu sperren, richte zuerst in den Systemeinstellungen ein Anmeldepasswort für diesen Mac ein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para bloquear cuadernos, configura primero una contraseña de inicio de sesión para este Mac en Ajustes del Sistema."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour verrouiller des carnets, définissez d’abord un mot de passe de session pour ce Mac dans Réglages Système."
+          }
+        }
+      }
+    },
     "To lock notebooks, set a passcode on this iPad in Settings first." : {
       "localizations" : {
         "de" : {
@@ -34430,7 +35222,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Um Notizbücher zu sperren, richte zuerst in den Einstellungen einen Code auf diesem iPad ein."
+                  "value" : "Um Notizbücher zu sperren, richte zuerst in den Systemeinstellungen ein Anmeldepasswort für diesen Mac ein."
                 }
               },
               "other" : {
@@ -34466,7 +35258,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "To lock notebooks, set a passcode on this iPad in Settings first."
+                  "value" : "To lock notebooks, set a login password for this Mac in System Settings first."
                 }
               },
               "other" : {
@@ -34502,7 +35294,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Para bloquear cuadernos, configura primero un código en este iPad en Ajustes."
+                  "value" : "Para bloquear cuadernos, configura primero una contraseña de inicio de sesión para este Mac en Ajustes del Sistema."
                 }
               },
               "other" : {
@@ -34538,7 +35330,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Pour verrouiller des carnets, définissez d’abord un code sur cet iPad dans Réglages."
+                  "value" : "Pour verrouiller des carnets, définissez d’abord un mot de passe de session pour ce Mac dans Réglages Système."
                 }
               },
               "other" : {
@@ -35018,7 +35810,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Halte ein Notizbuch gedrückt und wähle dann „Als Tagebuch verwenden“. Drücke in der Bibliothek ⌘T, um die heutige Seite zu öffnen. Ist „Heutige Termine drucken“ aktiviert, beginnt die Seite jedes neuen Tages mit den Terminen dieses Tages aus deinem Kalender, als Text, den du bewegen oder löschen kannst. Sie werden auf diesem iPad gelesen."
+                  "value" : "Klicke mit der rechten Maustaste auf ein Notizbuch und wähle dann „Als Tagebuch verwenden“. Drücke in der Bibliothek ⌘T, um die heutige Seite zu öffnen. Ist „Heutige Termine drucken“ aktiviert, beginnt die Seite jedes neuen Tages mit den Terminen dieses Tages aus deinem Kalender, als Text, den du bewegen oder löschen kannst. Sie werden auf diesem Mac gelesen."
                 }
               },
               "other" : {
@@ -35054,7 +35846,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Touch and hold a notebook, then choose Use as Daily Journal. Press ⌘T in the library to open today's page. With Print Today's Events on, each new day's page starts with that day's events from your calendar, as text you can move or delete. They are read on this iPad."
+                  "value" : "Right-click a notebook, then choose Use as Daily Journal. Press ⌘T in the library to open today's page. With Print Today's Events on, each new day's page starts with that day's events from your calendar, as text you can move or delete. They are read on this Mac."
                 }
               },
               "other" : {
@@ -35090,7 +35882,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Mantén pulsado un cuaderno y elige Usar como diario. Pulsa ⌘T en la biblioteca para abrir la página de hoy. Con Imprimir los eventos de hoy activado, la página de cada nuevo día empieza con los eventos de ese día de tu calendario, como texto que puedes mover o eliminar. Se leen en este iPad."
+                  "value" : "Haz clic con el botón derecho en un cuaderno y elige Usar como diario. Pulsa ⌘T en la biblioteca para abrir la página de hoy. Con Imprimir los eventos de hoy activado, la página de cada nuevo día empieza con los eventos de ese día de tu calendario, como texto que puedes mover o eliminar. Se leen en este Mac."
                 }
               },
               "other" : {
@@ -35126,7 +35918,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Maintenez le doigt sur un carnet, puis choisissez « Utiliser comme journal ». Appuyez sur ⌘T dans la bibliothèque pour ouvrir la page du jour. Lorsque « Imprimer les événements du jour » est activé, la page de chaque nouveau jour commence par les événements de ce jour dans votre calendrier, sous forme de texte que vous pouvez déplacer ou supprimer. Ils sont lus sur cet iPad."
+                  "value" : "Cliquez avec le bouton droit sur un carnet, puis choisissez « Utiliser comme journal ». Appuyez sur ⌘T dans la bibliothèque pour ouvrir la page du jour. Lorsque « Imprimer les événements du jour » est activé, la page de chaque nouveau jour commence par les événements de ce jour dans votre calendrier, sous forme de texte que vous pouvez déplacer ou supprimer. Ils sont lus sur ce Mac."
                 }
               },
               "other" : {
@@ -35408,7 +36200,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Auf diesem iPad übersetzt: %@."
+                  "value" : "Auf diesem Mac übersetzt: %@."
                 }
               },
               "other" : {
@@ -35444,7 +36236,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Translated into %@ on this iPad."
+                  "value" : "Translated into %@ on this Mac."
                 }
               },
               "other" : {
@@ -35480,7 +36272,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Traducido al %@ en este iPad."
+                  "value" : "Traducido al %@ en este Mac."
                 }
               },
               "other" : {
@@ -35516,7 +36308,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Traduit en %@ sur cet iPad."
+                  "value" : "Traduit en %@ sur ce Mac."
                 }
               },
               "other" : {
@@ -35526,6 +36318,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Translated into %@ on this Mac." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf diesem Mac übersetzt: %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traducido al %@ en este Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traduit en %@ sur ce Mac."
           }
         }
       }
@@ -35864,7 +36678,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Zwei Geräte hatten jeweils ein Tagebuch. Das zuerst begonnene ist jetzt auf allen Geräten das Tagebuch, und dieses hier, das dieses iPad verwendet hat, bleibt als gewöhnliches Notizbuch erhalten."
+                  "value" : "Zwei Geräte hatten jeweils ein Tagebuch. Das zuerst begonnene ist jetzt auf allen Geräten das Tagebuch, und dieses hier, das dieser Mac verwendet hat, bleibt als gewöhnliches Notizbuch erhalten."
                 }
               },
               "other" : {
@@ -35900,7 +36714,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Two devices each had a daily journal. The one begun first is now the journal on every device, and this one, which this iPad was using, is kept as an ordinary notebook."
+                  "value" : "Two devices each had a daily journal. The one begun first is now the journal on every device, and this one, which this Mac was using, is kept as an ordinary notebook."
                 }
               },
               "other" : {
@@ -35936,7 +36750,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Dos dispositivos tenían cada uno un diario. El que se empezó primero es ahora el diario en todos los dispositivos, y este, que usaba este iPad, se conserva como un cuaderno normal."
+                  "value" : "Dos dispositivos tenían cada uno un diario. El que se empezó primero es ahora el diario en todos los dispositivos, y este, que usaba este Mac, se conserva como un cuaderno normal."
                 }
               },
               "other" : {
@@ -35972,7 +36786,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Deux appareils avaient chacun un journal. Celui commencé en premier est désormais le journal sur tous les appareils, et celui-ci, qu’utilisait cet iPad, est conservé comme un carnet ordinaire."
+                  "value" : "Deux appareils avaient chacun un journal. Celui commencé en premier est désormais le journal sur tous les appareils, et celui-ci, qu’utilisait ce Mac, est conservé comme un carnet ordinaire."
                 }
               },
               "other" : {
@@ -35982,6 +36796,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Two devices each had a daily journal. The one begun first is now the journal on every device, and this one, which this Mac was using, is kept as an ordinary notebook." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwei Geräte hatten jeweils ein Tagebuch. Das zuerst begonnene ist jetzt auf allen Geräten das Tagebuch, und dieses hier, das dieser Mac verwendet hat, bleibt als gewöhnliches Notizbuch erhalten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dos dispositivos tenían cada uno un diario. El que se empezó primero es ahora el diario en todos los dispositivos, y este, que usaba este Mac, se conserva como un cuaderno normal."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deux appareils avaient chacun un journal. Celui commencé en premier est désormais le journal sur tous les appareils, et celui-ci, qu’utilisait ce Mac, est conservé comme un carnet ordinaire."
           }
         }
       }
@@ -36210,7 +37046,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Entsperre es mit Face ID, Touch ID oder dem Code dieses iPad."
+                  "value" : "Entsperre es mit Touch ID oder dem Passwort dieses Mac."
                 }
               },
               "other" : {
@@ -36246,7 +37082,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Unlock it with Face ID, Touch ID or this iPad's passcode."
+                  "value" : "Unlock it with Touch ID or this Mac's password."
                 }
               },
               "other" : {
@@ -36282,7 +37118,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Desbloquéalo con Face ID, Touch ID o el código de este iPad."
+                  "value" : "Desbloquéalo con Touch ID o la contraseña de este Mac."
                 }
               },
               "other" : {
@@ -36318,7 +37154,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Déverrouillez-le avec Face ID, Touch ID ou le code de cet iPad."
+                  "value" : "Déverrouillez-le avec Touch ID ou le mot de passe de ce Mac."
                 }
               },
               "other" : {
@@ -36328,6 +37164,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Unlock it with Touch ID or this Mac's password." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entsperre es mit Touch ID oder dem Passwort dieses Mac."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desbloquéalo con Touch ID o la contraseña de este Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déverrouillez-le avec Touch ID ou le mot de passe de ce Mac."
           }
         }
       }
@@ -37414,7 +38272,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Auf diesem iPad aus dem geschrieben, was in deinen Notizen steht. Vergleiche es mit deinen Notizen: Es kann falsch sein."
+                  "value" : "Auf diesem Mac aus dem geschrieben, was in deinen Notizen steht. Vergleiche es mit deinen Notizen: Es kann falsch sein."
                 }
               },
               "other" : {
@@ -37450,7 +38308,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Written on this iPad from what your notes say. Check it against your notes: it can be wrong."
+                  "value" : "Written on this Mac from what your notes say. Check it against your notes: it can be wrong."
                 }
               },
               "other" : {
@@ -37486,7 +38344,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Escrito en este iPad a partir de lo que dicen tus notas. Compáralo con tus notas: puede equivocarse."
+                  "value" : "Escrito en este Mac a partir de lo que dicen tus notas. Compáralo con tus notas: puede equivocarse."
                 }
               },
               "other" : {
@@ -37522,7 +38380,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Rédigé sur cet iPad à partir de ce que disent vos notes. Vérifiez avec vos notes : il peut se tromper."
+                  "value" : "Rédigé sur ce Mac à partir de ce que disent vos notes. Vérifiez avec vos notes : il peut se tromper."
                 }
               },
               "other" : {
@@ -37532,6 +38390,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Written on this Mac from what your notes say. Check it against your notes: it can be wrong." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf diesem Mac aus dem geschrieben, was in deinen Notizen steht. Vergleiche es mit deinen Notizen: Es kann falsch sein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escrito en este Mac a partir de lo que dicen tus notas. Compáralo con tus notas: puede equivocarse."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rédigé sur ce Mac à partir de ce que disent vos notes. Vérifiez avec vos notes : il peut se tromper."
           }
         }
       }
@@ -37824,7 +38704,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Dein iCloud-Speicher ist voll, deshalb können Änderungen auf diesem iPad nicht hochgeladen werden. Gib Speicher frei oder wähle einen größeren Tarif unter Einstellungen › dein Name › iCloud."
+                  "value" : "Dein iCloud-Speicher ist voll, deshalb können Änderungen auf diesem Mac nicht hochgeladen werden. Gib Speicher frei oder wähle einen größeren Tarif unter Systemeinstellungen › dein Name › iCloud."
                 }
               },
               "other" : {
@@ -37860,7 +38740,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Your iCloud storage is full, so changes made on this iPad can't be uploaded. Free up space, or choose a bigger plan in Settings › your name › iCloud."
+                  "value" : "Your iCloud storage is full, so changes made on this Mac can't be uploaded. Free up space, or choose a bigger plan in System Settings › your name › iCloud."
                 }
               },
               "other" : {
@@ -37896,7 +38776,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Tu almacenamiento de iCloud está lleno, así que los cambios hechos en este iPad no se pueden subir. Libera espacio o elige un plan mayor en Ajustes › tu nombre › iCloud."
+                  "value" : "Tu almacenamiento de iCloud está lleno, así que los cambios hechos en este Mac no se pueden subir. Libera espacio o elige un plan mayor en Ajustes del Sistema › tu nombre › iCloud."
                 }
               },
               "other" : {
@@ -37932,7 +38812,7 @@
               "mac" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Votre stockage iCloud est plein : les modifications faites sur cet iPad ne peuvent pas être envoyées. Libérez de l’espace ou choisissez un forfait plus grand dans Réglages › votre nom › iCloud."
+                  "value" : "Votre stockage iCloud est plein : les modifications faites sur ce Mac ne peuvent pas être envoyées. Libérez de l’espace ou choisissez un forfait plus grand dans Réglages Système › votre nom › iCloud."
                 }
               },
               "other" : {
@@ -37942,6 +38822,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Your iCloud storage is full, so changes made on this Mac can't be uploaded. Free up space, or choose a bigger plan in System Settings › your name › iCloud." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein iCloud-Speicher ist voll, deshalb können Änderungen auf diesem Mac nicht hochgeladen werden. Gib Speicher frei oder wähle einen größeren Tarif unter Systemeinstellungen › dein Name › iCloud."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu almacenamiento de iCloud está lleno, así que los cambios hechos en este Mac no se pueden subir. Libera espacio o elige un plan mayor en Ajustes del Sistema › tu nombre › iCloud."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre stockage iCloud est plein : les modifications faites sur ce Mac ne peuvent pas être envoyées. Libérez de l’espace ou choisissez un forfait plus grand dans Réglages Système › votre nom › iCloud."
           }
         }
       }

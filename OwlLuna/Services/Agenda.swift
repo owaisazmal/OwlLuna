@@ -11,7 +11,9 @@ enum AgendaError: LocalizedError {
     case notAllowed
 
     var errorDescription: String? {
-        String(localized: "OwlLuna isn't allowed to read your calendar. Allow it in Settings › Privacy & Security › Calendars.")
+        (Device.isMac
+            ? String(localized: "OwlLuna isn't allowed to read your calendar. Allow it in System Settings › Privacy & Security › Calendars.")
+            : String(localized: "OwlLuna isn't allowed to read your calendar. Allow it in Settings › Privacy & Security › Calendars."))
     }
 }
 

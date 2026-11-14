@@ -79,7 +79,7 @@ struct ExportSheet: View {
                                 .buttonStyle(.owlLuna)
                         }
                     }
-                    .sheet(isPresented: $sharing) { ShareSheet(items: job.shared).presentationCornerRadius(Radius.sheet) }
+                    .sheet(isPresented: $sharing) { ShareSheet(items: job.shared).presentationCornerRadius(Radius.sheet).appModels() }
                 }
                 if job.skipped > 0 {
                     Label(String(localized: "\(job.skipped) locked notebooks were left out. Unlock them to export them."), systemImage: "lock")

@@ -30,9 +30,15 @@ enum StudyGuideError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .nothingToRead: String(localized: "There isn't enough writing here to study from yet.")
-        case .tooLong: String(localized: "These notes are too long for the model on this iPad to read at once.")
-        case .declined: String(localized: "The model on this iPad wouldn't write about these notes.")
-        case .language: String(localized: "The model on this iPad can't read the language of these notes yet.")
+        case .tooLong: (Device.isMac
+            ? String(localized: "These notes are too long for the model on this Mac to read at once.")
+            : String(localized: "These notes are too long for the model on this iPad to read at once."))
+        case .declined: (Device.isMac
+            ? String(localized: "The model on this Mac wouldn't write about these notes.")
+            : String(localized: "The model on this iPad wouldn't write about these notes."))
+        case .language: (Device.isMac
+            ? String(localized: "The model on this Mac can't read the language of these notes yet.")
+            : String(localized: "The model on this iPad can't read the language of these notes yet."))
         }
     }
 }

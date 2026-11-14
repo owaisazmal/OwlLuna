@@ -22,8 +22,8 @@ struct OwlLunaSettingsView: View {
     @AppStorage(SettingsKey.pencilSqueeze) private var pencilSqueeze: PencilAction = .system
     @AppStorage(SettingsKey.pencilSeen) private var pencilSeen = false
 
-    /// An iPhone shows the Pencil's choices once a Pencil has touched it.
-    private var hasPencil: Bool { !Device.isPhone || pencilSeen }
+    /// An iPhone shows the Pencil's choices once a Pencil has touched it; a Mac never does.
+    private var hasPencil: Bool { !Device.isMac && (!Device.isPhone || pencilSeen) }
     @AppStorage(SettingsKey.journalAgenda) private var printsAgenda = false
     @AppStorage(SettingsKey.spotlight) private var showsInSpotlight = true
     @AppStorage(SettingsKey.appearance) private var appearance: AppAppearance = .initial
@@ -84,8 +84,7 @@ struct OwlLunaSettingsView: View {
             }
         }
         .tint(Color.accentColor)
-        .presentationSizing(.page)
-        .sheet(item: $sharedBackup) { file in ShareSheet(items: [file.url]).presentationCornerRadius(Radius.sheet) }
+        .sheet(item: $sharedBackup) { file in ShareSheet(items: [file.url]).presentationCornerRadius(Radius.sheet).appModels() }
         // The backup is kept to share again while Settings is open.
         .onDisappear {
             backingUp?.cancel()
@@ -98,7 +97,9 @@ struct OwlLunaSettingsView: View {
     }
 
     private var appearanceSection: some View {
-        SettingsSection("Appearance", note: "“System” follows the iPad's Light or Dark appearance. With Keep Paper Light on, pages, paper colours and templates stay light in Dark Mode, and ink looks as it does on light paper. A PDF, a photo and everything you export keep their own colours.") {
+        SettingsSection("Appearance", note: Device.isMac
+            ? "“System” follows the Mac's Light or Dark appearance. With Keep Paper Light on, pages, paper colours and templates stay light in Dark Mode, and ink looks as it does on light paper. A PDF, a photo and everything you export keep their own colours."
+            : "“System” follows the iPad's Light or Dark appearance. With Keep Paper Light on, pages, paper colours and templates stay light in Dark Mode, and ink looks as it does on light paper. A PDF, a photo and everything you export keep their own colours.") {
             OwlLunaSegmentedPicker("Appearance", selection: $appearance, options: AppAppearance.allCases,
                                    identifier: { "settings.appearance.\($0.rawValue)" }) { Text($0.displayName) }
                 .accessibilityIdentifier("settings.appearance")
@@ -144,10 +145,14 @@ struct OwlLunaSettingsView: View {
 
     private var recordingsSection: some View {
         let chosen = transcriptLanguage.isEmpty ? nil : Locale(identifier: transcriptLanguage)
-        return SettingsSection("Recordings", note: "Recordings are transcribed on this iPad, in this language unless you pick another for one. Only the languages this iPad can transcribe without sending a recording away are listed.") {
-            SettingsChoiceRow(title: "Transcription Language", value: chosen.map(Transcription.name(of:)) ?? String(localized: "Same as iPad"),
+        return SettingsSection("Recordings", note: Device.isMac
+            ? "Recordings are transcribed on this Mac, in this language unless you pick another for one. Only the languages this Mac can transcribe without sending a recording away are listed."
+            : "Recordings are transcribed on this iPad, in this language unless you pick another for one. Only the languages this iPad can transcribe without sending a recording away are listed.") {
+            SettingsChoiceRow(title: "Transcription Language", value: chosen.map(Transcription.name(of:)) ?? (Device.isMac
+                ? String(localized: "Same as Mac")
+                : String(localized: "Same as iPad")),
                               selection: $transcriptLanguage) {
-                Section { Text("Same as iPad").tag("") }
+                Section { (Device.isMac ? Text("Same as Mac") : Text("Same as iPad")).tag("") }
                 if !transcriptLanguages.isEmpty {
                     Section {
                         ForEach(transcriptLanguages, id: \.identifier) { Text(Transcription.name(of: $0)).tag($0.identifier(.bcp47)) }
@@ -226,7 +231,9 @@ struct OwlLunaSettingsView: View {
 
     private var journalSection: some View {
         let journal = journalID.isEmpty ? nil : store.dailyJournal
-        return SettingsSection("Daily Journal", note: "Touch and hold a notebook, then choose Use as Daily Journal. Press ⌘T in the library to open today's page. With Print Today's Events on, each new day's page starts with that day's events from your calendar, as text you can move or delete. They are read on this iPad.") {
+        return SettingsSection("Daily Journal", note: Device.isMac
+            ? "Right-click a notebook, then choose Use as Daily Journal. Press ⌘T in the library to open today's page. With Print Today's Events on, each new day's page starts with that day's events from your calendar, as text you can move or delete. They are read on this Mac."
+            : "Touch and hold a notebook, then choose Use as Daily Journal. Press ⌘T in the library to open today's page. With Print Today's Events on, each new day's page starts with that day's events from your calendar, as text you can move or delete. They are read on this iPad.") {
             SettingsValueRow(title: "Journal", value: journal?.title ?? String(localized: "None"))
             Toggle("Show On This Day", isOn: $showsOnThisDay).settingsRow()
             Toggle("Print Today's Events", isOn: Binding(get: { printsAgenda }, set: setPrintsAgenda))
@@ -253,7 +260,9 @@ struct OwlLunaSettingsView: View {
     }
 
     private var searchSection: some View {
-        SettingsSection("Search", note: "Notebooks can be found from the Home Screen by their title or by the words in them. That index is kept by iPadOS on this iPad. Locked notebooks are never in it.") {
+        SettingsSection("Search", note: Device.isMac
+            ? "Notebooks can be found with Spotlight by their title or by the words in them. That index is kept by macOS on this Mac. Locked notebooks are never in it."
+            : "Notebooks can be found from the Home Screen by their title or by the words in them. That index is kept by iPadOS on this iPad. Locked notebooks are never in it.") {
             Toggle("Find Notebooks in Spotlight", isOn: $showsInSpotlight)
                 .accessibilityIdentifier("settings.spotlight")
                 .settingsRow()
@@ -266,7 +275,9 @@ struct OwlLunaSettingsView: View {
     @ViewBuilder
     private var syncSection: some View {
         if let sync = app?.sync {
-            SettingsSection("iCloud", note: "Each notebook is copied whole to your private iCloud storage and from there to your other devices, with your folders, smart shelves, stickers and pens. A notebook open here is sent a few seconds after you stop writing, and one open on another device then shows the newer version, unless it has changes of its own. If one was changed on two devices before they could sync, the newer version is kept and the older is saved beside it as a conflicted copy. Writing history is not synced. Turning sync off leaves the copy in iCloud. To remove it, turn sync off on every device, then delete OwlLuna's data in Settings › your name › iCloud.") {
+            SettingsSection("iCloud", note: Device.isMac
+                ? "Each notebook is copied whole to your private iCloud storage and from there to your other devices, with your folders, smart shelves, stickers and pens. A notebook open here is sent a few seconds after you stop writing, and one open on another device then shows the newer version, unless it has changes of its own. If one was changed on two devices before they could sync, the newer version is kept and the older is saved beside it as a conflicted copy. Writing history is not synced. Turning sync off leaves the copy in iCloud. To remove it, turn sync off on every device, then delete OwlLuna's data in System Settings › your name › iCloud."
+                : "Each notebook is copied whole to your private iCloud storage and from there to your other devices, with your folders, smart shelves, stickers and pens. A notebook open here is sent a few seconds after you stop writing, and one open on another device then shows the newer version, unless it has changes of its own. If one was changed on two devices before they could sync, the newer version is kept and the older is saved beside it as a conflicted copy. Writing history is not synced. Turning sync off leaves the copy in iCloud. To remove it, turn sync off on every device, then delete OwlLuna's data in Settings › your name › iCloud.") {
                 Toggle("Sync with iCloud", isOn: Bindable(sync).isEnabled)
                     .accessibilityIdentifier("settings.sync.toggle")
                     .settingsRow()
@@ -438,7 +449,9 @@ private struct Colophon: View {
                 Text("Version \(version)").metaStyle()
             }
             .accessibilityElement(children: .combine)
-            Text("OwlLuna is free and open source. No ads, no subscriptions, no tracking. Your notes stay on your iPad, and in your own iCloud if you turn sync on.")
+            (Device.isMac
+                ? Text("OwlLuna is free and open source. No ads, no subscriptions, no tracking. Your notes stay on your Mac, and in your own iCloud if you turn sync on.")
+                : Text("OwlLuna is free and open source. No ads, no subscriptions, no tracking. Your notes stay on your iPad, and in your own iCloud if you turn sync on."))
                 .font(.subheadline)
                 .foregroundStyle(Color.textSecondary)
                 .multilineTextAlignment(.center)

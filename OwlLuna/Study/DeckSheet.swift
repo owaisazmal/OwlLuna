@@ -60,13 +60,19 @@ struct DeckSheet: View {
             if !Task.isCancelled { changes.dismiss() }
         }
         .onChange(of: draft != nil || reviewing != nil) { _, covered in if covered { changes.dismiss() } }
-        .presentationBackground(Color.surface)
-        .sheet(item: $draft) { draft in CardComposer(notebook: notebook, draft: draft).presentationCornerRadius(Radius.sheet) }
+        .sheet(item: $draft) { draft in
+            CardComposer(notebook: notebook, draft: draft)
+                .presentationCornerRadius(Radius.sheet)
+                .appModels()
+                .presentationDetents([.medium, .large])
+                .presentationBackground(Color.surface)
+        }
         .fullScreenCover(item: $reviewing) { deck in
             CardReview(due: deck.due, all: deck.all) { _, page in
                 dismiss()
                 if let index = session.document.index(of: page) { session.go(to: index) }
             }
+            .appModels()
         }
         .notice("Something went wrong", isPresented: Binding(get: { failure != nil || library.lastError != nil },
                                                              set: { if !$0 { failure = nil; library.clearError() } }),
@@ -328,8 +334,6 @@ struct CardComposer: View {
                 .boardBackground()
             }
         }
-        .presentationDetents([.medium, .large])
-        .presentationBackground(Color.surface)
         .task(id: draft.front.imageName) { frontImage = await library.image(draft.front.imageName, in: notebook) }
         .task(id: draft.back.imageName) { backImage = await library.image(draft.back.imageName, in: notebook) }
         .onAppear { if draft.card == nil { focus = draft.front.isEmpty ? .front : .back } }

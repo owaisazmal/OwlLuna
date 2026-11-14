@@ -161,7 +161,10 @@ final class EditorSession {
         finder = NotebookFinder(document: document)
         let saved = document.manifest.library.currentPage
         currentPage = max(0, min(initialPageID.flatMap(document.index(of:)) ?? saved, document.pages.count - 1))
-        drawingInput = UserDefaults.standard.string(forKey: SettingsKey.drawingInput).flatMap(DrawingInput.init(rawValue:)) ?? .initial
+        // A Mac shows no Draw With choice, so a pointer always draws there.
+        drawingInput = Device.isMac
+            ? .anyInput
+            : UserDefaults.standard.string(forKey: SettingsKey.drawingInput).flatMap(DrawingInput.init(rawValue:)) ?? .initial
         pageFlow = UserDefaults.standard.pageFlow
         finder.startPage = { [weak self] in self?.currentPage ?? 0 }
         finder.onChange = { [weak self] in

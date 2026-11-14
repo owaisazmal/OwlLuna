@@ -75,8 +75,6 @@ struct StudyGuideSheet: View {
                 }
             }
         }
-        .presentationDetents([.large])
-        .presentationBackground(Color.surface)
         .onAppear(perform: write)
         .onChange(of: tab) { write() }
         .onChange(of: scope) {
@@ -266,7 +264,9 @@ struct StudyGuideSheet: View {
 
     private var onDeviceNote: some View {
         Label {
-            Text("Written on this iPad from what your notes say. Check it against your notes: it can be wrong.")
+            (Device.isMac
+                ? Text("Written on this Mac from what your notes say. Check it against your notes: it can be wrong.")
+                : Text("Written on this iPad from what your notes say. Check it against your notes: it can be wrong."))
                 .fixedSize(horizontal: false, vertical: true)
         } icon: {
             Image(systemName: "lock.ipad").accessibilityHidden(true)
@@ -316,7 +316,9 @@ struct StudyGuideSheet: View {
 
     private var unavailable: some View {
         ScrollView {
-            EmptyPlate("Not on This iPad Yet", systemImage: Device.isPhone ? "lock.iphone" : "lock.ipad", message: Text(unavailableReason))
+            EmptyPlate(Device.isMac
+                ? "Not on This Mac Yet"
+                : "Not on This iPad Yet", systemImage: Device.isPhone ? "lock.iphone" : Device.isMac ? "lock.laptopcomputer" : "lock.ipad", message: Text(unavailableReason))
         }
         .scrollBounceBehavior(.basedOnSize)
         .accessibilityIdentifier("guide.unavailable")
@@ -325,10 +327,18 @@ struct StudyGuideSheet: View {
     private var unavailableReason: String {
         switch status {
         case .ready: ""
-        case .needsUpdate: String(localized: "Study guides are written by Apple Intelligence on the iPad itself, which needs iPadOS 26 or later. OwlLuna has no other way to write one.")
-        case .notEligible: String(localized: "Study guides are written by Apple Intelligence on the iPad itself, and this iPad doesn't have it. OwlLuna has no other way to write one.")
-        case .turnedOff: String(localized: "Study guides are written by Apple Intelligence on the iPad itself. Turn it on in Settings, under Apple Intelligence and Siri, and come back. Your notes are read on this iPad.")
-        case .preparing: String(localized: "Apple Intelligence is still getting ready on this iPad. Try again in a little while.")
+        case .needsUpdate: (Device.isMac
+            ? String(localized: "Study guides are written by Apple Intelligence on the Mac itself, which needs macOS 26 or later. OwlLuna has no other way to write one.")
+            : String(localized: "Study guides are written by Apple Intelligence on the iPad itself, which needs iPadOS 26 or later. OwlLuna has no other way to write one."))
+        case .notEligible: (Device.isMac
+            ? String(localized: "Study guides are written by Apple Intelligence on the Mac itself, and this Mac doesn't have it. OwlLuna has no other way to write one.")
+            : String(localized: "Study guides are written by Apple Intelligence on the iPad itself, and this iPad doesn't have it. OwlLuna has no other way to write one."))
+        case .turnedOff: (Device.isMac
+            ? String(localized: "Study guides are written by Apple Intelligence on the Mac itself. Turn it on in System Settings, under Apple Intelligence and Siri, and come back. Your notes are read on this Mac.")
+            : String(localized: "Study guides are written by Apple Intelligence on the iPad itself. Turn it on in Settings, under Apple Intelligence and Siri, and come back. Your notes are read on this iPad."))
+        case .preparing: (Device.isMac
+            ? String(localized: "Apple Intelligence is still getting ready on this Mac. Try again in a little while.")
+            : String(localized: "Apple Intelligence is still getting ready on this iPad. Try again in a little while."))
         }
     }
 
