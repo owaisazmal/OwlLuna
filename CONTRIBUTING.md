@@ -7,12 +7,12 @@ Thanks for helping. Everyone taking part follows the [Code of Conduct](CODE_OF_C
 1. For anything bigger than a small fix, open an issue first so we can agree on the approach.
 2. Fork the repo and branch from `main`.
 3. Keep each pull request to one change.
-4. The app should build without warnings and the tests should pass (⌘U).
+4. The app should build without warnings and the unit tests (`OwlLunaTests`) should pass. ⌘U also runs the UI tests, which are much slower; CI runs those.
 5. For UI changes, add iPad screenshots or a short recording in portrait and landscape, light and dark.
 
 ## Checks
 
-Every pull request runs [CI](.github/workflows/ci.yml): a Debug build, the unit tests and one UI test on an iPad, an iPhone Duo and an iPhone simulator, and Release builds for iPad and iPhone and for the Mac. Warnings fail the builds. A test that fails is run once more on a rebooted simulator and fails the check only if it fails again. The whole UI suite and the accessibility audits run each night on `main`. A change to `website/` alone runs the [website checks](website/README.md#checks) instead.
+Every pull request runs [CI](.github/workflows/ci.yml): a Debug build, the unit tests and one UI test on an iPad, an iPhone Duo and an iPhone simulator, and Release builds for iPad and iPhone and for the Mac. Warnings fail the builds. A test that fails is run once more on a rebooted simulator and fails the check only if it fails again. Each night with a new commit on `main`, the whole UI suite and the accessibility audits run, and so do the unit tests on an iPadOS 18 simulator, the oldest iPadOS the app supports. A change to `website/` alone runs the [website checks](website/README.md#checks) instead, and a change under `.github/` also runs [actionlint](.github/workflows/lint.yml) on the workflows.
 
 CI builds with Xcode 27.2. When the app moves to a newer Xcode, change `DEVELOPER_DIR` in `ci.yml` and `release.yml` too.
 

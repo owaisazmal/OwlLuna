@@ -5,6 +5,8 @@ updates:
     directory: /website
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     ignore:
       # Follows the Node major in website/.nvmrc.
@@ -19,6 +21,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     groups:
       actions-minor-and-patch:

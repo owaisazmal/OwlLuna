@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Usage: boot-simulator.py ipad|duo|iphone. Boots that device on the newest iOS runtime that has it and sets SIMULATOR_UDID.
+# Usage: boot-simulator.py ipad|duo|iphone [<iOS version>]. Boots that device on the newest iOS runtime that has it and sets SIMULATOR_UDID.
 # The model is looked for on every runtime before anything stands in for it: a newer runtime without a Duo doesn't win.
 
 import json
@@ -34,15 +34,22 @@ def find(runtimes, devices, wanted):
 
 def main():
     label, model, stand_in = DEVICES[sys.argv[1]]
-    runtimes = [runtime for runtime in json.loads(simctl("list", "runtimes", "available", "--json"))["runtimes"]
-                if runtime["platform"] == "iOS"]
+    every = [runtime for runtime in json.loads(simctl("list", "runtimes", "available", "--json"))["runtimes"]
+             if runtime["platform"] == "iOS"]
+    names = ", ".join(runtime["identifier"] for runtime in every) or "none"
+    # A version such as 18 or 18.6 keeps to the runtimes it names.
+    ios = [int(part) for part in sys.argv[2].split(".")] if len(sys.argv) > 2 else []
+    what = f"iOS {sys.argv[2]} runtime" if ios else "iOS runtime"
+    runtimes = [runtime for runtime in every if version(runtime)[:len(ios)] == ios]
+    if ios and not runtimes:
+        print(f"::error::This runner has no {what} ({names}).", flush=True)
+        return 1
     runtimes.sort(key=version, reverse=True)
     devices = json.loads(simctl("list", "devices", "available", "--json"))["devices"]
 
     found = find(runtimes, devices, model) or find(runtimes, devices, stand_in)
     if not found:
-        names = ", ".join(runtime["identifier"] for runtime in runtimes) or "none"
-        print(f"::error::No iOS runtime on this runner has an {label} or a device like it ({names}).", flush=True)
+        print(f"::error::No {what} on this runner has an {label} or a device like it ({names}).", flush=True)
         return 1
     runtime, existing, models = found
     if existing:

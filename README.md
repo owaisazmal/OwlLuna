@@ -118,14 +118,14 @@ cp Config/Signing.local.xcconfig.example Config/Signing.local.xcconfig
 
 Set your team ID and a bundle ID prefix you own. The bundle IDs, App Group and iCloud container follow the prefix (`<prefix>.OwlLuna`, `group.<prefix>.OwlLuna`, `iCloud.<prefix>.OwlLuna`); set `APP_GROUP` or `ICLOUD_CONTAINER` if yours differ. Set the team there, not in Signing & Capabilities, which writes it into the project. A free developer account can't sign the iCloud capability: uncomment `APP_ENTITLEMENTS` and `MAC_APP_ENTITLEMENTS` in the same file and the app runs with sync shown as unavailable.
 
-Run the tests with ⌘U, or from Terminal with any iPad simulator:
+Run the unit tests (`OwlLunaTests`) from Xcode's Test navigator, or from Terminal with any iPad simulator. ⌘U also runs the UI tests, which are much slower.
 
 ```bash
 xcrun simctl list devices available | grep iPad
 ```
 
 ```bash
-xcodebuild test -project OwlLuna.xcodeproj -scheme OwlLuna -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M5)'
+xcodebuild test -project OwlLuna.xcodeproj -scheme OwlLuna -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M5)' -only-testing:OwlLunaTests
 ```
 
 ## Architecture

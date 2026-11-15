@@ -11,6 +11,8 @@ on:
       - '.github/workflows/release.yml'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/dependabot.yml'
+      - '.github/workflows/lint.yml'
+      - '.github/actionlint.yaml'
       - 'LICENSE'
   pull_request:
     paths-ignore:
@@ -21,6 +23,8 @@ on:
       - '.github/workflows/release.yml'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/dependabot.yml'
+      - '.github/workflows/lint.yml'
+      - '.github/actionlint.yaml'
       - 'LICENSE'
   schedule:
     - cron: '30 11 * * *'
@@ -45,11 +49,14 @@ env:
 jobs:
   build:
     name: Build for testing
+    # A night whose jobs already passed on this commit builds nothing.
+    needs: nightly-check
+    if: ${{ !cancelled() && needs.nightly-check.outputs.nightly != 'false' }}
     # Xcode 27 preview image. There is no macos-27 label yet (November 2026); switch once it is generally available.
     runs-on: xcode-27
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Built once for every test job. A generic destination keeps every device's assets; ARCHS keeps it to this Mac's.
       - name: Build
@@ -73,7 +80,7 @@ jobs:
       - name: Pack the products
         run: tar -cf "$RUNNER_TEMP/products.tar" -C "$RUNNER_TEMP/DerivedData/Build" Products
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: products
           path: ${{ runner.temp }}/products.tar
@@ -86,7 +93,7 @@ jobs:
         continue-on-error: true
         run: python3 .github/scripts/test-report.py "$RUNNER_TEMP"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: build-log
@@ -96,6 +103,8 @@ jobs:
   test:
     name: Tests (${{ matrix.name }})
     needs: build
+    # A nightly's commit already ran these when it was pushed.
+    if: ${{ !cancelled() && needs.build.result == 'success' && github.event_name != 'schedule' }}
     runs-on: xcode-27
     timeout-minutes: 75
     env:
@@ -112,10 +121,10 @@ jobs:
           - name: iPhone
             device: iphone
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Before the simulator boots: its first boot keeps the runner busy, and the download then takes minutes.
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: products
           path: ${{ runner.temp }}
@@ -153,10 +162,73 @@ jobs:
         continue-on-error: true
         run: python3 .github/scripts/test-report.py "$RUNNER_TEMP"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: test-results-${{ matrix.device }}
+          retention-days: 14
+          path: |
+            ${{ runner.temp }}/*.log
+            ${{ runner.temp }}/*.xcresult
+
+  ipados-18:
+    name: Tests (iPadOS 18)
+    # Nightly and by hand only: downloading the runtime makes it too slow for every push.
+    needs: build
+    if: ${{ !cancelled() && needs.build.result == 'success' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    runs-on: xcode-27
+    timeout-minutes: 90
+    env:
+      NSUnbufferedIO: 'YES'
+      # The newest iOS 18 runtime Apple offers (22G86). It has no arm64-only build.
+      IOS_VERSION: '18.6'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: products
+          path: ${{ runner.temp }}
+
+      # The image keeps only the three newest iOS runtimes, so this one, about 9 GB, comes from Apple each night.
+      - name: Install the iOS runtime
+        timeout-minutes: 30
+        run: |
+          df -h /System/Volumes/Data
+          for attempt in 1 2 3; do
+            xcodebuild -downloadPlatform iOS -buildVersion "$IOS_VERSION" -architectureVariant universal && break
+            [ "$attempt" = 3 ] && exit 1
+            sleep 60
+          done
+          xcrun simctl list runtimes
+
+      - name: Boot the simulator
+        run: python3 .github/scripts/boot-simulator.py ipad "$IOS_VERSION"
+
+      - name: Unpack the products
+        run: |
+          tar -xf "$RUNNER_TEMP/products.tar" -C "$RUNNER_TEMP"
+          echo "XCTESTRUN=$(ls "$RUNNER_TEMP"/Products/*.xctestrun)" >> "$GITHUB_ENV"
+
+      - name: Wait for the simulator
+        id: ready
+        run: xcrun simctl bootstatus "$SIMULATOR_UDID"
+
+      - name: Unit tests
+        timeout-minutes: 50
+        run: |
+          python3 .github/scripts/run-tests.py Unit --select "-only-testing:OwlLunaTests" -- \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 600
+
+      - name: Report
+        if: always() && steps.ready.outcome == 'success'
+        continue-on-error: true
+        run: python3 .github/scripts/test-report.py "$RUNNER_TEMP"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: test-results-ipados-18
           retention-days: 14
           path: |
             ${{ runner.temp }}/*.log
@@ -169,7 +241,7 @@ jobs:
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Build for iPad and iPhone
         run: |
@@ -202,7 +274,7 @@ jobs:
             2>&1 | tee "$RUNNER_TEMP/release-mac.log" \
             | xcbeautify --renderer github-actions
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: release-build-logs
@@ -217,9 +289,9 @@ jobs:
     permissions:
       actions: read
     outputs:
-      ui-suite: ${{ steps.check.outputs.ui-suite }}
+      nightly: ${{ steps.check.outputs.nightly }}
     steps:
-      # A nightly skips the UI suite when it passed on this commit in the last week; any API error runs it.
+      # A nightly skips its jobs when they passed on this commit in the last week; any API error runs them.
       - name: Check the last nightly on this commit
         id: check
         env:
@@ -232,23 +304,23 @@ jobs:
             ids=$(get "workflows/ci.yml/runs?event=schedule&status=completed&head_sha=$GITHUB_SHA&per_page=20" \
               | jq -r --arg since "$since" '.workflow_runs[] | select(.created_at >= $since) | .id') || ids=
             for id in $ids; do
-              ui=$(get "runs/$id/jobs?filter=latest&per_page=100" | jq -r '
-                [.jobs[] | select(.name | startswith("UI suite")) | .conclusion]
+              nightly=$(get "runs/$id/jobs?filter=latest&per_page=100" | jq -r '
+                [.jobs[] | select((.name | startswith("UI suite")) or .name == "Tests (iPadOS 18)") | .conclusion]
                 | if all(. == "skipped") then "skipped" elif all(. == "success") then "passed" else "failed" end') || break
-              [ "$ui" = skipped ] && continue
-              if [ "$ui" = passed ]; then
+              [ "$nightly" = skipped ] && continue
+              if [ "$nightly" = passed ]; then
                 run=false
-                echo "::notice title=UI suite skipped::It passed on ${GITHUB_SHA:0:7} in run $id. Run the workflow by hand to repeat it."
+                echo "::notice title=Nightly skipped::Its jobs passed on ${GITHUB_SHA:0:7} in run $id. Run the workflow by hand to repeat them."
               fi
               break
             done
           fi
-          echo "ui-suite=$run" >> "$GITHUB_OUTPUT"
+          echo "nightly=$run" >> "$GITHUB_OUTPUT"
 
   ui-suite:
     name: UI suite (${{ matrix.part }})
     needs: [build, nightly-check]
-    if: needs.nightly-check.outputs.ui-suite == 'true'
+    if: ${{ !cancelled() && needs.build.result == 'success' && needs.nightly-check.outputs.nightly == 'true' }}
     runs-on: xcode-27
     timeout-minutes: 300
     env:
@@ -279,9 +351,9 @@ jobs:
             allowance: 2700
             appearance: dark
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: products
           path: ${{ runner.temp }}
@@ -322,7 +394,7 @@ jobs:
         continue-on-error: true
         run: python3 .github/scripts/test-report.py "$RUNNER_TEMP"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: ui-${{ matrix.part }}-results

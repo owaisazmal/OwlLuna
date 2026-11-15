@@ -1,0 +1,32 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/**'
+  pull_request:
+    paths:
+      - '.github/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Workflows and CI scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # actionlint also runs shellcheck on each run: script; warnings and errors fail, style notes don't.
+      - name: Check the workflows
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo -e SHELLCHECK_OPTS=--severity=warning \
+            rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 \
+            -format '{{range $err := .}}::error file={{$err.Filepath}},line={{$err.Line}},col={{$err.Column}}::{{$err.Message}}{{"\n"}}{{end}}'
+
+      - name: Check the scripts compile
+        run: python3 -m py_compile .github/scripts/*.py

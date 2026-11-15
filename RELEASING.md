@@ -27,17 +27,9 @@ In [CHANGELOG.md](CHANGELOG.md), move Unreleased into a new `## [1.0.0-build.3] 
 
 For an App Store build, add a short `## [1.0.0] - YYYY-MM-DD` section above it that names the build, linked to the `v1.0.0` tag.
 
-Commit the bump and the changelog, and archive from that commit with nothing else changed, so the tag matches the build.
+Commit the bump and the changelog, and archive from that commit with nothing else changed, so the tag matches the build. Push it and let CI pass on it first: its Release builds job builds that commit for iPad, iPhone and the Mac.
 
-## 3. Check that it archives
-
-Push `main` and run the Release workflow from the Actions tab. It archives an unsigned Release build and keeps it as an artifact. The same check on the Mac:
-
-```bash
-xcodebuild archive -project OwlLuna.xcodeproj -scheme OwlLuna -configuration Release -destination 'generic/platform=iOS' -archivePath "$TMPDIR/OwlLuna.xcarchive" CODE_SIGNING_ALLOWED=NO
-```
-
-## 4. Archive and upload from Xcode
+## 3. Archive and upload from Xcode
 
 1. Set the destination to Any iOS Device (arm64).
 2. Product › Archive.
@@ -48,7 +40,7 @@ xcodebuild archive -project OwlLuna.xcodeproj -scheme OwlLuna -configuration Rel
 
 `ITSAppUsesNonExemptEncryption` is NO, so there is no export compliance question.
 
-## 5. Tag the build
+## 4. Tag the build
 
 ```bash
 git tag -a v1.0.0-build.3 -m "OwlLuna 1.0 (build 3)"
@@ -70,7 +62,7 @@ git tag -a v1.0.0 'v1.0.0-build.3^{}' -m "OwlLuna 1.0"
 git push origin v1.0.0
 ```
 
-## 6. Publish the GitHub Release
+## 5. Publish the GitHub Release
 
 This needs the GitHub CLI, signed in once:
 
