@@ -23,8 +23,11 @@ final class SliceUITests: XCTestCase {
         add(attachment)
     }
 
+    /// The heading, or on a folded iPhone Duo, which has no bar title once the heading scrolls away, the thumb index's chosen tab.
     private func waitForLibrary(_ app: XCUIApplication) {
-        XCTAssertTrue(app.staticTexts["All notebooks"].firstMatch.waitForExistence(timeout: 30), "library heading")
+        let shown = NSPredicate(format: "(elementType == %lu AND label == %@) OR (identifier == %@ AND selected == YES)",
+                                XCUIElement.ElementType.staticText.rawValue, "All notebooks", "index.All notebooks")
+        XCTAssertTrue(app.descendants(matching: .any).matching(shown).firstMatch.waitForExistence(timeout: 30), "library heading")
     }
 
     private func write(_ strokes: Int, on canvas: XCUIElement) {
