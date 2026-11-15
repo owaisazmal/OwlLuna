@@ -8,11 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Text boxes set formulas written in LaTeX: `$…$` or `\(…\)` within a line, and `$$…$$` or `\[…\]` set larger, with fractions, roots, sums, integrals, matrices and cases. The box shows the source while you type in it. A formula it can't read stays as typed, prices such as "$5 or $10" are left alone, and `\$` writes a dollar sign.
 - Favourite notebooks stand on their own Favourites shelf at the top of All notebooks, each folder, tag and smart shelf, in the order chosen, and leave the shelves below. Search results, Favourites and Recently Deleted are as before.
 
 ### Changed
 
 - A favourite notebook now has a red flag with a star sticking out of its pages, in place of the ribbon, which looked like a bookmark. List rows show the flag too.
+- The fineliner can be set twice as fine, down to a hairline half a point wide. Widths under 1 show two decimals.
 
 ## [1.0.0-build.6] - 2026-11-12
 

@@ -134,7 +134,7 @@ extension TextBox {
         return UIFont(descriptor: descriptor.addingAttributes([.matrix: lean]), size: font.pointSize)
     }
 
-    /// The text as it is measured and drawn, and where a checklist's boxes go in it.
+    /// The text as it is measured and drawn, and where a checklist's boxes and its formulas go in it.
     private struct Typeset {
         var text: NSAttributedString
         /// The tab that starts each item of a checklist, by line.
@@ -142,15 +142,41 @@ extension TextBox {
         var font: UIFont
         /// Between a marker and the words.
         var gap: CGFloat = 0
+        var formulas: [Formula] = []
+    }
+
+    /// A formula set in the text, where an attachment the size of it holds its place.
+    private struct Formula {
+        var location: Int
+        var math: MathFormula
+        /// How much it was shrunk to fit the box's width.
+        var fit: CGFloat
+        var color: UIColor
+    }
+
+    /// The text laid out at a width, the way it is drawn.
+    private struct Layout {
+        let storage: NSTextStorage
+        let manager = NSLayoutManager()
+        let container: NSTextContainer
+
+        init(_ text: NSAttributedString, width: CGFloat) {
+            storage = NSTextStorage(attributedString: text)
+            container = NSTextContainer(size: CGSize(width: max(width, 1), height: .greatestFiniteMagnitude))
+            container.lineFragmentPadding = 0
+            manager.addTextContainer(container)
+            storage.addLayoutManager(manager)
+        }
     }
 
     /// A list's lines start with their marker and a tab across to the indent the rest of the line keeps to, each tab joined
     /// to what follows so a long first word can't leave its marker alone on a line; a checklist's boxes are drawn in the
     /// room its tab leaves. With `markersOnly` the words are there but clear, for drawing under the editor's own; `editing`
-    /// leaves the markers out and stands every line at the indent, as the editor holds the words.
+    /// leaves the markers out and stands every line at the indent, as the editor holds the words. Formulas are set unless
+    /// `typed`, shrunk to fit `width`.
     private func typeset(_ string: String, color: UIColor, highlight: UIColor? = nil, scale: CGFloat = 1, markersOnly: Bool = false,
-                         editing: Bool = false) -> Typeset {
-        let font = font(scale: scale)
+                         editing: Bool = false, typed: Bool = false, width: CGFloat? = nil) -> Typeset {
+        let font = font(scale: scale), setsMath = !(typed || editing || markersOnly)
         var words: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: markersOnly ? UIColor.clear : color]
         if !markersOnly, isUnderlined { words[.underlineStyle] = NSUnderlineStyle.single.rawValue }
         if !markersOnly, let highlight { words[.backgroundColor] = highlight }
@@ -165,7 +191,7 @@ extension TextBox {
             words[.paragraphStyle] = paragraph
             let text = NSMutableAttributedString(string: string, attributes: words)
             if words.count > 3 { Self.plainNewlines(in: text) }
-            return Typeset(text: text, font: font)
+            return Typeset(text: text, font: font, formulas: setsMath ? Self.setMath(in: text, font: font, room: width) : [])
         }
         let lines = (string as NSString).components(separatedBy: "\n"), numbers = Self.numbers(of: lines)
         let side = Self.checkSide(font), gap = font.pointSize * 0.4
@@ -193,7 +219,7 @@ extension TextBox {
         }
         let item = paragraph(first: editing ? indent : 0), plain = paragraph(first: indent)
         let text = NSMutableAttributedString()
-        var checks: [(line: Int, location: Int)] = []
+        var checks: [(line: Int, location: Int)] = [], formulas: [Formula] = []
         for (index, line) in lines.enumerated() {
             var look = words
             look[.paragraphStyle] = markers[index] == nil ? plain : item
@@ -203,10 +229,47 @@ extension TextBox {
                 text.append(NSAttributedString(string: list == .check ? "\t\u{2060}" : "\t\u{2060}\(marker)\t\u{2060}",
                                                attributes: [.font: font, .foregroundColor: color, .paragraphStyle: item]))
             }
-            text.append(NSAttributedString(string: index < lines.count - 1 ? line + "\n" : line, attributes: look))
+            let written = NSMutableAttributedString(string: index < lines.count - 1 ? line + "\n" : line, attributes: look)
+            if setsMath {
+                let start = text.length
+                formulas += Self.setMath(in: written, font: font, room: width.map { $0 - indent }).map { formula in
+                    var formula = formula
+                    formula.location += start
+                    return formula
+                }
+            }
+            text.append(written)
         }
         Self.plainNewlines(in: text)
-        return Typeset(text: text, checks: checks, font: font, gap: gap)
+        return Typeset(text: text, checks: checks, font: font, gap: gap, formulas: formulas)
+    }
+
+    /// Stands each formula in for an attachment its size and shows `\$` as `$`; one that can't be set stays as typed.
+    private static func setMath(in text: NSMutableAttributedString, font: UIFont, room: CGFloat?) -> [Formula] {
+        let runs = MathRun.find(in: text.string as NSString)
+        guard !runs.isEmpty else { return [] }
+        let size = MathFormula.size(beside: font)
+        var formulas: [Formula] = [], shift = 0
+        for run in runs {
+            let range = NSRange(location: run.range.location - shift, length: run.range.length)
+            if run.isEscape {
+                text.replaceCharacters(in: range, with: "$")
+            } else if let math = MathFormula(run.source, size: size, display: run.display, textFont: font) {
+                var look = text.attributes(at: range.location, effectiveRange: nil)
+                let fit = room.map { min(1, max($0, 1) / math.width) } ?? 1
+                let stand = NSTextAttachment()
+                stand.image = UIImage()
+                stand.bounds = CGRect(x: 0, y: -math.descent * fit, width: math.width * fit, height: (math.ascent + math.descent) * fit)
+                look[.attachment] = stand
+                look[.underlineStyle] = nil
+                text.replaceCharacters(in: range, with: NSAttributedString(string: "\u{FFFC}", attributes: look))
+                formulas.append(Formula(location: range.location, math: math, fit: fit, color: look[.foregroundColor] as? UIColor ?? .black))
+            } else {
+                continue
+            }
+            shift += range.length - 1
+        }
+        return formulas
     }
 
     /// The returns between lines are neither underlined nor washed.
@@ -224,13 +287,9 @@ extension TextBox {
 
     /// Each box of a checklist by line, and the room beside its first line where a tap ticks it, from the box's top
     /// left, at the scale it was set at.
-    private func checkboxes(_ set: Typeset, width: CGFloat) -> [(line: Int, box: CGRect, room: CGRect)] {
+    private func checkboxes(_ set: Typeset, width: CGFloat, layout: Layout? = nil) -> [(line: Int, box: CGRect, room: CGRect)] {
         guard !set.checks.isEmpty else { return [] }
-        let storage = NSTextStorage(attributedString: set.text), manager = NSLayoutManager()
-        let container = NSTextContainer(size: CGSize(width: max(width, 1), height: .greatestFiniteMagnitude))
-        container.lineFragmentPadding = 0
-        manager.addTextContainer(container)
-        storage.addLayoutManager(manager)
+        let layout = layout ?? Layout(set.text, width: width), manager = layout.manager, container = layout.container
         let side = Self.checkSide(set.font)
         return set.checks.map { check in
             let glyph = manager.glyphIndexForCharacter(at: check.location)
@@ -240,6 +299,15 @@ extension TextBox {
             let x = tab.minX < 0.5 ? tab.maxX - set.gap - side : tab.minX + set.gap
             let box = CGRect(x: x, y: baseline - set.font.capHeight / 2 - side / 2, width: side, height: side)
             return (check.line, box, CGRect(x: tab.minX, y: line.minY, width: tab.width, height: line.height))
+        }
+    }
+
+    /// Where each formula's baseline starts, from the box's top left; an attachment's glyph is located by its foot.
+    private func formulas(_ set: Typeset, in layout: Layout) -> [(formula: Formula, origin: CGPoint)] {
+        set.formulas.map { formula in
+            let glyph = layout.manager.glyphIndexForCharacter(at: formula.location)
+            let line = layout.manager.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil), at = layout.manager.location(forGlyphAt: glyph)
+            return (formula, CGPoint(x: line.minX + at.x, y: line.minY + at.y - formula.math.descent * formula.fit))
         }
     }
 
@@ -261,18 +329,18 @@ extension TextBox {
         ctx.restoreGState()
     }
 
-    /// An empty box, or one ending in a return, is as tall as the line the caret sits on.
-    func height(width: CGFloat) -> CGFloat {
+    /// An empty box, or one ending in a return, is as tall as the line the caret sits on; `typed`, as the editor holds it.
+    func height(width: CGFloat, typed: Bool = false) -> CGFloat {
         let measured = string.isEmpty || string.hasSuffix("\n") ? string + " " : string
-        let bounds = typeset(measured, color: .black).text.boundingRect(with: CGSize(width: max(width, 1), height: .greatestFiniteMagnitude),
-                                                                        options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+        let bounds = typeset(measured, color: .black, typed: typed, width: width).text
+            .boundingRect(with: CGSize(width: max(width, 1), height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
         return max(bounds.height, font().lineHeight).rounded(.up)
     }
 
     /// The width its longest line wants, for a box that hasn't been given one.
     func naturalWidth(limit: CGFloat) -> CGFloat {
-        let bounds = typeset(string, color: .black).text.boundingRect(with: CGSize(width: limit, height: .greatestFiniteMagnitude),
-                                                                      options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+        let bounds = typeset(string, color: .black, width: limit).text.boundingRect(with: CGSize(width: limit, height: .greatestFiniteMagnitude),
+                                                                                    options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
         return min(bounds.width.rounded(.up) + 2, limit)
     }
 
@@ -281,12 +349,17 @@ extension TextBox {
     func draw(in ctx: CGContext, rect: CGRect, onDark: Bool, scale: CGFloat = 1, markersOnly: Bool = false) {
         guard !string.isEmpty else { return }
         let color = tint.color(onDark: onDark)
-        let set = typeset(string, color: color, highlight: highlight?.color(onDark: onDark), scale: scale, markersOnly: markersOnly)
+        let set = typeset(string, color: color, highlight: highlight?.color(onDark: onDark), scale: scale, markersOnly: markersOnly, width: rect.width)
         UIGraphicsPushContext(ctx)
         set.text.draw(with: rect, options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
         UIGraphicsPopContext()
-        for check in checkboxes(set, width: rect.width) {
+        guard !set.checks.isEmpty || !set.formulas.isEmpty else { return }
+        let layout = Layout(set.text, width: rect.width)
+        for check in checkboxes(set, width: rect.width, layout: layout) {
             Self.drawCheckbox(check.box.offsetBy(dx: rect.minX, dy: rect.minY), ticked: checked.contains(check.line), color: color, in: ctx)
+        }
+        for (formula, origin) in formulas(set, in: layout) {
+            formula.math.draw(in: ctx, at: CGPoint(x: rect.minX + origin.x, y: rect.minY + origin.y), color: formula.color.cgColor, scale: formula.fit)
         }
     }
 
@@ -304,9 +377,9 @@ extension TextBox {
     }
 
     /// The line of a checklist whose box is at a point, in page points from the box's top left; `reach` is how far past
-    /// the box's room a tap still counts.
-    func checkbox(at point: CGPoint, width: CGFloat, reach: CGFloat = 6) -> Int? {
-        checkboxes(typeset(string, color: .black), width: width)
+    /// the box's room a tap still counts, and `typed` finds it in the text as the editor holds it.
+    func checkbox(at point: CGPoint, width: CGFloat, reach: CGFloat = 6, typed: Bool = false) -> Int? {
+        checkboxes(typeset(string, color: .black, typed: typed, width: width), width: width)
             .filter { $0.room.insetBy(dx: -reach, dy: -2).contains(point) }
             .min { hypot($0.box.midX - point.x, $0.box.midY - point.y) < hypot($1.box.midX - point.x, $1.box.midY - point.y) }?.line
     }
@@ -314,7 +387,7 @@ extension TextBox {
     /// Where each box of a checklist is, by line, from the box's top left; at a `scale`, `width` and the boxes are in
     /// points that many times larger.
     func checkboxes(width: CGFloat, scale: CGFloat = 1) -> [(line: Int, rect: CGRect)] {
-        checkboxes(typeset(string, color: .black, scale: scale), width: width).map { ($0.line, $0.box) }
+        checkboxes(typeset(string, color: .black, scale: scale, width: width), width: width).map { ($0.line, $0.box) }
     }
 }
 

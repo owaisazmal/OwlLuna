@@ -23,7 +23,7 @@ struct PenOptions: View {
     }
 
     private func content(_ pen: ToolPreset, _ ink: PKInkingTool.InkType) -> some View {
-        let width = pen.width.formatted(.number.precision(.fractionLength(0...1)))
+        let width = pen.width.formatted(.number.precision(.fractionLength(0...(pen.width < 1 ? 2 : 1))))
         let night = scheme == .dark && !onDark
         // The label shows the ink as faint as it is set; the tools of the roll and the bars are drawn at full strength.
         let colour = ToolSwatch.ink(pen, onDark: onDark, night: night, turned: turned)

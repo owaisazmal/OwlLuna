@@ -33,6 +33,15 @@ final class ToolPresetTests: XCTestCase {
         XCTAssertEqual(ToolPreset(ink: .marker, color: 0x0000_00FF, width: PKInkingTool.InkType.marker.validWidthRange.lowerBound).widthFraction, 0)
     }
 
+    func testTheFinelinerGoesFinerThanPencilKitsOwnRange() throws {
+        let finest = ToolPreset.widths(of: .monoline).lowerBound
+        XCTAssertLessThan(finest, PKInkingTool.InkType.monoline.validWidthRange.lowerBound)
+        XCTAssertEqual(try XCTUnwrap(ToolPreset(ink: .monoline, color: 0x0000_00FF, width: 0).tool).width, finest, accuracy: 0.001, "PencilKit keeps it")
+        XCTAssertEqual(ToolPreset.width(at: 0, of: .monoline), finest)
+        XCTAssertEqual(ToolPreset(ink: .monoline, color: 0x0000_00FF, width: finest).widthFraction, 0)
+        XCTAssertEqual(ToolPreset.widths(of: .pen).lowerBound, PKInkingTool.InkType.pen.validWidthRange.lowerBound, accuracy: 0.001)
+    }
+
     func testTheSameToolIsToldByKindColourAndWidthNotByWhichWasSaved() {
         let pen = ToolPreset(ink: .pen, color: 0x2747_B8FF, width: 3)
         XCTAssertTrue(pen.isSameTool(as: ToolPreset(ink: .pen, color: 0x2747_B8FF, width: 3.1)))

@@ -49,6 +49,9 @@ struct TextBox: Sendable, Hashable {
 extension TextBox {
     var lines: [String] { (string as NSString).components(separatedBy: "\n") }
 
+    /// Whether any of the text is written between dollar signs, to be set as a formula.
+    var hasFormulas: Bool { MathRun.find(in: string as NSString).contains { !$0.isEscape } }
+
     /// A line with nothing written on it is passed over by a list: it has no bullet, number or box.
     static func isItem(_ line: String) -> Bool {
         !line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -354,10 +357,10 @@ struct PageItem: Sendable, Hashable, Identifiable {
         return copy
     }
 
-    /// A text box as tall as its text needs at its width, growing downwards.
-    func fittedToText() -> PageItem {
+    /// A text box as tall as its text needs at its width, growing downwards; `typed`, as tall as the editor needs.
+    func fittedToText(typed: Bool = false) -> PageItem {
         guard let text else { return self }
-        return resized(to: CGSize(width: size.width, height: text.height(width: size.width)))
+        return resized(to: CGSize(width: size.width, height: text.height(width: size.width, typed: typed)))
     }
 
     init?(json: JSONValue) {
@@ -407,7 +410,7 @@ struct PageItem: Sendable, Hashable, Identifiable {
         default: content = .unknown
         }
         raw = object
-        if case .text(let box) = content, let stored = object["fit"], stored != Self.fit(box, size: size) { self = fittedToText() }
+        if case .text(let box) = content, object["fit"].map({ $0 != Self.fit(box, size: size) }) ?? box.hasFormulas { self = fittedToText() }
     }
 
     var json: JSONValue {
@@ -440,7 +443,7 @@ struct PageItem: Sendable, Hashable, Identifiable {
             object["checked"] = box.checked.isEmpty ? nil : .array(box.checked.sorted().map { .number(Double($0)) })
             object["checkedText"] = box.checked.isEmpty ? nil : .string(box.string)
             let foreign = box.face == .system && object["face"] != nil || box.list == nil && object["list"] != nil
-            if !foreign { object["fit"] = box.face != .system || box.isItalic || box.list != nil ? Self.fit(box, size: size) : nil }
+            if !foreign { object["fit"] = box.face != .system || box.isItalic || box.list != nil || box.hasFormulas ? Self.fit(box, size: size) : nil }
         case .link(let link):
             object["kind"] = .string("link")
             object["label"] = .string(link.label)

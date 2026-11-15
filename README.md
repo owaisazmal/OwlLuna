@@ -54,7 +54,7 @@ The App Store version comes later. To build it yourself, see [Getting started](#
 - Pictures you can move, resize, rotate, crop and layer.
 - Forty vector stickers, plus stickers cut out of your own photos.
 - Study tape that hides what is under it until you tap it.
-- Typed text boxes with fonts, styles, lists and checklists, and today's calendar events.
+- Typed text boxes with fonts, styles, lists, checklists and LaTeX formulas, and today's calendar events.
 - Export as PDF (vector ink, searchable handwriting, working links), as images, as text or Markdown, or a page as a time-lapse video.
 
 ### Studying

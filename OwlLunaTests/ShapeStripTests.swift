@@ -75,7 +75,7 @@ final class ShapeStripTests: XCTestCase {
 
     func testAShapeLeavesAMarkAtThePensThinnestWidth() {
         for ink in [PKInkingTool.InkType.pen, .monoline, .fountainPen] {
-            let tool = PKInkingTool(ink, color: .black, width: ink.validWidthRange.lowerBound)
+            let tool = PKInkingTool(ink, color: .black, width: ToolPreset.widths(of: ink).lowerBound)
             let stroke = ShapeSnap.stroke(ShapeKind.line.shape(from: CGPoint(x: 60, y: 10), to: CGPoint(x: 60, y: 110), width: tool.width), tool: tool, startingNear: .zero)
             let image = PKDrawing(strokes: [stroke]).image(from: CGRect(x: 0, y: 0, width: 120, height: 120), scale: 2)
             XCTAssertGreaterThan(inkedPixels(image), 200, "\(ink.rawValue) at \(tool.width)")

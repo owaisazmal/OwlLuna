@@ -61,15 +61,24 @@ struct ToolPreset: Codable, Hashable, Identifiable, Sendable {
                 blue: CGFloat(color >> 8 & 0xFF) / 255, alpha: CGFloat(color & 0xFF) / 255)
     }
 
+    /// The finest a fineliner can be set: PencilKit takes it below its own range, and it draws a line half a point wide.
+    static let finestFineliner = 0.25
+
+    /// The widths a kind of ink can be set to: PencilKit's range, with the fineliner let down to `finestFineliner`.
+    static func widths(of ink: PKInkingTool.InkType) -> ClosedRange<Double> {
+        let range = ink.validWidthRange
+        return (ink == .monoline ? min(range.lowerBound, finestFineliner) : range.lowerBound)...range.upperBound
+    }
+
     var tool: PKInkingTool? {
         guard let inkType else { return nil }
-        let range = inkType.validWidthRange
+        let range = Self.widths(of: inkType)
         return PKInkingTool(inkType, color: uiColor, width: min(max(width, range.lowerBound), range.upperBound))
     }
 
     /// Where the width lies in what this kind of ink allows, from 0 to 1.
     var widthFraction: Double {
-        guard let range = inkType?.validWidthRange, range.upperBound > range.lowerBound else { return 0.5 }
+        guard let range = inkType.map(Self.widths(of:)), range.upperBound > range.lowerBound else { return 0.5 }
         return min(max((width - range.lowerBound) / (range.upperBound - range.lowerBound), 0), 1)
     }
 
@@ -127,7 +136,7 @@ struct ToolPreset: Codable, Hashable, Identifiable, Sendable {
     /// Where a width at `fraction` of the way lies for a kind of ink. The thin end has most of the travel, where
     /// writing is done.
     static func width(at fraction: Double, of ink: PKInkingTool.InkType) -> Double {
-        let range = ink.validWidthRange, clamped = min(max(fraction, 0), 1)
+        let range = widths(of: ink), clamped = min(max(fraction, 0), 1)
         return range.lowerBound + (range.upperBound - range.lowerBound) * clamped * clamped
     }
 

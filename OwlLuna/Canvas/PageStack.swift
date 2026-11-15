@@ -1658,7 +1658,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         box.checked = typed?.checked ?? box.checked
         var live = item
         live.content = .text(box)
-        return (slot, live.fittedToText())
+        return (slot, live.fittedToText(typed: true))
     }
 
     private func layoutTextEditor() {
@@ -1743,7 +1743,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     /// room ends, so a tap on them only places the caret.
     private func typedCheckbox(at point: CGPoint) -> Int? {
         guard bakedScale > 0, let (_, item) = liveTextItem(), let box = item.text, box.list == .check else { return nil }
-        return box.checkbox(at: CGPoint(x: point.x / bakedScale, y: point.y / bakedScale), width: item.size.width, reach: 0)
+        return box.checkbox(at: CGPoint(x: point.x / bakedScale, y: point.y / bakedScale), width: item.size.width, reach: 0, typed: true)
     }
 
     /// Only a touch on a box of the checklist being typed in is a tick; every other touch is the text view's.

@@ -56,6 +56,7 @@ Riso inks (`RisoInk`): pink `#FF48B0`, yellow `#FFE800`, teal `#00838A`, blue `#
 
 - Fraunces (SIL OFL): library headings, empty states, cover labels, and text boxes set in it. Use `.displayFont(_:relativeTo:)` for headings and `.displayTextFont(_:relativeTo:)` for running text: `Font.custom` on `Fraunces-SemiBold` and `Fraunces-Regular`, so they scale with Dynamic Type, one weight heavier with Bold Text. Cover labels (`OwlLunaFonts.coverLabel`) are SOFT 50, WONK 1; typed text (`OwlLunaFonts.text`) is SOFT 0, WONK 0. Only the upright is bundled, so italic is a slant.
 - Bricolage Grotesque (SIL OFL): Print cover titles only, condensed ExtraBold (wdth 75, wght 800) through the axes (`OwlLunaFonts.printTitle`), since there's no named condensed instance.
+- STIX Two Math (SIL OFL, part of iOS and macOS, not bundled): formulas in text boxes, sized to the x-height of the box's typeface.
 - Archivo (SIL OFL): the launch splash only. Black (wght 900) at wdth 62 for the wordmark, volume number and stamp, wdth 95 for the ticker (`OwlLunaFonts.splashTitle`). Drawn as outlines (`SplashType`), so a line can be scaled to its tile and each letter moved alone.
 - SF Pro: all other UI. Metadata uses `.metaStyle()`: small caps, tracking, tabular digits.
 
