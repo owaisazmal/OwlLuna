@@ -20,7 +20,7 @@ npm run dev
 
 ## Checks
 
-A pull request that touches `website/` runs lint, the typecheck, a build under `/OwlLuna` as on GitHub Pages, a link check and an accessibility pass. To run the last three locally:
+A pull request or push that touches `website/` runs lint, the typecheck, a build under `/OwlLuna` as on GitHub Pages, a link check and an accessibility pass. A push publishes the site only when they all pass. To run the last three locally:
 
 ```bash
 export BASE_PATH=/OwlLuna NEXT_PUBLIC_SITE_URL=https://owaisazmal.github.io/OwlLuna
@@ -62,4 +62,4 @@ Libre Franklin sets the site's own text. Fraunces, Archivo and Bricolage Grotesq
 
 ## Publishing
 
-[.github/workflows/website.yml](../.github/workflows/website.yml) builds the site and publishes it to GitHub Pages whenever `website/` changes on `main`. It needs Settings › Pages › Source set to "GitHub Actions", once. The site is then at `https://owaisazmal.github.io/OwlLuna/`. The workflow reads the address from Pages, so a custom domain needs no change here.
+[.github/workflows/website.yml](../.github/workflows/website.yml) checks and builds the site and publishes it to GitHub Pages whenever `website/` changes on `main`. It needs Settings › Pages › Source set to "GitHub Actions", once. The site is then at `https://owaisazmal.github.io/OwlLuna/`. The workflow reads the address from Pages, so a custom domain needs no change here.

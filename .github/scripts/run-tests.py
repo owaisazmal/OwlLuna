@@ -13,7 +13,6 @@ from pathlib import Path
 TEST_CASE = re.compile(r"Test Case '-\[(\w+)\.(\w+) (\w+)\]' (started|passed|failed|skipped)")
 # Past this many, something other than a slow runner is wrong, and the whole selection is run again.
 MOST = 40
-HERE = Path(__file__).resolve().parent
 
 
 def run(name, attempt, selection, options, beautify):
@@ -45,8 +44,7 @@ def failed_tests(log):
 def reboot():
     udid = os.environ["SIMULATOR_UDID"]
     subprocess.run(["xcrun", "simctl", "shutdown", udid])
-    subprocess.run(["xcrun", "simctl", "boot", udid], check=True)
-    subprocess.run(["bash", str(HERE / "wait-for-simulator.sh"), "120"], check=True)
+    subprocess.run(["xcrun", "simctl", "bootstatus", udid, "-b"], check=True)
     if appearance := os.environ.get("APPEARANCE"):
         subprocess.run(["xcrun", "simctl", "ui", udid, "appearance", appearance], check=True)
 

@@ -8,6 +8,9 @@ on:
       - 'docs/**'
       - 'website/**'
       - '.github/workflows/website.yml'
+      - '.github/workflows/release.yml'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/dependabot.yml'
       - 'LICENSE'
   pull_request:
     paths-ignore:
@@ -15,6 +18,9 @@ on:
       - 'docs/**'
       - 'website/**'
       - '.github/workflows/website.yml'
+      - '.github/workflows/release.yml'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/dependabot.yml'
       - 'LICENSE'
   schedule:
     - cron: '30 11 * * *'
@@ -32,10 +38,14 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # The Xcode the app is built and archived with; the image's default is 27.1. release.yml uses the same.
+  DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+
 jobs:
   build:
     name: Build for testing
-    # Xcode 27 preview image. There is no macos-27 label yet (October 2026); switch once it is generally available.
+    # Xcode 27 preview image. There is no macos-27 label yet (November 2026); switch once it is generally available.
     runs-on: xcode-27
     timeout-minutes: 45
     steps:
@@ -95,14 +105,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: iPadOS latest
-            ipad: latest
-          - name: iPadOS 18
-            ipad: '18'
+          - name: iPad
+            device: ipad
           - name: iPhone Duo
-            iphone: duo
+            device: duo
           - name: iPhone
-            iphone: iphone
+            device: iphone
     steps:
       - uses: actions/checkout@v7
 
@@ -112,53 +120,28 @@ jobs:
           name: products
           path: ${{ runner.temp }}
 
-      - name: Boot an iPad simulator
-        if: matrix.ipad
-        uses: ./.github/actions/boot-ipad
-        with:
-          ios: ${{ matrix.ipad }}
-
-      - name: Boot an iPhone simulator
-        if: matrix.iphone
-        uses: ./.github/actions/boot-iphone
-        with:
-          device: ${{ matrix.iphone }}
-
-      - name: Check for the runtime
-        if: env.SIMULATOR_UDID == ''
-        env:
-          IOS: ${{ matrix.ipad }}
-        run: |
-          xcodebuild -version
-          runtimes=$(xcrun simctl list runtimes available | grep '^iOS' | cut -d' ' -f1-2 | paste -sd, - | sed 's/,/, /g' || true)
-          if [ -z "$IOS" ] || [ "$IOS" = latest ]; then
-            echo "::error::No iOS simulator runtime is available on this runner."
-            exit 1
-          fi
-          echo "::notice title=iPadOS $IOS skipped::This runner image has no iOS $IOS simulator runtime (it has ${runtimes:-none})."
+      - name: Boot the simulator
+        run: python3 .github/scripts/boot-simulator.py ${{ matrix.device }}
 
       - name: Unpack the products
-        id: products
-        if: env.SIMULATOR_UDID != ''
         run: |
           tar -xf "$RUNNER_TEMP/products.tar" -C "$RUNNER_TEMP"
           echo "XCTESTRUN=$(ls "$RUNNER_TEMP"/Products/*.xctestrun)" >> "$GITHUB_ENV"
 
       - name: Wait for the simulator
-        if: steps.products.outcome == 'success'
-        run: bash .github/scripts/wait-for-simulator.sh
+        id: ready
+        run: xcrun simctl bootstatus "$SIMULATOR_UDID"
 
       # On a slow runner a different test misses a deadline each time, so a test fails the job only if it fails twice:
       # run-tests.py runs what failed once more in a fresh test runner, and the report lists it as a warning.
       - name: Unit tests
-        if: steps.products.outcome == 'success'
         timeout-minutes: 50
         run: |
           python3 .github/scripts/run-tests.py Unit --select "-only-testing:OwlLunaTests" -- \
             -test-timeouts-enabled YES -default-test-execution-time-allowance 600
 
       - name: UI smoke test
-        if: ${{ !cancelled() && steps.products.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.ready.outcome == 'success' }}
         timeout-minutes: 30
         run: |
           python3 .github/scripts/run-tests.py Smoke --beautify --select "-only-testing:OwlLunaUITests/SliceUITests/testVerticalSlice" -- \
@@ -166,27 +149,29 @@ jobs:
             -test-timeouts-enabled YES -default-test-execution-time-allowance 600
 
       - name: Report
-        if: always() && steps.products.outcome == 'success'
+        if: always() && steps.ready.outcome == 'success'
         continue-on-error: true
         run: python3 .github/scripts/test-report.py "$RUNNER_TEMP"
 
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: test-results-${{ matrix.ipad && format('ipados-{0}', matrix.ipad) || matrix.iphone }}
+          name: test-results-${{ matrix.device }}
           retention-days: 14
           path: |
             ${{ runner.temp }}/*.log
             ${{ runner.temp }}/*.xcresult
 
   release:
-    name: Release build
+    name: Release builds
+    # A nightly's commit was already built in Release when it was pushed.
+    if: github.event_name != 'schedule'
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
 
-      - name: Build Release with warnings as errors
+      - name: Build for iPad and iPhone
         run: |
           set -o pipefail
           xcodebuild -version
@@ -198,28 +183,14 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
             GCC_TREAT_WARNINGS_AS_ERRORS=YES \
-            2>&1 | tee "$RUNNER_TEMP/release.log" \
+            2>&1 | tee "$RUNNER_TEMP/release-ios.log" \
             | xcbeautify --renderer github-actions
 
-      - uses: actions/upload-artifact@v7
-        if: failure()
-        with:
-          name: release-build-log
-          retention-days: 14
-          path: ${{ runner.temp }}/release.log
-
-  mac:
-    name: Mac build
-    runs-on: xcode-27
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v7
-
       # The Mac version is the same app built with Mac Catalyst; this catches code that only breaks there.
-      - name: Build Release for the Mac with warnings as errors
+      - name: Build for the Mac
+        if: ${{ !cancelled() }}
         run: |
           set -o pipefail
-          xcodebuild -version
           xcodebuild build \
             -project OwlLuna.xcodeproj \
             -scheme OwlLuna \
@@ -228,15 +199,15 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
             GCC_TREAT_WARNINGS_AS_ERRORS=YES \
-            2>&1 | tee "$RUNNER_TEMP/mac.log" \
+            2>&1 | tee "$RUNNER_TEMP/release-mac.log" \
             | xcbeautify --renderer github-actions
 
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: mac-build-log
+          name: release-build-logs
           retention-days: 14
-          path: ${{ runner.temp }}/mac.log
+          path: ${{ runner.temp }}/release-*.log
 
   nightly-check:
     name: Nightly check
@@ -315,17 +286,16 @@ jobs:
           name: products
           path: ${{ runner.temp }}
 
-      - name: Boot an iPad simulator
-        uses: ./.github/actions/boot-ipad
+      - name: Boot the simulator
+        run: python3 .github/scripts/boot-simulator.py ipad
 
       - name: Unpack the products
         run: |
-          test -n "$SIMULATOR_UDID" || { echo "::error::No iOS simulator runtime is available on this runner."; exit 1; }
           tar -xf "$RUNNER_TEMP/products.tar" -C "$RUNNER_TEMP"
           echo "XCTESTRUN=$(ls "$RUNNER_TEMP"/Products/*.xctestrun)" >> "$GITHUB_ENV"
 
       - name: Wait for the simulator
-        run: bash .github/scripts/wait-for-simulator.sh
+        run: xcrun simctl bootstatus "$SIMULATOR_UDID"
 
       - name: Set the appearance
         run: xcrun simctl ui "$SIMULATOR_UDID" appearance ${{ matrix.appearance }}

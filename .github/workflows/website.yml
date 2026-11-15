@@ -20,36 +20,13 @@ permissions:
   contents: read
 
 jobs:
-  check:
-    name: Check
-    if: github.event_name == 'pull_request'
+  build:
+    name: Build and check
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: website
-    env:
-      BASE_PATH: /OwlLuna
-      NEXT_PUBLIC_SITE_URL: https://owaisazmal.github.io/OwlLuna
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: website/.nvmrc
-          cache: npm
-          cache-dependency-path: website/package-lock.json
-
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run build
-      - run: npm run check:links
-      - run: npm run check:a11y
-
-  build:
-    name: Build
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -60,20 +37,30 @@ jobs:
           cache-dependency-path: website/package-lock.json
 
       - id: pages
+        if: github.event_name != 'pull_request'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
-      - name: Install
-        working-directory: website
-        run: npm ci
-
-      - name: Build
-        working-directory: website
+      # A push builds for the address Pages gives, so a custom domain needs no change here; a pull request for the usual one.
+      - name: Set the address
         env:
-          BASE_PATH: ${{ steps.pages.outputs.base_path }}
-          NEXT_PUBLIC_SITE_URL: ${{ steps.pages.outputs.base_url }}
-        run: npm run build
+          PAGES_PATH: ${{ steps.pages.outputs.base_path }}
+          PAGES_URL: ${{ steps.pages.outputs.base_url }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            PAGES_PATH=/OwlLuna PAGES_URL=https://owaisazmal.github.io/OwlLuna
+          fi
+          echo "BASE_PATH=$PAGES_PATH" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SITE_URL=$PAGES_URL" >> "$GITHUB_ENV"
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run check:links
+      - run: npm run check:a11y
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        if: github.event_name != 'pull_request'
         with:
           path: website/out
 
@@ -82,6 +69,7 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       pages: write
       id-token: write

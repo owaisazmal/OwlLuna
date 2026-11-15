@@ -10,6 +10,12 @@ Thanks for helping. Everyone taking part follows the [Code of Conduct](CODE_OF_C
 4. The app should build without warnings and the tests should pass (⌘U).
 5. For UI changes, add iPad screenshots or a short recording in portrait and landscape, light and dark.
 
+## Checks
+
+Every pull request runs [CI](.github/workflows/ci.yml): a Debug build, the unit tests and one UI test on an iPad, an iPhone Duo and an iPhone simulator, and Release builds for iPad and iPhone and for the Mac. Warnings fail the builds. A test that fails is run once more on a rebooted simulator and fails the check only if it fails again. The whole UI suite and the accessibility audits run each night on `main`. A change to `website/` alone runs the [website checks](website/README.md#checks) instead.
+
+CI builds with Xcode 27.2. When the app moves to a newer Xcode, change `DEVELOPER_DIR` in `ci.yml` and `release.yml` too.
+
 ## Code style
 
 - Swift and SwiftUI, with UIKit where PencilKit needs it (`Canvas/`).

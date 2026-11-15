@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+env:
+  # The Xcode the app is built and archived with; the image's default is 27.1. ci.yml uses the same.
+  DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+
 jobs:
   archive:
     name: Release archive
@@ -68,4 +72,5 @@ jobs:
         if: failure()
         with:
           name: archive-log
+          retention-days: 14
           path: ${{ runner.temp }}/archive.log
