@@ -19,9 +19,15 @@ struct TouchRests {
 
     private var down: [AnyHashable: Touch] = [:]
     private var last: (duration: TimeInterval, landed: TimeInterval, endedAt: TimeInterval, isPencil: Bool)?
+    private var pencilLifted = -TimeInterval.infinity
 
     /// Every touch has lifted.
     var isEmpty: Bool { down.isEmpty }
+
+    /// The Pencil is on the pages, or left them less than `window` before `now`.
+    func pencilIsNear(at now: TimeInterval, within window: TimeInterval) -> Bool {
+        down.values.contains(where: \.isPencil) || now - pencilLifted < window
+    }
 
     mutating func began(_ touch: AnyHashable, isPencil: Bool, fingersDraw: Bool, at point: CGPoint, time: TimeInterval) {
         let alone = down.isEmpty
@@ -42,12 +48,14 @@ struct TouchRests {
     }
 
     mutating func ended(_ touch: AnyHashable, time: TimeInterval) {
-        guard let ended = down.removeValue(forKey: touch), ended.counts else { return }
+        guard let ended = down.removeValue(forKey: touch) else { return }
+        if ended.isPencil { pencilLifted = time }
+        guard ended.counts else { return }
         last = (time - ended.restingSince, ended.landed, time, ended.isPencil)
     }
 
-    mutating func cancelled(_ touch: AnyHashable) {
-        down[touch] = nil
+    mutating func cancelled(_ touch: AnyHashable, time: TimeInterval) {
+        if down.removeValue(forKey: touch)?.isPencil == true { pencilLifted = time }
     }
 
     /// Forgets the touches that are down, but not the rest waiting to be taken.
@@ -106,6 +114,11 @@ final class StrokeHoldRecognizer: UIGestureRecognizer {
     /// Taken in place of the next stroke's rest, for tests, which have no touches.
     var nextRest: TimeInterval?
 
+    /// A tap of fingers while the Pencil writes, or just after, is the writing hand's palm.
+    func pencilIsNear(within window: TimeInterval = 0.5) -> Bool {
+        rests.pencilIsNear(at: ProcessInfo.processInfo.systemUptime, within: window)
+    }
+
     /// The rest at the end of `stroke`, once, if the touch that drew it rested and lifted less than `window` ago.
     func takeHold(for stroke: PKStroke?, within window: TimeInterval = 2) -> TimeInterval? {
         if let rest = nextRest {
@@ -142,7 +155,7 @@ final class StrokeHoldRecognizer: UIGestureRecognizer {
     }
 
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent) {
-        for touch in touches { rests.cancelled(ObjectIdentifier(touch)) }
+        for touch in touches { rests.cancelled(ObjectIdentifier(touch), time: touch.timestamp) }
         drag.cancelled()
         if rests.isEmpty { state = .failed }
     }

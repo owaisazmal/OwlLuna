@@ -504,6 +504,48 @@ final class EditorModesUITests: XCTestCase {
         XCTAssertEqual(strokeCount(first), 5, "writing carries on afterwards")
     }
 
+    /// Issue 34: after the lasso moved ink, one finger must still scroll where only the Pencil draws.
+    func testOneFingerScrollsAfterTheLassoMovesInk() throws {
+        let app = XCUIApplication()
+        // "System Setting": fingers draw while the tools are out on a simulator, and only the Pencil once they are put away.
+        app.launchArguments = ["-storageRoot", "modes", "-resetStorage", "-seedLibrary", "3", "-seedReplay", "-drawingInput", "system"]
+        app.launch()
+        let notebook = app.buttons["notebook.Lecture Replay"]
+        XCTAssertTrue(notebook.waitForExistence(timeout: 30))
+        notebook.tap()
+        let first = app.element("page.canvas.1")
+        XCTAssertTrue(first.waitForExistence(timeout: 20))
+        first.waitUntilStill()
+        let undo = app.buttons["editor.undo"]
+        XCTAssertFalse(undo.isEnabled)
+        // A point on the letter page, placed from its foot on screen. The seeded lines run from x 120 to 480 at y 140, 220, 300 and 380.
+        func point(_ x: CGFloat, _ y: CGFloat) -> XCUICoordinate {
+            let shown = first.frame, scale = shown.width / 612
+            return app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: shown.minX + x * scale, dy: shown.maxY - (792 - y) * scale))
+        }
+        func scrolled() -> CGFloat {
+            first.waitUntilStill()
+            let foot = first.frame.maxY
+            point(560, 620).press(forDuration: 0.05, thenDragTo: point(560, 420), withVelocity: 600, thenHoldForDuration: 0.2)
+            first.waitUntilStill()
+            return foot - first.frame.maxY
+        }
+
+        // Part way down the page the canvas shows only some of it, so its own pan would have somewhere to go.
+        app.buttons["Hide Tools"].firstMatch.tap()
+        XCTAssertGreaterThan(scrolled(), 100, "one finger scrolls where only the Pencil draws")
+        app.buttons["Show Tools"].firstMatch.tap()
+        app.buttons["editor.tools.lasso"].tap()
+        first.waitUntilStill()
+        point(100, 355).press(forDuration: 0.1, thenDragTo: point(510, 405), withVelocity: 400, thenHoldForDuration: 0.2)
+        point(260, 368).press(forDuration: 0.2, thenDragTo: point(260, 520), withVelocity: 300, thenHoldForDuration: 0.1)
+        XCTAssertTrue(undo.isEnabled, "PencilKit's lasso caught the last line and moved it")
+        attach(app, "lasso-moved-ink")
+
+        app.buttons["Hide Tools"].firstMatch.tap()
+        XCTAssertGreaterThan(scrolled(), 100, "and still does after the lasso moved ink")
+    }
+
     func testDrawAndHoldStraightensAStroke() throws {
         let app = XCUIApplication()
         let canvas = openNotebook(app, input: "anyInput")

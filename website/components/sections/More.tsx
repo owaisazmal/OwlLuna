@@ -52,7 +52,7 @@ export function More() {
                 <h3 className={`display ${styles.title}`}>Search</h3>
                 <p className={styles.text}>
                   Search looks through titles, handwriting, typed text, PDF text, the print on scans and what was said
-                  in transcribed recordings. Handwriting is read on the iPad, and each result opens at the matching
+                  in transcribed recordings. Handwriting is read on your device, and each result opens at the matching
                   page.
                 </p>
                 <p className={styles.text}>
@@ -128,7 +128,7 @@ export function More() {
                   calendar, laid out like a printed diary, opens the exact pages you wrote on any day.
                 </p>
                 <p className={styles.text}>
-                  The history is a small file on your iPad that is never synced, and{' '}
+                  The history is a small file on your device that is never synced, and{' '}
                   <span className={styles.path}>Settings › Writing History</span> turns it off or clears it.
                 </p>
                 <p className={styles.plain}>No streaks, badges or reminders.</p>
@@ -163,7 +163,7 @@ export function More() {
                   <p className={styles.rowName}>Backup</p>
                   <p className={styles.rowText}>
                     <span className={styles.path}>Settings › Backup</span> puts the whole library into one file, to
-                    restore on this or another iPad. Restoring adds what is missing and never replaces a notebook: one
+                    restore on this or another device. Restoring adds what is missing and never replaces a notebook: one
                     that differs from the backup comes back beside yours as a copy.
                   </p>
                   <p className={styles.rowText}>It carries your flashcards, smart shelves and writing history with it.</p>
@@ -171,7 +171,7 @@ export function More() {
                 <div className={styles.half}>
                   <p className={styles.rowName}>iCloud sync</p>
                   <p className={styles.rowText}>
-                    Sync between your iPads asks before it starts, and{' '}
+                    Sync between your devices asks before it starts, and{' '}
                     <span className={styles.path}>Settings › iCloud</span> has the switch. Each notebook is copied whole,
                     and one changed on two devices keeps both versions.
                   </p>
@@ -217,8 +217,12 @@ export function More() {
                   <dd className={`display-text ${styles.needValue}`}>iPadOS 18 or later</dd>
                 </div>
                 <div className={styles.need}>
+                  <dt className={styles.needName}>iPhone</dt>
+                  <dd className={`display-text ${styles.needValue}`}>iOS 18 or later</dd>
+                </div>
+                <div className={styles.need}>
                   <dt className={styles.needName}>Mac</dt>
-                  <dd className={`display-text ${styles.needValue}`}>Apple silicon Macs, as an iPad app</dd>
+                  <dd className={`display-text ${styles.needValue}`}>macOS 26 or later</dd>
                 </div>
               </dl>
             </article>

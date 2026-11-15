@@ -7,7 +7,7 @@ export function AppStructuredData() {
     '@type': 'SoftwareApplication',
     name: site.name,
     applicationCategory: 'ProductivityApplication',
-    operatingSystem: 'iPadOS 18 or later',
+    operatingSystem: 'iPadOS 18 or later, iOS 18 or later, macOS 26 or later',
     description: site.description,
     url: `${site.url}/`,
     image: `${site.url}/owlluna-icon.png`,

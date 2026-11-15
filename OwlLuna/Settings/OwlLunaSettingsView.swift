@@ -18,8 +18,11 @@ struct OwlLunaSettingsView: View {
     @AppStorage(SettingsKey.snapsHighlighter) private var snapsHighlighter = true
     @AppStorage(SettingsKey.scribbleErases) private var scribbleErases = false
     @AppStorage(SettingsKey.circleSelects) private var circleSelects = true
-    @AppStorage(SettingsKey.pencilDoubleTap) private var pencilDoubleTap: PencilAction = .system
-    @AppStorage(SettingsKey.pencilSqueeze) private var pencilSqueeze: PencilAction = .system
+    @AppStorage(SettingsKey.pencilDoubleTap) private var pencilDoubleTap: GestureAction = .system
+    @AppStorage(SettingsKey.pencilSqueeze) private var pencilSqueeze: GestureAction = .system
+    @AppStorage(SettingsKey.fingerDoubleTap) private var fingerDoubleTap = FingerTap.doubleTap.initial
+    @AppStorage(SettingsKey.twoFingerTap) private var twoFingerTap = FingerTap.twoFingers.initial
+    @AppStorage(SettingsKey.threeFingerTap) private var threeFingerTap = FingerTap.threeFingers.initial
     @AppStorage(SettingsKey.pencilSeen) private var pencilSeen = false
 
     /// An iPhone shows the Pencil's choices once a Pencil has touched it; a Mac never does.
@@ -59,6 +62,7 @@ struct OwlLunaSettingsView: View {
                 appearanceSection
                 inputSection
                 pencilSection
+                if !Device.isMac { fingerSection }
                 penTraySection
                 paperSection
                 if UIApplication.shared.supportsAlternateIcons {
@@ -195,14 +199,36 @@ struct OwlLunaSettingsView: View {
                 .settingsRow()
             if hasPencil {
                 SettingsChoiceRow(title: "Double-Tap", value: pencilDoubleTap.displayName, selection: $pencilDoubleTap) {
-                    ForEach(PencilAction.allCases) { Text($0.displayName).tag($0) }
+                    ForEach(GestureAction.pencilChoices) { Text($0.displayName).tag($0) }
                 }
                 .accessibilityIdentifier("settings.pencil.doubleTap")
                 SettingsChoiceRow(title: "Squeeze", value: pencilSqueeze.displayName, selection: $pencilSqueeze) {
-                    ForEach(PencilAction.allCases) { Text($0.displayName).tag($0) }
+                    ForEach(GestureAction.pencilChoices) { Text($0.displayName).tag($0) }
                 }
                 .accessibilityIdentifier("settings.pencil.squeeze")
             }
+        }
+    }
+
+    /// Where fingers draw, a double-tap would draw two dots first, so it is only offered where a Pencil draws.
+    private var fingerSection: some View {
+        SettingsSection("Finger Gestures", note: hasPencil
+                        ? "Tap with two or three fingers anywhere on the pages. Double-Tap works with one finger on bare paper, while only Apple Pencil draws."
+                        : "Tap with two or three fingers anywhere on the pages.") {
+            if hasPencil {
+                SettingsChoiceRow(title: "Double-Tap", value: fingerDoubleTap.fingerName, selection: $fingerDoubleTap) {
+                    ForEach(GestureAction.fingerChoices) { Text($0.fingerName).tag($0) }
+                }
+                .accessibilityIdentifier("settings.fingers.doubleTap")
+            }
+            SettingsChoiceRow(title: "Two-Finger Tap", value: twoFingerTap.fingerName, selection: $twoFingerTap) {
+                ForEach(GestureAction.fingerChoices) { Text($0.fingerName).tag($0) }
+            }
+            .accessibilityIdentifier("settings.fingers.twoFingerTap")
+            SettingsChoiceRow(title: "Three-Finger Tap", value: threeFingerTap.fingerName, selection: $threeFingerTap) {
+                ForEach(GestureAction.fingerChoices) { Text($0.fingerName).tag($0) }
+            }
+            .accessibilityIdentifier("settings.fingers.threeFingerTap")
         }
     }
 

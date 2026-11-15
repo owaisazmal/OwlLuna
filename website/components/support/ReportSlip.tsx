@@ -8,8 +8,8 @@ import { Tape } from '../ui/Tape'
 import styles from './ReportSlip.module.css'
 
 const lines = [
-  { label: 'The iPad model' },
-  { label: 'The iPadOS version' },
+  { label: 'The device model' },
+  { label: 'The iPadOS, iOS or macOS version' },
   { label: 'The app’s version', where: 'Settings › About in the app' },
   { label: 'What you did' },
   { label: 'What happened' },
@@ -81,7 +81,7 @@ export function ReportSlip() {
             </li>
           ))}
         </ul>
-        <p className={styles.foot}>For a drawing problem, say whether you were using the Apple Pencil or a finger.</p>
+        <p className={styles.foot}>For a drawing problem, say what you drew with: an Apple Pencil, a finger, a trackpad or a mouse.</p>
 
         <motion.span
           data-slip-ink

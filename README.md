@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/owaisazmal/OwlLuna/actions/workflows/ci.yml/badge.svg)](https://github.com/owaisazmal/OwlLuna/actions/workflows/ci.yml)
 
-**A free, open-source handwritten notes app for iPad. No subscriptions, no ads, no tracking.**
+**A free, open-source handwritten notes app for iPad, iPhone and Mac. No subscriptions, no ads, no tracking.**
 
-OwlLuna is built only on Apple frameworks (SwiftUI, PencilKit, PDFKit, Vision, SwiftData). Your notes stay on your iPad, with a copy in your own private iCloud storage if you turn sync on.
+OwlLuna is built only on Apple frameworks (SwiftUI, PencilKit, PDFKit, Vision, SwiftData). Your notes stay on your device, with a copy in your own private iCloud storage if you turn sync on.
 
 ## Try the beta
 
@@ -24,8 +24,9 @@ The App Store version comes later. To build it yourself, see [Getting started](#
 - Draw and hold: rest the pen at the end of a line, circle, rectangle or other straight-sided shape and it straightens. A hooked or barbed line becomes an arrow.
 - Shapes: drag out a line, arrow, circle, rectangle or triangle in the current pen's ink.
 - Pencil gestures: scribble over ink to erase it, loop round ink to select it, and choose what double-tap and squeeze do. A squeeze can bring an ink dish of your pens to the Pencil's tip.
+- Finger taps: two fingers undo and three redo, or choose another action for each, and for a one-finger double-tap.
 - Select ink across pages and move it to another page.
-- Handwriting to text, read on the iPad: convert a selection, or have writing set as type as you go. Translate it with Apple's translator.
+- Handwriting to text, read on the device: convert a selection, or have writing set as type as you go. Translate it with Apple's translator.
 - A zoom window for writing small and neat.
 - Whiteboards: a page with no edges, for diagrams and brainstorming.
 - Zoom up to 5× with sharp ink, Fit Width (⌘0) and Fit Page (⌘9).
@@ -60,12 +61,12 @@ The App Store version comes later. To build it yourself, see [Getting started](#
 ### Studying
 
 - Flashcards made from study tape, from handwriting or by hand, with spaced repetition.
-- A study guide of main points and practice questions, written on the iPad by Apple Intelligence.
+- A study guide of main points and practice questions, written on the device by Apple Intelligence.
 
 ### Audio
 
 - Record alongside a notebook, then replay it with your ink appearing as it was written.
-- Transcripts made on the iPad, never on a server. Tap a line to hear it.
+- Transcripts made on the device, never on a server. Tap a line to hear it.
 
 ### Library
 
@@ -76,7 +77,7 @@ The App Store version comes later. To build it yourself, see [Getting started](#
 - Folders inside folders, tags, smart shelves, favourites, sorting, and a list view.
 - Recently Deleted, emptied after 7, 30 or 90 days.
 - Search across handwriting, typed text, PDFs, scans and transcripts, Find in Notebook (⌘F), and Spotlight.
-- iCloud sync between your iPads, and a backup of the whole library to one file.
+- iCloud sync between your devices, and a backup of the whole library to one file.
 - Light, Dark or the system appearance, and a left-handed layout.
 
 ### Everywhere else
@@ -86,17 +87,17 @@ The App Store version comes later. To build it yourself, see [Getting started](#
 
 ## Requirements
 
-- Xcode 27 or later (iOS 27 SDK, Swift 6). The app uses newer APIs where the iPad has them, so older Xcodes fail to compile.
-- iPadOS 18 or later.
-- Runs on iPad, and on the Mac as a Mac Catalyst app (macOS 26 or later).
+- Xcode 27 or later (iOS 27 SDK, Swift 6). The app uses newer APIs where the device has them, so older Xcodes fail to compile.
+- iPadOS 18 or later on iPad, and iOS 18 or later on iPhone.
+- macOS 26 or later on the Mac, where it runs as a Mac Catalyst app.
 
 ## Privacy
 
-OwlLuna has no accounts and no analytics. Handwriting, speech and printed text are read on the iPad. Transcription runs only when you ask, and only if the iPad can do it on the device. Translation and study guides also run on the iPad. The calendar is read only for today's events, and the camera only while you scan.
+OwlLuna has no accounts and no analytics. Handwriting, speech and printed text are read on the device. Transcription runs only when you ask, and only if the device can do it without a server. Translation and study guides also run on the device. The calendar is read only for today's events, and the camera only while you scan.
 
-On an iPad that has never synced, iCloud sync copies nothing until you allow it in Settings › iCloud. With it on, your library goes to the app's private container in your own iCloud. The writing history (`Library/activity.json`) is never synced, though your backups include it; Settings › Writing History turns it off or clears it.
+On a device that has never synced, iCloud sync copies nothing until you allow it in Settings › iCloud. With it on, your library goes to the app's private container in your own iCloud. The writing history (`Library/activity.json`) is never synced, though your backups include it; Settings › Writing History turns it off or clears it.
 
-The widgets read a small snapshot the app writes to its shared container on the device. A locked notebook's title and cover are never in it, nor in Spotlight, and its name isn't offered to Siri. A lock keeps a notebook closed in the app but doesn't encrypt it beyond what iPadOS does for every app, so a backup or iCloud copy holds it like any other.
+The widgets read a small snapshot the app writes to its shared container on the device. A locked notebook's title and cover are never in it, nor in Spotlight, and its name isn't offered to Siri. A lock keeps a notebook closed in the app but doesn't encrypt it beyond what the system does for every app, so a backup or iCloud copy holds it like any other.
 
 ## Getting started
 
@@ -158,17 +159,18 @@ The main decisions, with measurements, are in [docs/ARCHITECTURE.md](docs/ARCHIT
 
 ## Roadmap
 
-Some features can't be fully tested in the simulator. The steps for checking them on a real iPad are in [docs/DEVICE-CHECKS.md](docs/DEVICE-CHECKS.md). Help with any of these is welcome.
+Some features can't be fully tested in the simulator. The steps for checking them on a real iPad or Mac are in [docs/DEVICE-CHECKS.md](docs/DEVICE-CHECKS.md). Help with any of these is welcome.
 
 - [x] iCloud sync between two real iPads: arrival, edits on both, delete, restore, lock, folders, large uploads, offline catch-up (October 2026).
 - [ ] The rest of iCloud sync: a notebook open on both iPads, many deletes at once, evicted files, a fast clock, different Recently Deleted lengths, another Apple Account.
 - [ ] Transcription with real speech and a long recording.
 - [ ] Camera scanning, Face ID, translation, the calendar prompt, Control Center buttons, and the zoom window with a Pencil.
 - [ ] The study guide on an iPad with Apple Intelligence.
-- [ ] Pencil double-tap, squeeze, scribble and loop with a real Pencil.
+- [ ] Pencil double-tap, squeeze, scribble and loop with a real Pencil, and finger taps with a hand resting on the page.
 - [ ] Handwriting to Text with real handwriting.
-- [ ] Whiteboards, tabs, PDF text and the tool tray with a Pencil on a real iPad.
-- [ ] A ruler that spans pages.
+- [ ] Whiteboards, tabs, one page at a time, PDF text and the tool tray with a Pencil on a real iPad.
+- [ ] PDFs shared or dropped from Files, iCloud Drive and other storage providers.
+- [ ] The Mac version, once it's signed for iCloud: the title bar, right-click menus, drawing with a trackpad, and sync with an iPad.
 - [ ] Native-speaker review of the translations, and more languages.
 
 ## Website

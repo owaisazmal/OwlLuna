@@ -274,6 +274,26 @@ final class ShapeSnapTests: XCTestCase {
         XCTAssertTrue(rests.isEmpty)
     }
 
+    func testThePencilIsNearWhileItWritesAndJustAfter() {
+        var rests = TouchRests()
+        XCTAssertFalse(rests.pencilIsNear(at: 0, within: 0.5))
+        rests.began("finger", isPencil: false, fingersDraw: true, at: start, time: 0)
+        rests.ended("finger", time: 0.1)
+        XCTAssertFalse(rests.pencilIsNear(at: 0.2, within: 0.5), "a finger is not the Pencil")
+
+        rests.began("pencil", isPencil: true, fingersDraw: false, at: start, time: 1)
+        drag("pencil", &rests, from: 1)
+        XCTAssertTrue(rests.pencilIsNear(at: 4, within: 0.5), "however long it has been writing")
+        rests.ended("pencil", time: 5)
+        XCTAssertTrue(rests.pencilIsNear(at: 5.3, within: 0.5))
+        XCTAssertFalse(rests.pencilIsNear(at: 5.6, within: 0.5))
+
+        rests.began("pencil", isPencil: true, fingersDraw: false, at: start, time: 6)
+        rests.cancelled("pencil", time: 6.2)
+        XCTAssertTrue(rests.pencilIsNear(at: 6.4, within: 0.5), "a cancelled stroke lifts the Pencil too")
+        XCTAssertTrue(rests.isEmpty)
+    }
+
     func testAThumbLiftingMidStrokeLendsTheStrokeNoRest() throws {
         for fingersDraw in [false, true] {
             var rests = TouchRests()

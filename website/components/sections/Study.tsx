@@ -99,12 +99,12 @@ export function Study() {
                         <path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                         <rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="currentColor" />
                       </svg>
-                      Written on the iPad itself, by Apple Intelligence.
+                      Written on the device itself, by Apple Intelligence.
                     </p>
                   </div>
                   <Drop className={styles.question}>
                     <IndexCard side="Practice question" className={styles.card}>
-                      <span className={styles.asked}>And on an iPad without Apple Intelligence?</span>
+                      <span className={styles.asked}>And on a device without Apple Intelligence?</span>
                       <span className={styles.answered}>The sheet says so and nothing else happens.</span>
                     </IndexCard>
                   </Drop>
@@ -112,10 +112,10 @@ export function Study() {
               </Reveal>
               <Reveal className={styles.copy} delay={0.08}>
                 <p className="meta">Study guide</p>
-                <h3 className={`display ${styles.title}`}>The main points, written on the iPad</h3>
+                <h3 className={`display ${styles.title}`}>The main points, written on the device</h3>
                 <p>
-                  A study guide is the main points of what you wrote, and practice questions to go with them. Apple Intelligence writes it on the iPad
-                  itself, so it needs iPadOS 26 or later and an iPad with Apple Intelligence turned on.
+                  A study guide is the main points of what you wrote, and practice questions to go with them. Apple Intelligence writes it on the device
+                  itself, so it needs iPadOS 26, iOS 26 or macOS 26 or later and a device with Apple Intelligence turned on.
                 </p>
               </Reveal>
             </div>
@@ -147,8 +147,8 @@ export function Study() {
             <Reveal className={styles.point} delay={0.14}>
               <h3 className="meta">Transcribed on the device</h3>
               <p>
-                Ask for a transcript and the recording is written down on the iPad, never on a server. If the iPad can’t transcribe a language on the
-                device, the app says so and sends nothing.
+                Ask for a transcript and the recording is written down on your device, never on a server. If the device can’t transcribe a language
+                itself, the app says so and sends nothing.
               </p>
             </Reveal>
           </div>

@@ -28,6 +28,11 @@ final class PageCanvasView: PKCanvasView {
         if guardedHolds == 0 { guardedHolds = holdGuard.guardHolds(in: self) }
     }
 
+    /// The stack scrolls, never the canvas. PencilKit turns the canvas's own pan back on after it drags a selection.
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        gestureRecognizer !== panGestureRecognizer && super.gestureRecognizerShouldBegin(gestureRecognizer)
+    }
+
     /// Whether a tile PencilKit has drawn is empty where a stroke runs through it. When memory runs short PencilKit
     /// can lose a tile's render and leave it blank until the strokes change.
     var hasBlankInkTile: Bool {

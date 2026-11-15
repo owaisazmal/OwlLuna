@@ -205,10 +205,28 @@ final class PencilGestureTests: XCTestCase {
         memory.select("pencil", isEraser: false)
         XCTAssertEqual(memory.eraserSwitch(eraser: "eraser"), "eraser")
 
-        XCTAssertEqual(PencilAction.setting("pencil.test.unset"), .system)
-        XCTAssertEqual(PencilAction.allCases.count, 7)
-        XCTAssertEqual(Set(PencilAction.allCases.map(\.displayName)).count, 7)
-        XCTAssertEqual(PencilAction(rawValue: "palette")?.displayName, "Tool Palette at the Pencil")
+        XCTAssertEqual(GestureAction.setting("pencil.test.unset"), .system)
+        XCTAssertEqual(GestureAction.allCases.count, 9)
+        XCTAssertEqual(Set(GestureAction.allCases.map(\.displayName)).count, 9)
+        XCTAssertEqual(GestureAction(rawValue: "palette")?.displayName, "Tool Palette at the Pencil")
+    }
+
+    func testFingerTapsUndoAndRedoUntilChosenOtherwise() throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "finger.taps.test"))
+        defaults.removePersistentDomain(forName: "finger.taps.test")
+        defer { defaults.removePersistentDomain(forName: "finger.taps.test") }
+        XCTAssertEqual(FingerTap.allCases.map { $0.action(defaults) }, [.off, .undo, .redo])
+        XCTAssertEqual(FingerTap.allCases.map { "\($0.touches)×\($0.taps)" }, ["1×2", "2×1", "3×1"])
+
+        defaults.set(GestureAction.toggleTools.rawValue, forKey: SettingsKey.fingerDoubleTap)
+        defaults.set(GestureAction.off.rawValue, forKey: SettingsKey.twoFingerTap)
+        XCTAssertEqual(FingerTap.allCases.map { $0.action(defaults) }, [.toggleTools, .off, .redo])
+
+        XCTAssertFalse(GestureAction.fingerChoices.contains(.system), "fingers have no system setting to follow")
+        XCTAssertFalse(GestureAction.pencilChoices.contains(.off))
+        XCTAssertEqual(Set(GestureAction.fingerChoices.map(\.fingerName)).count, GestureAction.fingerChoices.count)
+        XCTAssertEqual(GestureAction.palette.fingerName, "Tool Palette Where Tapped")
+        XCTAssertEqual(GestureAction.undo.fingerName, "Undo")
     }
 
     private func pause(_ seconds: Double) async {

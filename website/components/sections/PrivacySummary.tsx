@@ -12,7 +12,7 @@ export function PrivacySummary() {
         <div className={styles.words}>
           <SectionHeading eyebrow="Privacy" title="What OwlLuna knows about you: nothing." id="privacy-summary-title">
             <p>
-              There is no account to make and no server of mine behind the app. Your notebooks are files on your iPad,
+              There is no account to make and no server of mine behind the app. Your notebooks are files on your device,
               and iCloud sync, which asks before it starts, keeps a copy in your own iCloud.
             </p>
           </SectionHeading>
@@ -32,10 +32,10 @@ export function PrivacySummary() {
           </Reveal>
           <Reveal delay={0.08}>
             <Ledger title="Where the reading happens">
-              <LedgerRow label="Handwriting and scans" mark="check">Read on the iPad.</LedgerRow>
-              <LedgerRow label="Recordings" mark="check">Transcribed on the iPad, or not at all.</LedgerRow>
-              <LedgerRow label="Study guides" mark="check">Written by Apple Intelligence on the iPad.</LedgerRow>
-              <LedgerRow label="Your notebooks" mark="check">On your iPad, and in your own iCloud if sync is on.</LedgerRow>
+              <LedgerRow label="Handwriting and scans" mark="check">Read on your device.</LedgerRow>
+              <LedgerRow label="Recordings" mark="check">Transcribed on your device, or not at all.</LedgerRow>
+              <LedgerRow label="Study guides" mark="check">Written by Apple Intelligence on your device.</LedgerRow>
+              <LedgerRow label="Your notebooks" mark="check">On your device, and in your own iCloud if sync is on.</LedgerRow>
             </Ledger>
           </Reveal>
         </div>

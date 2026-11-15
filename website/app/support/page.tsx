@@ -84,7 +84,7 @@ export default function Support() {
           ))}
           <div className={styles.closing}>
             <p>
-              For what OwlLuna keeps on your iPad and what it copies to your own iCloud, read the{' '}
+              For what OwlLuna keeps on your device and what it copies to your own iCloud, read the{' '}
               <Link href="/privacy/">Privacy Policy</Link>.
             </p>
           </div>

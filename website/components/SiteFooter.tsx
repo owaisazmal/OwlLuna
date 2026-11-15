@@ -56,7 +56,7 @@ export function SiteFooter() {
           Franklin, Fraunces, Archivo and Bricolage Grotesque, used under the <a href={site.fontLicenses}>SIL Open Font License</a>.
         </p>
         <p>
-          Apple, iPad, iPadOS, Apple Pencil, Mac, iCloud, Face ID, Touch ID, Spotlight, Siri, SwiftUI, SwiftData,
+          Apple, iPad, iPadOS, iPhone, Apple Pencil, Mac, macOS, iCloud, Face ID, Touch ID, Spotlight, Siri, SwiftUI, SwiftData,
           PencilKit and App Store are trademarks of Apple Inc., registered in the U.S. and other countries and regions.
           Apple Intelligence is a trademark of Apple Inc.
         </p>

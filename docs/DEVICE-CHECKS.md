@@ -1,6 +1,6 @@
 # Device checks
 
-These are the checks the simulator can't do. Unless a check says it has passed, it has only run in the simulator or in tests. Work through a section, tick its items in the "Device checks before 1.0" issue, and attach what it asks you to keep.
+These are the checks the simulator can't do. Unless a check says it has passed, it has only run in the simulator or in tests. Work through a section, then report the results in a [GitHub issue](https://github.com/owaisazmal/OwlLuna/issues) with what it asks you to keep.
 
 You need:
 
@@ -9,6 +9,7 @@ You need:
 - iPadOS 18 or later, and iPadOS 26 for the calligraphy pen and the study guide. CI runs only the unit tests on iPadOS 18, so try the main paths on iPadOS 18 too.
 - A keyboard with a trackpad, a display with a USB-C to HDMI adapter or an Apple TV, a Mac with Xcode 27, and an iPhone that films at 240 fps.
 - For the iPhone checks, an iPhone on iOS 18 or later, ideally an iPhone Duo.
+- For the Mac checks, a Mac on macOS 26 or later with a trackpad and a camera, signed in to the same test Apple Account.
 
 Names are spelt as the app spells them. In the editor, ⋯ is More, + is Add, and the title menu opens from the notebook's title. Keep a screen recording of every check, and film your hand with a phone where it matters. Write the build, the iPadOS version and the Pencil beside every result.
 
@@ -37,7 +38,7 @@ It prints two `PERF v2 memory` lines. Swap in `testV2StrokeEndHeavyNotebook`, `t
 
 ## iCloud sync
 
-Passed on real iCloud in October 2026, on two iPads with one Apple Account: Sync 1, 4, 5 and 7, and the lock and folder in Sync 3. A pass now downloads only what changed (CHANGELOG, Unreleased), so run Sync 1, 5, 7 and 8 again with Sync 14.
+Passed on real iCloud in October 2026, on two iPads with one Apple Account: Sync 1, 4, 5 and 7, and the lock and folder in Sync 3. A pass now downloads only what changed (CHANGELOG, 1.0.0-build.3), so run Sync 1, 5, 7 and 8 again with Sync 14.
 
 Setup: iPads A and B on the same build and test account, iCloud Drive on, 2 GB free in iCloud, automatic time, the logging profile, and Console on `category:sync`. First turn sync off in OwlLuna everywhere and delete OwlLuna's data in Settings › your name › iCloud. B starts without the app. Run the checks in order (about four hours) and write down the time at each step.
 
@@ -179,8 +180,9 @@ Palm rejection:
 1. ⋯ › Draw With › Apple Pencil Only. Write a paragraph with your hand on the glass, low on the page and near the tray, lifting the palm mid-word.
 2. Draw a line and rest the Pencil at its end with the palm down. Draw another without resting.
 3. Repeat with Pencil and Finger, scrolling with two fingers while the palm is down. Then write left-handed with Settings › Input › Left-Handed on.
+4. On iPadOS 27, write over handwriting with the palm down. Then hold one finger still on handwriting, and then a thumb.
 
-Expect: the palm never draws, scrolls, presses the tray or counts as a rest, and only the rested line straightens. Count stray marks per page on a phone video.
+Expect: the palm never draws, scrolls, presses the tray or counts as a rest, and only the rested line straightens. Count stray marks per page on a phone video. In step 4 the palm never opens the Select All and Insert Space menu, and one finger or a thumb held still does. A tester confirmed the palm part on an iPad Air (5th generation) with iPadOS 27 in build 6, November 2026.
 
 Latency, on a 120 Hz iPad Pro (and a 60 Hz iPad if you can): film fast zigzags at 240 fps in Apple Notes, then in OwlLuna with the Pen on a blank page, a heavy stand-in page, at 5×, with Handwriting to Text on, while recording, and in the zoom window. Count frames from tip to ink, five times per clip.
 
@@ -193,10 +195,19 @@ Expect: within one frame (about 4 ms) of Notes on the same iPad, with no stutter
 1. Set OwlLuna's Settings › Apple Pencil › Double-Tap and Squeeze to System Setting.
 2. With iPadOS set to switch to the eraser, double-tap twice. Set it to the last tool, use pen A then pen B, and double-tap.
 3. With squeeze set to the palette, squeeze over the page, near its edge, near the tray, and with the tip high up.
-4. Try each OwlLuna choice for both: Switch to Eraser, Undo, Select Ink, Show or Hide Tools, Tool Palette at the Pencil, Zoom Window.
+4. Try each OwlLuna choice for both: Switch to Eraser, Undo, Redo, Select Ink, Show or Hide Tools, Tool Palette at the Pencil, Zoom Window.
 5. Try them in focus mode, while presenting, with a sheet open, and in a read-only notebook.
 
 Expect: one action each time, never the system's picker or palette: the eraser and back, then pen A. The ink dish opens centred under the tip, on the pages and clear of the tray (mid-page if the tip is too high), and a tap outside closes it. Focus mode works; the other places do nothing.
+
+### Finger taps
+
+1. Write a few lines with the Pencil, tap the page with two fingers twice, then with three fingers twice.
+2. Write a long line with the side of your hand on the page, lifting and landing it as you go. Tap with two fingers just as the Pencil lifts.
+3. Set Settings › Finger Gestures › Double-Tap to Show or Hide Tools. Double-tap bare paper, a picture, a link and a checklist box. Set Draw With to Pencil and Finger and double-tap bare paper again.
+4. Swipe left and right with three fingers.
+
+Expect: each two-finger tap undoes one step and each three-finger tap redoes one, leaving no mark and no system Undo bar. The resting hand never undoes anything, and nor does the tap as the Pencil lifts. The double-tap shows and hides the tools on bare paper only; elsewhere a tap does what it always did, and with fingers drawing it only draws. Note what the three-finger swipes do.
 
 ### Scribble and loop
 
@@ -284,6 +295,8 @@ Use a readable PDF, a locked one and a broken one (a text file renamed `.pdf`), 
 Expect: OwlLuna is offered where PDFs are shared, and takes the drop everywhere but Recently deleted, saying where it is going. Each PDF becomes a notebook named after the file, in the folder on show, with the same progress and notices as Import PDF. Dropped on the icon with the app closed, the splash goes at once and the import shows on the shelf. The original is never changed or moved, and nothing stays in either inbox.
 
 Sharing from Files to OwlLuna on the iPad Pro 11-inch simulator (iOS 27.0) made the notebook, emptied the inbox and left the file in Files. The drops haven't been tried outside unit tests.
+
+For [issue 26](https://github.com/owaisazmal/OwlLuna/issues/26), also run the checks in [PDF-IMPORT-26.md](PDF-IMPORT-26.md#device-checks-still-needed): an iCloud PDF whose download was removed, the same offline, and a retry once it can be reached.
 
 ## Backup and restore
 
@@ -422,6 +435,17 @@ So far only checked with a stand-in window. Connect a display (mirroring, Stage 
 
 Expect: the display shows only the page, on black, centred, following zoom and lifted tape, with a smooth laser and fading tail. Notes, the next page and the clock stay on the iPad. After Done it mirrors again, and unplugging doesn't stop the presentation or crash.
 
+## One page at a time
+
+Only checked in the simulator and in tests. Use a written notebook of ten pages, with ⋯ › Pages › One Page at a Time.
+
+1. Write a page with your palm down, right up to the left and right edges, lifting the palm mid-word.
+2. Swipe left and right with a finger: a short drag, a long one past the side, and a flick.
+3. Pinch to 3×, pan to the right side, then swipe again from there.
+4. ⌘F a word on another page. Open the zoom window and write until it reaches the foot of the page.
+
+Expect: the Pencil and a resting palm never turn a page. A short drag springs back, and a long swipe or a flick turns one page. Zoomed in, the first pan stops at the side and only the next swipe from there turns. Find and the zoom window go to the page they need.
+
 ## Whiteboards
 
 A board has only been laid out at 5× in the simulator, never written on with a Pencil.
@@ -448,6 +472,20 @@ Only checked in the simulator, on an iPhone Duo (iOS 27.1, folded), an iPhone 17
 7. On the smallest iPhone you have, ideally an iPhone SE or a mini, go through the library, a notebook, the tool tray, More and Settings, upright and on its side.
 
 Expect: a finger draws from the first launch, two fingers never draw, and a resting hand makes no marks. On the small iPhone every control can be reached and nothing is cut off. After the Pencil's first stroke only the Pencil draws, and Draw With is back in Settings. Nothing in the column sits under the camera or the status bar, and menus open beside it. Unfolding keeps the page and shelf you were on, with the sidebar and the Pages column beside them. The same notebook opens on both devices with its pages and ink. Notes say iPhone, never iPad, and until a Pencil is used Settings has no Draw With, Double-Tap or Squeeze.
+
+## Mac
+
+Not yet run as a signed build, so iCloud and the App Group haven't been tried on a Mac. First build it once from Xcode with your account, for My Mac (Mac Catalyst), so it gets its iCloud and App Group profiles.
+
+1. In a window and in full screen, click every button in the library's and the editor's bars, including those beside the traffic lights. Drag the window by an empty part of a bar, and resize it.
+2. Right-click a notebook, a shelf in the sidebar, a tab, a page in the page navigator and a sticker.
+3. Write with the trackpad and with a mouse. Pinch to zoom, and scroll with two fingers.
+4. Open New Notebook, Settings, Change Cover, Tags…, the export options, the study guide and a deck. Read the notes under Appearance, iCloud, Recordings, Search and Daily Journal in Settings.
+5. Import PDF… from Finder, and drag a PDF from Finder onto the shelf. Export a notebook as a PDF, then drag one from the library onto the Desktop.
+6. Record Audio, Take Photos and + › Today's Events, allowing each. Lock a notebook and open it.
+7. Turn on Sync with iCloud. Write a page on the Mac and let it reach an iPad, then the other way. Add the Continue Writing widget to the desktop and click it.
+
+Expect: the traffic lights sit level with the bar's buttons in a window and go in full screen, and every button takes its click, even at the very top of the window. A right-click opens the menu a held tap opens on the iPad, at once. The pointer draws from the first launch, two-finger scrolling never draws, and Settings has no Draw With, Double-Tap or Squeeze. No sheet crashes or opens empty. Notes and messages say Mac, never iPad, and point to System Settings. Files from Finder come in with no permission error, and the dragged notebook lands as a PDF. Write down whether the export's share sheet can save the PDF in a folder. The microphone, camera and calendar each ask once, and the lock asks for Touch ID or the Mac's password. The same notebook opens on both with its pages and ink, and the widget shows the notebook you last wrote in.
 
 ## Performance
 

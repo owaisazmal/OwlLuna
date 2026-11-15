@@ -95,6 +95,160 @@
         }
       }
     },
+    "Finger Gestures" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fingergesten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestos con los dedos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestes avec les doigts"
+          }
+        }
+      }
+    },
+    "Off" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé"
+          }
+        }
+      }
+    },
+    "Tap with two or three fingers anywhere on the pages." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe mit zwei oder drei Fingern irgendwo auf die Seiten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca con dos o tres dedos en cualquier parte de las páginas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touchez les pages avec deux ou trois doigts, n’importe où."
+          }
+        }
+      }
+    },
+    "Tap with two or three fingers anywhere on the pages. Double-Tap works with one finger on bare paper, while only Apple Pencil draws." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe mit zwei oder drei Fingern irgendwo auf die Seiten. Doppeltippen funktioniert mit einem Finger auf leerem Papier, solange nur der Apple Pencil zeichnet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca con dos o tres dedos en cualquier parte de las páginas. Doble toque funciona con un dedo sobre el papel en blanco, mientras solo dibuje el Apple Pencil."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touchez les pages avec deux ou trois doigts, n’importe où. Toucher deux fois se fait avec un doigt sur le papier vierge, tant que seul l’Apple Pencil dessine."
+          }
+        }
+      }
+    },
+    "Three-Finger Tap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit drei Fingern tippen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toque con tres dedos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toucher avec trois doigts"
+          }
+        }
+      }
+    },
+    "Tool Palette Where Tapped" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Werkzeugpalette an der getippten Stelle"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paleta de herramientas donde se toca"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palette d’outils à l’endroit touché"
+          }
+        }
+      }
+    },
+    "Two-Finger Tap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit zwei Fingern tippen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toque con dos dedos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toucher avec deux doigts"
+          }
+        }
+      }
+    },
     "“System Setting” follows Settings › Apple Pencil › Only Draw with Apple Pencil. With Left-Handed on, the page ribbon, the zoom window's buttons and the panels beside the page are on the left." : {
       "localizations" : {
         "de" : {

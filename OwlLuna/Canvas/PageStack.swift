@@ -134,6 +134,12 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     private lazy var itemTap = UITapGestureRecognizer(target: self, action: #selector(tappedPage))
     private lazy var itemHold = UILongPressGestureRecognizer(target: self, action: #selector(heldPage))
     private lazy var tapeTap = UITapGestureRecognizer(target: self, action: #selector(tappedTape))
+    private lazy var fingerTaps: [(tap: FingerTap, recognizer: UITapGestureRecognizer)] = FingerTap.allCases.map { tap in
+        let recognizer = UITapGestureRecognizer(target: self, action: #selector(fingersTapped))
+        recognizer.numberOfTapsRequired = tap.taps
+        recognizer.numberOfTouchesRequired = tap.touches
+        return (tap, recognizer)
+    }
     /// The whiteboard that is open on its own, the zoom the stack of pages was left at, and where each board was left.
     private var soloID: UUID? {
         didSet { if session.openBoard != soloID { session.openBoard = soloID } }
@@ -230,6 +236,14 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             let squeeze = UITapGestureRecognizer(target: self, action: #selector(scriptedSqueeze))
             squeeze.numberOfTouchesRequired = 2
             view.addGestureRecognizer(squeeze)
+        }
+        // Two and three fingers cancel the dot the first finger may have begun where fingers draw.
+        for (tap, recognizer) in fingerTaps where !(tap == .twoFingers && PencilGestures.squeezeIsScripted) {
+            recognizer.allowedTouchTypes = [NSNumber(value: UITouch.TouchType.direct.rawValue)]
+            recognizer.cancelsTouchesInView = tap != .doubleTap
+            recognizer.delaysTouchesEnded = tap != .doubleTap
+            recognizer.delegate = self
+            view.addGestureRecognizer(recognizer)
         }
         itemTap.allowedTouchTypes = [NSNumber(value: UITouch.TouchType.direct.rawValue)]
         itemHold.minimumPressDuration = 0.45
@@ -1538,6 +1552,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         if gestureRecognizer === shapePan { return !isLocked && !document.isReadOnly && toolbox.pen != nil }
         if gestureRecognizer === checkTap { return typedCheckbox(at: gestureRecognizer.location(in: textView)) != nil }
+        if let tap = fingerTaps.first(where: { $0.recognizer === gestureRecognizer })?.tap { return allowsFingerTap(tap, gestureRecognizer) }
         guard gestureRecognizer === tapeTap else { return true }
         return replay == nil && inkLasso == nil && textOverlay == nil && !isOnSelection(gestureRecognizer)
             && item(at: gestureRecognizer.location(in: scrollView), tapeOnly: true) != nil
@@ -3223,7 +3238,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     }
 
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
-        [laserGesture, itemTap, itemHold, strokeHold, tapeTap, checkTap].contains { $0 === gestureRecognizer || $0 === other }
+        let doubleTap = fingerTaps.first { $0.tap == .doubleTap }?.recognizer
+        return [laserGesture, itemTap, itemHold, strokeHold, tapeTap, checkTap, doubleTap].contains { $0 === gestureRecognizer || $0 === other }
     }
 
     /// Two fingers are scrolling or zooming, not pointing.
@@ -3249,24 +3265,41 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     // MARK: UIPencilInteractionDelegate
 
     func pencilInteraction(_ interaction: UIPencilInteraction, didReceiveTap tap: UIPencilInteraction.Tap) {
-        pencil(.setting(SettingsKey.pencilDoubleTap), preferred: UIPencilInteraction.preferredTapAction, at: tap.hoverPose?.location)
+        perform(.setting(SettingsKey.pencilDoubleTap), preferred: UIPencilInteraction.preferredTapAction, at: tap.hoverPose?.location)
     }
 
     func pencilInteraction(_ interaction: UIPencilInteraction, didReceiveSqueeze squeeze: UIPencilInteraction.Squeeze) {
         guard squeeze.phase == .ended else { return }
-        pencil(.setting(SettingsKey.pencilSqueeze), preferred: UIPencilInteraction.preferredSqueezeAction, at: squeeze.hoverPose?.location)
+        perform(.setting(SettingsKey.pencilSqueeze), preferred: UIPencilInteraction.preferredSqueezeAction, at: squeeze.hoverPose?.location)
     }
 
     @objc private func scriptedSqueeze(_ gesture: UITapGestureRecognizer) {
-        pencil(.palette, preferred: .ignore, at: gesture.location(in: view))
+        perform(.palette, preferred: .ignore, at: gesture.location(in: view))
     }
 
-    /// A double-tap or a squeeze: the action chosen in Settings, or what the system's own setting asks for.
-    /// `point` is where the Pencil's tip was over the pages, if it was near enough to tell.
-    private func pencil(_ action: PencilAction, preferred: UIPencilPreferredAction, at point: CGPoint?) {
+    // MARK: Finger taps
+
+    /// Two and three fingers tap anywhere, but not while the Pencil writes. One finger's double-tap is only on bare
+    /// paper, and only where fingers don't draw, since there it would draw two dots first.
+    private func allowsFingerTap(_ tap: FingerTap, _ gesture: UIGestureRecognizer) -> Bool {
+        guard tap.action() != .off, !strokeHold.pencilIsNear() else { return false }
+        guard tap == .doubleTap else { return true }
+        return !fingersDraw && !isLocked && cropView == nil && !isOnSelection(gesture) && item(at: gesture.location(in: scrollView)) == nil
+    }
+
+    @objc private func fingersTapped(_ gesture: UITapGestureRecognizer) {
+        guard let tap = fingerTaps.first(where: { $0.recognizer === gesture })?.tap else { return }
+        perform(tap.action(), preferred: .ignore, at: gesture.location(in: view))
+    }
+
+    /// A double-tap or a squeeze of the Pencil, or a tap of fingers: the action chosen in Settings, or what the
+    /// system's own setting asks for. `point` is where the Pencil's tip or the fingers were over the pages, if known.
+    private func perform(_ action: GestureAction, preferred: UIPencilPreferredAction, at point: CGPoint?) {
         guard view.window != nil, session.isActivePane(), !isModalShowing, textView == nil, !document.isReadOnly else { return }
         let mode = session.mode, writing = mode == .writing || mode == .focus
         switch action {
+        case .off:
+            break
         case .system:
             guard writing else { return }
             switch preferred {
@@ -3280,6 +3313,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             if writing { toolbox.switchEraser() }
         case .undo:
             if writing || mode == .selecting { undoProxy.undo() }
+        case .redo:
+            if writing || mode == .selecting { undoProxy.redo() }
         case .selectInk:
             guard writing || mode == .selecting else { return }
             session.enter(writing ? .selecting : .writing)

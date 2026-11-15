@@ -18,7 +18,7 @@ const terms: { field: string; answer: string; detail: ReactNode }[] = [
   {
     field: 'Your notes',
     answer: 'Private',
-    detail: 'No accounts, no analytics, no ads. Handwriting and speech are read on the iPad.',
+    detail: 'No accounts, no analytics, no ads. Handwriting and speech are read on your device.',
   },
   {
     field: 'Made with',

@@ -106,8 +106,8 @@ export function Notebooks() {
               <div className={styles.caption}>
                 <h3 className={`display ${styles.tileTitle}`}>Locked notebooks</h3>
                 <p className={styles.text}>
-                  A locked notebook asks for Face ID, Touch ID or the iPad’s passcode every time it is opened, and what is written in it is left out
-                  of search.
+                  A locked notebook asks for Face ID, Touch ID or your passcode (your password on a Mac) every time it is opened, and what is written
+                  in it is left out of search.
                 </p>
                 <p className={styles.caveat}>
                   <span className="meta">Worth knowing</span>A lock keeps a notebook closed in the app. It does not encrypt its files.

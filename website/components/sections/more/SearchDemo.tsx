@@ -24,10 +24,10 @@ type Place = {
 
 const places: Place[] = [
   { kind: 'title', name: 'Titles', book: 'Notebook', before: '', match: 'Tides', after: ' and Currents', how: 'The word is in a notebook’s title.' },
-  { kind: 'hand', name: 'Handwriting', book: 'Field Notes', spot: 'Page 4', before: 'Spring ', match: 'tides', after: ' come at full and new moon', how: 'Read from handwriting, on the iPad.' },
+  { kind: 'hand', name: 'Handwriting', book: 'Field Notes', spot: 'Page 4', before: 'Spring ', match: 'tides', after: ' come at full and new moon', how: 'Read from handwriting, on your device.' },
   { kind: 'typed', name: 'Typed text', book: 'Field Notes', spot: 'Page 7', before: 'Neap ', match: 'tides', after: ' fall between them', how: 'Typed in a text box on the page.' },
   { kind: 'pdf', name: 'PDF text', book: 'Tide Tables', spot: 'Page 2', before: 'Predicted ', match: 'tides', after: ' for the week', how: 'From the PDF’s own text.' },
-  { kind: 'scan', name: 'Scans', book: 'Field Notes', spot: 'Page 11', before: 'Notice of ', match: 'tides', after: ' and sailing times', how: 'The print on a scanned sheet, read on the iPad.' },
+  { kind: 'scan', name: 'Scans', book: 'Field Notes', spot: 'Page 11', before: 'Notice of ', match: 'tides', after: ' and sailing times', how: 'The print on a scanned sheet, read on your device.' },
   { kind: 'said', name: 'Recordings', book: 'Field Notes', spot: 'Recording', before: 'and the ', match: 'tides', after: ' follow the moon', how: 'Said in a recording you had transcribed.' },
 ]
 

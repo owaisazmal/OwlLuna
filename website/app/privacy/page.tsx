@@ -11,7 +11,7 @@ import styles from './privacy.module.css'
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
-    'OwlLuna collects nothing. What the app keeps on your iPad, what iCloud sync copies to your own iCloud storage, what each permission is for, and how to remove it all.',
+    'OwlLuna collects nothing. What the app keeps on your device, what iCloud sync copies to your own iCloud storage, what each permission is for, and how to remove it all.',
 }
 
 const apple = {
@@ -27,7 +27,7 @@ const history = `${site.repo}/commits/main/website/app/privacy/page.tsx`
 const contents = [
   ['who', 'Who this is from'],
   ['collected', 'What I collect'],
-  ['on-your-ipad', 'What the app keeps on your iPad'],
+  ['on-your-ipad', 'What the app keeps on your device'],
   ['icloud', 'iCloud sync'],
   ['permissions', 'Permissions'],
   ['on-device', 'What Apple’s frameworks do'],
@@ -99,17 +99,17 @@ export default function PrivacyPolicy() {
           <Ledger title="The short version" className={styles.short}>
             <LedgerRow label="Collected by the developer" mark="check">
               Nothing, apart from what <a href="#testflight">TestFlight</a> sends me while you test the beta: crash
-              reports and details of your iPad, not your name or email address.
+              reports and details of your device, not your name or email address.
             </LedgerRow>
             <LedgerRow label="Accounts, analytics, ads, trackers" mark="check">
               None. The app contains no third-party code at all.
             </LedgerRow>
             <LedgerRow label="Where your notebooks are" mark="check">
-              On your iPad. With iCloud on, a copy is kept in your own iCloud storage so your other devices have them.
+              On your device. With iCloud on, a copy is kept in your own iCloud storage so your other devices have them.
               You can turn that off.
             </LedgerRow>
             <LedgerRow label="Handwriting, scans and speech" mark="check">
-              Read on the iPad, by Apple&rsquo;s frameworks.
+              Read on your device, by Apple&rsquo;s frameworks.
             </LedgerRow>
             <LedgerRow label="Removing everything" mark="check">
               Delete your notebooks or the app, and clear the app&rsquo;s data from your iCloud storage.
@@ -119,9 +119,9 @@ export default function PrivacyPolicy() {
           <Part id="who">
             <p>
               OwlLuna is made by <Out href={site.author.url}>{site.author.name}</Out>, an independent developer. On this
-              page &ldquo;I&rdquo; means me, and &ldquo;the app&rdquo; means OwlLuna for iPad. The app also runs on a Mac
-              with Apple silicon, and it keeps and syncs your data the same way there. The Settings paths on this page,
-              and what happens when the app is deleted, describe iPadOS.
+              page &ldquo;I&rdquo; means me, and &ldquo;the app&rdquo; means OwlLuna for iPad and iPhone. The app also
+              runs on a Mac, and it keeps and syncs your data the same way there. The Settings paths on this page, and
+              what happens when the app is deleted, describe iPadOS and iOS.
             </p>
             <p>
               The app is open source under the MIT License, so everything said here can be checked against{' '}
@@ -143,8 +143,8 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 It does not read or create any identifier for you or for your device, with one exception that stays on
-                the iPad. So that <a href="#icloud">iCloud sync</a> can notice a different Apple Account signing in, it
-                keeps a scrambled marker made from the token iPadOS gives the app for the signed-in iCloud account. The
+                the device. So that <a href="#icloud">iCloud sync</a> can notice a different Apple Account signing in, it
+                keeps a scrambled marker made from the token the system gives the app for the signed-in iCloud account. The
                 marker cannot be turned back into the account, tells one account from another and nothing more, and is
                 never sent anywhere.
               </li>
@@ -161,7 +161,7 @@ export default function PrivacyPolicy() {
           </Part>
 
           <Part id="on-your-ipad">
-            <p>Everything you make in OwlLuna is saved as files in the app&rsquo;s own storage on your iPad:</p>
+            <p>Everything you make in OwlLuna is saved as files in the app&rsquo;s own storage on your device:</p>
             <ul className={styles.list} role="list">
               <li>
                 <strong>Your notebooks.</strong> Handwriting (with the moment each stroke was made, which replay and
@@ -181,7 +181,7 @@ export default function PrivacyPolicy() {
                 times of day. Settings › Writing History in the app turns it off or clears it.
               </li>
             </ul>
-            <p>Some of this is handed to iPadOS, on the same iPad, so that system features work:</p>
+            <p>Some of this is handed to the system, on the same device, so that system features work:</p>
             <ul className={styles.list} role="list">
               <li>
                 <strong>Spotlight.</strong> Each notebook&rsquo;s title, cover and the words in it, so it can be found
@@ -199,29 +199,29 @@ export default function PrivacyPolicy() {
                 one by name. Locked notebooks are not offered; a shortcut you made before locking a notebook keeps its
                 name and still opens it, once you unlock it. When you ask Siri for a notebook aloud,{' '}
                 <Out href={apple.features}>Apple handles that request</Out>, the name included, as it does any Siri
-                request, which may not stay on the iPad.
+                request, which may not stay on your device.
               </li>
             </ul>
             <p>
               When something goes wrong, such as a file that cannot be read or a sync that fails, the app writes a line
-              to the iPad&rsquo;s own system log. Those lines hold no note content and no notebook titles, and the app
+              to the device&rsquo;s own system log. Those lines hold no note content and no notebook titles, and the app
               does not send them anywhere.
             </p>
             <p>
-              The app adds no encryption of its own. Your files are protected the way iPadOS protects every
-              app&rsquo;s files, which depends on your passcode. If you back up your iPad to iCloud or to a computer,
-              iPadOS may include the app&rsquo;s files, as it does for any app.
+              The app adds no encryption of its own. Your files are protected the way iPadOS and iOS protect every
+              app&rsquo;s files, which depends on your passcode. If you back up your iPad or iPhone to iCloud or to a
+              computer, the backup may include the app&rsquo;s files, as it does for any app.
             </p>
           </Part>
 
           <Part id="icloud">
             <p>
-              iCloud sync is the one way OwlLuna itself copies your notebooks off the iPad without you sending them
+              iCloud sync is the one way OwlLuna itself copies your notebooks off your device without you sending them
               somewhere yourself.
             </p>
             <Stamp title="It asks first" className={styles.note}>
               <p>
-                On a device that has never synced, OwlLuna copies nothing until you say yes. If the iPad is signed in
+                On a device that has never synced, OwlLuna copies nothing until you say yes. If the device is signed in
                 to iCloud with iCloud Drive on, it asks once when it opens. Settings › iCloud in the app has the switch,
                 and you can set it at any time, also before you sign in to iCloud. A device that was already syncing
                 with an earlier version of OwlLuna carries on without being asked.
@@ -256,17 +256,17 @@ export default function PrivacyPolicy() {
               its <Out href={apple.icloud}>iCloud data security overview</Out>.
             </p>
             <p>
-              Sync runs only while OwlLuna is running. If you use the app on a Mac signed in to the same Apple Account,
-              it syncs there too.
+              Sync runs only while OwlLuna is running. It works the same way on an iPad, an iPhone and a Mac signed in
+              to the same Apple Account.
             </p>
             <p>
-              OwlLuna syncs with the Apple Account the iPad is signed in to. If a different account signs in while
+              OwlLuna syncs with the Apple Account the device is signed in to. If a different account signs in while
               sync is on, sync stops and asks before it copies your notebooks to that account&rsquo;s iCloud storage or
               brings anything in from it. A sync already under way at that moment stops after the notebook it is
-              copying. If you say yes, the notebooks on the iPad are copied there and the notebooks that account holds
-              are added; nothing is deleted. If you say no, sync is turned off on that device and stays off until you
-              turn it on again in Settings › iCloud in the app, which asks again. Before you pass the iPad on to someone
-              else, delete the app.
+              copying. If you say yes, the notebooks on the device are copied there and the notebooks that account
+              holds are added; nothing is deleted. If you say no, sync is turned off on that device and stays off until
+              you turn it on again in Settings › iCloud in the app, which asks again. Before you pass an iPad or iPhone
+              on to someone else, delete the app.
             </p>
             <h3 className={`display ${styles.sub}`}>Turning it off, and removing the copy</h3>
             <p>
@@ -275,10 +275,10 @@ export default function PrivacyPolicy() {
             </p>
             <p>
               To remove the iCloud copy, first turn sync off on every device, because a device that still has it on will
-              put the notebooks back. Then delete OwlLuna&rsquo;s data from your iCloud storage: iPadOS Settings › your
-              name › iCloud lists the apps that keep data there (Apple renames those screens from time to time). If you
-              turn sync on again afterwards, the device sees that the copy is gone and uploads its notebooks, folders
-              and stickers again. Nothing is removed from the device.
+              put the notebooks back. Then delete OwlLuna&rsquo;s data from your iCloud storage: in iPadOS and iOS,
+              Settings › your name › iCloud lists the apps that keep data there (Apple renames those screens from time
+              to time). If you turn sync on again afterwards, the device sees that the copy is gone and uploads its
+              notebooks, folders and stickers again. Nothing is removed from the device.
             </p>
             <h3 className={`display ${styles.sub}`}>When you delete a notebook</h3>
             <p>
@@ -297,7 +297,7 @@ export default function PrivacyPolicy() {
 
           <Part id="permissions">
             <p>
-              iPadOS asks before the app may use any of these. Each is asked for only when you use the feature that
+              The system asks before the app may use any of these. Each is asked for only when you use the feature that
               needs it.
             </p>
             <Ledger className={styles.table}>
@@ -307,19 +307,19 @@ export default function PrivacyPolicy() {
               </LedgerRow>
               <LedgerRow label="Microphone">
                 Only while you are recording: from when you start a recording until you stop it or close the notebook.
-                A recording carries on when you switch to another app or lock the iPad, and iPadOS shows its own
-                recording indicator meanwhile. In a notebook with a lock it stops, and is saved, when the notebook
+                A recording carries on when you switch to another app or lock your iPad or iPhone, and the system shows
+                its own recording indicator meanwhile. In a notebook with a lock it stops, and is saved, when the notebook
                 locks. The recording is saved in the notebook it was made in.
               </LedgerRow>
               <LedgerRow label="Photos">
                 You choose pictures in Apple&rsquo;s photo picker, and the app receives only those. It never looks
                 through your library. A picture is saved as a new image, without the original file&rsquo;s details,
                 such as where it was taken. If you save an exported picture or video to Photos from the share sheet,
-                iPadOS may ask to let the app add it.
+                the system may ask to let the app add it.
               </LedgerRow>
               <LedgerRow label="Speech Recognition">
-                Only when you ask for a transcript of a recording. It is done on the iPad: the app requires on-device
-                recognition, and if the iPad cannot do that for the language, nothing is transcribed.
+                Only when you ask for a transcript of a recording. It is done on your device: the app requires
+                on-device recognition, and if the device cannot do that for the language, nothing is transcribed.
               </LedgerRow>
               <LedgerRow label="Calendar">
                 Only if you add Today&rsquo;s Events to a page, or turn on Print Today&rsquo;s Events, which is off
@@ -329,45 +329,45 @@ export default function PrivacyPolicy() {
               </LedgerRow>
               <LedgerRow label="Face ID, Touch ID or passcode">
                 To open notebooks you have locked, to lock or unlock one, and before a backup when any notebook is
-                locked. iPadOS does the checking and tells the app only yes or no.
+                locked. The system does the checking and tells the app only yes or no.
               </LedgerRow>
             </Ledger>
             <p>
-              You can withdraw them in iPadOS Settings, on OwlLuna&rsquo;s own page under Apps or under Privacy &amp;
-              Security (Face ID is under Face ID &amp; Passcode). The rest of the app keeps working, and recording,
+              You can withdraw them in Settings on your iPad or iPhone, on OwlLuna&rsquo;s own page under Apps or under
+              Privacy &amp; Security (Face ID is under Face ID &amp; Passcode). The rest of the app keeps working, and recording,
               transcripts and Today&rsquo;s Events tell you when their permission is off.
             </p>
           </Part>
 
           <Part id="on-device">
             <p>
-              Reading your notes is done by frameworks that are part of iPadOS. The app passes them the text or the
-              picture and makes no network request of its own.
+              Reading your notes is done by frameworks that are part of the operating system. The app passes them the
+              text or the picture and makes no network request of its own.
             </p>
             <ul className={styles.list} role="list">
               <li>
                 <strong>Search, handwriting to text and stickers.</strong> Handwriting, scans and photo pages are read,
-                and the subject of a photo is cut out for a sticker, by Apple&rsquo;s Vision framework on the iPad.
+                and the subject of a photo is cut out for a sticker, by Apple&rsquo;s Vision framework on your device.
               </li>
               <li>
-                <strong>Transcripts.</strong> Apple&rsquo;s speech recogniser, on the iPad only, as described under
+                <strong>Transcripts.</strong> Apple&rsquo;s speech recogniser, on your device only, as described under
                 Permissions.
               </li>
               <li>
                 <strong>Translation.</strong> Only when you choose Translate for handwriting you have turned into text.
-                The app hands those lines to the translator built into iPadOS. Apple describes it as working on the
-                device, once iPadOS has downloaded the language from Apple.
+                The app hands those lines to the translator built into the operating system. Apple describes it as
+                working on the device, once the system has downloaded the language from Apple.
               </li>
               <li>
                 <strong>Study guides.</strong> Only when you open Study Guide. The words already read from your pages,
                 or a recording&rsquo;s transcript, are given to Apple&rsquo;s on-device language model, the one behind
                 Apple Intelligence, through Apple&rsquo;s framework. OwlLuna has no other model and no server of its own,
-                so on an iPad without Apple Intelligence there is no study guide.
+                so on a device without Apple Intelligence there is no study guide.
               </li>
               <li>
-                <strong>Typing.</strong> Typed text goes through the ordinary iPadOS keyboard and text tools, such as
-                dictation, autocorrection, or another keyboard you have installed. Those belong to iPadOS or to the
-                keyboard&rsquo;s maker and work as they do in any app.
+                <strong>Typing.</strong> Typed text goes through the system&rsquo;s ordinary keyboard and text tools,
+                such as dictation, autocorrection, or another keyboard you have installed. Those belong to the system or
+                to the keyboard&rsquo;s maker and work as they do in any app.
               </li>
             </ul>
             <p>
@@ -383,7 +383,7 @@ export default function PrivacyPolicy() {
             <ul className={styles.list} role="list">
               <li>
                 <strong>Export or print.</strong> A notebook as a PDF, pages as images, or a page as a time-lapse video
-                is handed to the iPadOS share sheet or print panel. The file is named after the notebook, and a PDF
+                is handed to the system&rsquo;s share sheet or print panel. The file is named after the notebook, and a PDF
                 carries its title, bookmarks and links. Covering something with ink or study tape does not take it out
                 of an exported PDF: what lies underneath is still in the file.
               </li>
@@ -395,7 +395,7 @@ export default function PrivacyPolicy() {
                 you trust.
               </li>
               <li>
-                <strong>Copy or drag.</strong> Text you copy goes to the iPadOS clipboard, and a picture you drop on a
+                <strong>Copy or drag.</strong> Text you copy goes to the system clipboard, and a picture you drop on a
                 page comes in from another app.
               </li>
               <li>
@@ -440,7 +440,7 @@ export default function PrivacyPolicy() {
                 Deleting it moves it to Recently Deleted. It is removed for good after 30 days, the next time the app
                 opens, or sooner if you delete it from there yourself. With iCloud sync on, the app syncs first when it
                 can, so a notebook you restored on another device is not removed. If that restore has not reached this
-                iPad by then, the notebook is removed here, stays on the device that restored it, and comes back here
+                device by then, the notebook is removed here, stays on the device that restored it, and comes back here
                 at a later sync.
               </LedgerRow>
               <LedgerRow label="A recording or a transcript">Each can be removed on its own from Recordings.</LedgerRow>
@@ -452,15 +452,15 @@ export default function PrivacyPolicy() {
               <LedgerRow label="What Spotlight holds">
                 Settings › Search › Find Notebooks in Spotlight, switched off, removes it.
               </LedgerRow>
-              <LedgerRow label="Everything on the iPad">
-                Delete the app. That removes its notebooks, settings, history and widget data from the iPad.
+              <LedgerRow label="Everything on an iPad or iPhone">
+                Delete the app. That removes its notebooks, settings, history and widget data from the device.
               </LedgerRow>
               <LedgerRow label="The iCloud copy">
                 Deleting the app does not remove it. See <a href="#icloud">iCloud sync</a> above for how to.
               </LedgerRow>
               <LedgerRow label="Exports and backup files">
                 Wherever you saved or sent them, they are yours to delete. A finished export or backup also stays in the
-                app&rsquo;s temporary storage until iPadOS clears it or the app is deleted.
+                app&rsquo;s temporary storage until the system clears it or the app is deleted.
               </LedgerRow>
             </Ledger>
           </Part>
@@ -474,11 +474,11 @@ export default function PrivacyPolicy() {
 
           <Part id="apple-reports">
             <p>
-              If you have agreed to share analytics with app developers (iPadOS Settings › Privacy &amp; Security ›
-              Analytics &amp; Improvements), Apple may send me crash reports and usage figures for the app, and the App
-              Store shows me totals such as how many times it was downloaded. Apple says these do not identify you.
-              They come from iPadOS and the App Store, not from any code in OwlLuna, and you can switch the sharing off
-              in the same place.
+              If you have agreed to share analytics with app developers (in iPadOS and iOS, Settings › Privacy &amp;
+              Security › Analytics &amp; Improvements), Apple may send me crash reports and usage figures for the app,
+              and the App Store shows me totals such as how many times it was downloaded. Apple says these do not
+              identify you. They come from the operating system and the App Store, not from any code in OwlLuna, and
+              you can switch the sharing off in the same place.
             </p>
           </Part>
 
@@ -493,15 +493,15 @@ export default function PrivacyPolicy() {
                 code it happened and how long the app had been running.
               </li>
               <li>
-                <strong>Usage and your iPad.</strong> How many times you installed and used each build, how many times
-                it crashed, which version you have, your iPad&rsquo;s model and an identifier for it, and its iPadOS
-                version and language.
+                <strong>Usage and your device.</strong> How many times you installed and used each build, how many
+                times it crashed, which version you have, your device&rsquo;s model and an identifier for it, and its
+                system version and language.
               </li>
             </ul>
             <p>
               Feedback is up to you. If you send it from the TestFlight app, by taking a screenshot in OwlLuna, or when
               TestFlight asks after a crash, I also get your comments and any screenshot. With them come the
-              iPad&rsquo;s battery level, free storage, screen resolution, time zone, processor type, connection type
+              device&rsquo;s battery level, free storage, screen resolution, time zone, processor type, connection type
               and mobile carrier, and how long the app had been open. A screenshot shows whatever is on the screen, your
               notes included, and you can send feedback without one.
             </p>

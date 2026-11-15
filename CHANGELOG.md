@@ -10,11 +10,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Text boxes set formulas written in LaTeX: `$…$` or `\(…\)` within a line, and `$$…$$` or `\[…\]` set larger, with fractions, roots, sums, integrals, matrices and cases. The box shows the source while you type in it. A formula it can't read stays as typed, prices such as "$5 or $10" are left alone, and `\$` writes a dollar sign. VoiceOver reads a formula as it is said, such as "x squared" or "1 over 2", not as its source.
 - Favourite notebooks stand on their own Favourites shelf at the top of All notebooks, each folder, tag and smart shelf, in the order chosen, and leave the shelves below. Search results, Favourites and Recently Deleted are as before.
+- OwlLuna runs on the Mac, on macOS 26 or later. The app's bar is the top of the window, beside the traffic lights, and a right-click opens the menus a held tap opens on the iPad. The pointer draws from the start and the Apple Pencil's settings are left out. Messages and notes say Mac and point to System Settings, in English, French, German and Spanish.
+- Tap the page with two fingers to undo and with three to redo. Settings › Finger Gestures gives each another action, such as the eraser or the tool palette, or turns it off, and adds a one-finger double-tap on bare paper for when only the Pencil draws. A tap while the Pencil writes, or just after it lifts, is left alone. Pencil double-tap and squeeze can redo too.
 
 ### Changed
 
 - A favourite notebook now has a red flag with a star sticking out of its pages, in place of the ribbon, which looked like a bookmark. List rows show the flag too.
 - The fineliner can be set twice as fine, down to a hairline half a point wide. Widths under 1 show two decimals.
+
+### Fixed
+
+- Two folders with the same name, such as ones made on two iPads, no longer swap places in the sidebar each time it redraws.
 
 ## [1.0.0-build.6] - 2026-11-12
 

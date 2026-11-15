@@ -150,16 +150,22 @@ enum PencilGestures {
     }
 }
 
-/// What a double-tap or a squeeze of the Pencil does.
-enum PencilAction: String, CaseIterable, Identifiable {
-    case system, eraser, undo, selectInk, toggleTools, palette, zoomWindow
+/// What a double-tap or a squeeze of the Pencil, or a tap of fingers on the pages, does.
+enum GestureAction: String, CaseIterable, Identifiable {
+    case system, off, eraser, undo, redo, selectInk, toggleTools, palette, zoomWindow
     var id: String { rawValue }
+
+    /// The Pencil can follow the system's own setting; fingers have none to follow, and can be turned off instead.
+    static let pencilChoices = allCases.filter { $0 != .off }
+    static let fingerChoices = allCases.filter { $0 != .system }
 
     var displayName: String {
         switch self {
         case .system: String(localized: "System Setting")
+        case .off: String(localized: "Off")
         case .eraser: String(localized: "Switch to Eraser")
         case .undo: String(localized: "Undo")
+        case .redo: String(localized: "Redo")
         case .selectInk: String(localized: "Select Ink")
         case .toggleTools: String(localized: "Show or Hide Tools")
         case .palette: String(localized: "Tool Palette at the Pencil")
@@ -167,9 +173,37 @@ enum PencilAction: String, CaseIterable, Identifiable {
         }
     }
 
-    static func setting(_ key: String) -> PencilAction {
-        UserDefaults.standard.string(forKey: key).flatMap(PencilAction.init(rawValue:)) ?? .system
+    var fingerName: String { self == .palette ? String(localized: "Tool Palette Where Tapped") : displayName }
+
+    static func setting(_ key: String, default value: GestureAction = .system, defaults: UserDefaults = .standard) -> GestureAction {
+        defaults.string(forKey: key).flatMap(GestureAction.init(rawValue:)) ?? value
     }
+}
+
+/// The taps of fingers on the pages that run an action chosen in Settings.
+enum FingerTap: CaseIterable {
+    case doubleTap, twoFingers, threeFingers
+
+    var key: String {
+        switch self {
+        case .doubleTap: SettingsKey.fingerDoubleTap
+        case .twoFingers: SettingsKey.twoFingerTap
+        case .threeFingers: SettingsKey.threeFingerTap
+        }
+    }
+
+    var initial: GestureAction {
+        switch self {
+        case .doubleTap: .off
+        case .twoFingers: .undo
+        case .threeFingers: .redo
+        }
+    }
+
+    var taps: Int { self == .doubleTap ? 2 : 1 }
+    var touches: Int { self == .threeFingers ? 3 : self == .twoFingers ? 2 : 1 }
+
+    func action(_ defaults: UserDefaults = .standard) -> GestureAction { .setting(key, default: initial, defaults: defaults) }
 }
 
 /// Remembers which tools were in hand, so a tap of the Pencil can go back to the one before, or from the eraser to
