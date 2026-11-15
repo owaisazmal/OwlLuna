@@ -21,6 +21,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - Two folders with the same name, such as ones made on two iPads, no longer swap places in the sidebar each time it redraws.
+- Where only the Apple Pencil draws, one finger still scrolls the pages after the lasso has moved some writing. Before, it stopped until the notebook was closed and opened again.
 
 ## [1.0.0-build.6] - 2026-11-12
 

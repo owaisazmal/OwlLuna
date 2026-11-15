@@ -504,46 +504,42 @@ final class EditorModesUITests: XCTestCase {
         XCTAssertEqual(strokeCount(first), 5, "writing carries on afterwards")
     }
 
-    /// Issue 34: after the lasso moved ink, one finger must still scroll where only the Pencil draws.
+    /// Issue 34: after PencilKit's lasso moved ink, one finger must still scroll where only the Pencil draws.
     func testOneFingerScrollsAfterTheLassoMovesInk() throws {
+        // Upright the whole page fits on screen and the canvas has nowhere to scroll; on its side the canvas shows part of the page.
+        XCUIDevice.shared.orientation = .landscapeLeft
+        addTeardownBlock { @MainActor in XCUIDevice.shared.orientation = .portrait }
         let app = XCUIApplication()
-        // "System Setting": fingers draw while the tools are out on a simulator, and only the Pencil once they are put away.
+        // "System Setting": on a simulator fingers draw while the tools are out, and only the Pencil once they are put away.
         app.launchArguments = ["-storageRoot", "modes", "-resetStorage", "-seedLibrary", "3", "-seedReplay", "-drawingInput", "system"]
         app.launch()
         let notebook = app.buttons["notebook.Lecture Replay"]
         XCTAssertTrue(notebook.waitForExistence(timeout: 30))
         notebook.tap()
-        let first = app.element("page.canvas.1")
+        let first = app.element("page.canvas.1"), second = app.element("page.canvas.2")
         XCTAssertTrue(first.waitForExistence(timeout: 20))
+        XCTAssertTrue(second.waitForExistence(timeout: 10))
         first.waitUntilStill()
         let undo = app.buttons["editor.undo"]
         XCTAssertFalse(undo.isEnabled)
-        // A point on the letter page, placed from its foot on screen. The seeded lines run from x 120 to 480 at y 140, 220, 300 and 380.
+        // The seeded lines run from x 120 to 480 at y 140, 220, 300 and 380 on a page 612 points wide.
+        let page = first.frame, scale = page.width / 612
         func point(_ x: CGFloat, _ y: CGFloat) -> XCUICoordinate {
-            let shown = first.frame, scale = shown.width / 612
-            return app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: shown.minX + x * scale, dy: shown.maxY - (792 - y) * scale))
-        }
-        func scrolled() -> CGFloat {
-            first.waitUntilStill()
-            let foot = first.frame.maxY
-            point(560, 620).press(forDuration: 0.05, thenDragTo: point(560, 420), withVelocity: 600, thenHoldForDuration: 0.2)
-            first.waitUntilStill()
-            return foot - first.frame.maxY
+            app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: page.minX + x * scale, dy: page.minY + y * scale))
         }
 
-        // Part way down the page the canvas shows only some of it, so its own pan would have somewhere to go.
-        app.buttons["Hide Tools"].firstMatch.tap()
-        XCTAssertGreaterThan(scrolled(), 100, "one finger scrolls where only the Pencil draws")
-        app.buttons["Show Tools"].firstMatch.tap()
         app.buttons["editor.tools.lasso"].tap()
-        first.waitUntilStill()
-        point(100, 355).press(forDuration: 0.1, thenDragTo: point(510, 405), withVelocity: 400, thenHoldForDuration: 0.2)
-        point(260, 368).press(forDuration: 0.2, thenDragTo: point(260, 520), withVelocity: 300, thenHoldForDuration: 0.1)
-        XCTAssertTrue(undo.isEnabled, "PencilKit's lasso caught the last line and moved it")
+        point(100, 115).press(forDuration: 0.1, thenDragTo: point(510, 165), withVelocity: 400, thenHoldForDuration: 0.2)
+        point(260, 128).press(forDuration: 0.2, thenDragTo: point(260, 200), withVelocity: 300, thenHoldForDuration: 0.1)
+        XCTAssertTrue(undo.isEnabled, "PencilKit's lasso caught the first line and moved it")
         attach(app, "lasso-moved-ink")
 
         app.buttons["Hide Tools"].firstMatch.tap()
-        XCTAssertGreaterThan(scrolled(), 100, "and still does after the lasso moved ink")
+        second.waitUntilStill()
+        let top = second.frame.minY
+        point(560, 150).press(forDuration: 0.05, thenDragTo: point(560, 50), withVelocity: 600, thenHoldForDuration: 0.2)
+        second.waitUntilStill()
+        XCTAssertLessThan(second.frame.minY, top - 50, "one finger scrolls the pages")
     }
 
     func testDrawAndHoldStraightensAStroke() throws {
