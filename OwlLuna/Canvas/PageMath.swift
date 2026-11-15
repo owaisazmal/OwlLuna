@@ -1364,3 +1364,125 @@ private final class MathSetter {
         return (fence(box, table.left, table.right, height: fenceHeight(box, style), style), .inner)
     }
 }
+
+extension MathRun {
+    /// The text as VoiceOver reads it: each formula in words, one it can't read as typed, and `\$` as a dollar sign.
+    static func spoken(_ text: String) -> String {
+        let source = text as NSString
+        var said = "", from = 0
+        for run in find(in: source) {
+            said += source.substring(with: NSRange(location: from, length: run.range.location - from))
+            said += run.isEscape ? "$" : MathFormula.spoken(run.source) ?? source.substring(with: run.range)
+            from = NSMaxRange(run.range)
+        }
+        return said + source.substring(from: from)
+    }
+}
+
+extension MathFormula {
+    /// A formula in words, its symbols left for VoiceOver to name in the reader's language; nil when it can't be read.
+    static func spoken(_ source: String) -> String? {
+        var parser = MathParser(source)
+        guard let nodes = try? parser.parse() else { return nil }
+        let words = MathSpeech.say(nodes).trimmingCharacters(in: CharacterSet(charactersIn: ", "))
+        return words.isEmpty ? nil : words
+    }
+}
+
+/// Fractions, powers, roots and limits said the way they are read aloud.
+private enum MathSpeech {
+    static func say(_ nodes: [MathNode]) -> String {
+        var said = ""
+        for node in nodes {
+            let word = say(node).trimmingCharacters(in: .whitespaces)
+            guard !word.isEmpty else { continue }
+            if let last = said.last, let first = word.first, !(isNumeral(last) && isNumeral(first)) { said += " " }
+            said += word
+        }
+        return said
+    }
+
+    private static func isNumeral(_ character: Character) -> Bool { character.isNumber || character == "." }
+
+    /// A run of letters and digits, which needs no pause after it.
+    private static func isSimple(_ nodes: [MathNode]) -> Bool {
+        !nodes.isEmpty && nodes.allSatisfy {
+            if case .symbol(_, .ord) = $0 { return true }
+            return false
+        }
+    }
+
+    private static func say(_ node: MathNode) -> String {
+        switch node {
+        case .symbol(let symbol, _), .middle(let symbol), .big(let symbol, _, _):
+            return symbol.precomposedStringWithCompatibilityMapping
+        case .word(let word, _), .text(let word, _, _):
+            return word
+        case .function(let name, _):
+            return name.replacingOccurrences(of: "\u{2006}", with: " ")
+        case .largeOp(let symbol, _):
+            return switch symbol {
+            case "∑": String(localized: "sum")
+            case "∏": String(localized: "product")
+            case "∫": String(localized: "integral")
+            default: symbol
+            }
+        case .group(let nodes), .boxed(let nodes):
+            return say(nodes)
+        case .scripts(let base, let sub, let sup):
+            return scripts(base, sub: sub, sup: sup)
+        case .fraction(let top, let bottom, let rule, _, _):
+            let (a, b) = (say(top), say(bottom))
+            if !rule { return String(localized: "\(a) choose \(b)") }
+            return isSimple(top) && isSimple(bottom) ? String(localized: "\(a) over \(b)") : String(localized: "fraction, \(a), over, \(b), end fraction")
+        case .radical(let body, let degree):
+            let x = say(body) + (isSimple(body) ? "" : ",")
+            guard let degree else { return String(localized: "square root of \(x)") }
+            let n = say(degree)
+            return n == "3" ? String(localized: "cube root of \(x)") : String(localized: "root \(n) of \(x)")
+        case .fenced(let left, let body, let right):
+            return [left, say(body), right].filter { !$0.isEmpty }.joined(separator: " ")
+        case .accent(let mark, let body, _):
+            let x = say(body)
+            return switch mark {
+            case "\u{0302}": String(localized: "\(x) hat")
+            case "\u{0304}": String(localized: "\(x) bar")
+            case "\u{20D7}": String(localized: "vector \(x)")
+            case "\u{0307}": String(localized: "\(x) dot")
+            case "\u{0308}": String(localized: "\(x) double dot")
+            case "\u{0303}": String(localized: "\(x) tilde")
+            default: x
+            }
+        case .bar(let body, let over):
+            return over ? String(localized: "\(say(body)) bar") : say(body)
+        case .stretchy(let body, let symbol, _, _):
+            return symbol == "\u{2192}" ? String(localized: "vector \(say(body))") : say(body)
+        case .stack(let base, _, _):
+            return say(base)
+        case .table(let rows, let table):
+            return rows.map { row in row.map { say($0) }.filter { !$0.isEmpty }.joined(separator: table.pairs ? " " : ", ") }.joined(separator: "; ")
+        case .space, .style:
+            return ""
+        }
+    }
+
+    private static func scripts(_ base: MathNode, sub: [MathNode]?, sup: [MathNode]?) -> String {
+        let below = sub.map { say($0) }, above = sup.map { say($0) }
+        switch base {
+        case .largeOp, .function:
+            let op = say(base)
+            if op == "lim", let below, above == nil { return String(localized: "limit as \(below)") + "," }
+            if let below, let above { return String(localized: "\(op) from \(below) to \(above)") + "," }
+            if let below { return String(localized: "\(op) over all \(below)") + "," }
+        default:
+            break
+        }
+        var said = say(base)
+        if let sub, let below, !below.isEmpty { said = String(localized: "\(said) sub \(below)") + (sub.count > 1 ? "," : "") }
+        guard let sup, let above, !above.isEmpty else { return said }
+        if sup.allSatisfy(\.isPrime) { return said + " " + above }
+        if above == "2" { return String(localized: "\(said) squared") }
+        if above == "3" { return String(localized: "\(said) cubed") }
+        return String(localized: "\(said) to the power \(above)") + (sup.count > 1 ? "," : "")
+    }
+}

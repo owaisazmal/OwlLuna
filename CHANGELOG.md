@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- Text boxes set formulas written in LaTeX: `$…$` or `\(…\)` within a line, and `$$…$$` or `\[…\]` set larger, with fractions, roots, sums, integrals, matrices and cases. The box shows the source while you type in it. A formula it can't read stays as typed, prices such as "$5 or $10" are left alone, and `\$` writes a dollar sign.
+- Text boxes set formulas written in LaTeX: `$…$` or `\(…\)` within a line, and `$$…$$` or `\[…\]` set larger, with fractions, roots, sums, integrals, matrices and cases. The box shows the source while you type in it. A formula it can't read stays as typed, prices such as "$5 or $10" are left alone, and `\$` writes a dollar sign. VoiceOver reads a formula as it is said, such as "x squared" or "1 over 2", not as its source.
 - Favourite notebooks stand on their own Favourites shelf at the top of All notebooks, each folder, tag and smart shelf, in the order chosen, and leave the shelves below. Search results, Favourites and Recently Deleted are as before.
 
 ### Changed

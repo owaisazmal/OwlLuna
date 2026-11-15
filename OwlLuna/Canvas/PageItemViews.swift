@@ -108,10 +108,10 @@ final class PageItemView: UIView {
                 self.picture.contents = image?.image
             }
         case .text(let box):
-            accessibilityLabel = box.string
+            accessibilityLabel = MathRun.spoken(box.string)
             accessibilityTraits = .staticText
             guard box.list == .check else { break }
-            let lines = box.lines.enumerated().filter { TextBox.isItem($0.element) }
+            let lines = box.lines.enumerated().filter { TextBox.isItem($0.element) }.map { (offset: $0.offset, element: MathRun.spoken($0.element)) }
             accessibilityLabel = lines.map { box.checked.contains($0.offset) ? String(localized: "\($0.element), ticked") : $0.element }
                 .joined(separator: "\n")
             ticks = lines.map { line, text in

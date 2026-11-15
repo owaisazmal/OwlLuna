@@ -57,6 +57,19 @@ final class TextMathTests: XCTestCase {
         XCTAssertEqual(runs("$a \\$ b$").map(\.source), ["a \\$ b"], "an escaped dollar doesn't end a formula")
     }
 
+    // MARK: Reading formulas aloud
+
+    func testVoiceOverReadsFormulasAsMathNotSource() {
+        XCTAssertEqual(MathRun.spoken(tester), "α = 0.3 β")
+        XCTAssertEqual(MathRun.spoken("Area $\\pi r^2$, so $\\frac{1}{2}$ of it"), "Area π r squared, so 1 over 2 of it")
+        XCTAssertEqual(MathRun.spoken("$$\\sum_{i=1}^n \\frac{1}{i}$$"), "sum from i = 1 to n, 1 over i")
+        XCTAssertEqual(MathRun.spoken("$\\sqrt{x+1}$"), "square root of x + 1")
+        XCTAssertEqual(MathRun.spoken("$e^{i\\pi}+1=0$"), "e to the power i π, + 1 = 0")
+        XCTAssertEqual(MathRun.spoken("$\\lim_{x \\to 0} \\frac{\\sin x}{x}$"), "limit as x → 0, fraction, sin x, over, x, end fraction")
+        XCTAssertEqual(MathRun.spoken("$\\hat{x}$ and $\\binom{n}{k}$"), "x hat and n choose k")
+        XCTAssertEqual(MathRun.spoken("Pay \\$5 for $\\foo$"), "Pay $5 for $\\foo$", "what can't be set is read as typed")
+    }
+
     // MARK: Setting formulas
 
     func testTheTestersFormulaIsSet() throws {

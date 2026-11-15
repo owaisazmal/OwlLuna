@@ -73,6 +73,9 @@ struct VerticalBarReader: UIViewRepresentable {
         }
 
         private func current() -> VerticalBar? {
+            #if targetEnvironment(macCatalyst)
+            return nil
+            #else
             guard #available(iOS 27.1, *), let window else { return nil }
             let edge: HorizontalEdge
             switch window.traitCollection.verticalBarEdge {
@@ -88,6 +91,7 @@ struct VerticalBarReader: UIViewRepresentable {
             let margin = onRight ? region.right : region.left
             guard width - margin >= ToolTray.button else { return nil }
             return VerticalBar(edge: edge, width: width, margin: margin, top: region.top, bottom: region.bottom)
+            #endif
         }
     }
 }
