@@ -31,6 +31,8 @@ Commit the bump and the changelog, and archive from that commit with nothing els
 
 ## 3. Archive and upload from Xcode
 
+Skip this step once the tag uploads the build: see [Uploading from CI](#uploading-from-ci).
+
 1. Set the destination to Any iOS Device (arm64).
 2. Product › Archive.
 3. In the Organizer, Distribute App › TestFlight & App Store, and upload.
@@ -50,7 +52,7 @@ git tag -a v1.0.0-build.3 -m "OwlLuna 1.0 (build 3)"
 git push origin v1.0.0-build.3
 ```
 
-The tag runs the Release workflow, which fails if the tag doesn't match the app's version and build or the widgets' numbers differ.
+The tag runs the Release workflow. It fails if the changelog has no section for the build, the tag doesn't match the app's version and build, or the widgets' numbers differ. Then it publishes the build's GitHub Release: a prerelease with the changelog section as its notes.
 
 When the build is approved for the App Store, tag the same commit with the version:
 
@@ -62,9 +64,9 @@ git tag -a v1.0.0 'v1.0.0-build.3^{}' -m "OwlLuna 1.0"
 git push origin v1.0.0
 ```
 
-## 5. Publish the GitHub Release
+## 5. Publish the App Store release
 
-This needs the GitHub CLI, signed in once:
+The workflow publishes TestFlight builds only. The App Store release is made by hand, from a checkout whose changelog has the `## [1.0.0]` section. This needs the GitHub CLI, signed in once:
 
 ```bash
 brew install gh
@@ -74,24 +76,22 @@ brew install gh
 gh auth login
 ```
 
-Use the build's changelog section as the notes:
+Use the version's changelog section as the notes:
 
 ```bash
-awk '/^## \[1\.0\.0-build\.3\]/{on=1; next} on && /^(## )?\[/{exit} on' CHANGELOG.md > "$TMPDIR/notes.md"
+python3 .github/scripts/release-notes.py v1.0.0 "$TMPDIR/notes.md"
 ```
 
 ```bash
-gh release create v1.0.0-build.3 --verify-tag --prerelease --title "OwlLuna 1.0 (build 3)" --notes-file "$TMPDIR/notes.md"
+gh release create v1.0.0 --verify-tag --title "OwlLuna 1.0" --notes-file "$TMPDIR/notes.md"
 ```
 
-TestFlight builds are prereleases. Leave out `--prerelease` for the App Store release.
+## Uploading from CI
 
-## Later: upload from CI
+The Release workflow can also sign a TestFlight build and upload it when its tag is pushed. That is off until these are in place:
 
-The Release workflow doesn't sign or upload, so it needs no secrets. Uploading from CI would need:
+1. An App Store Connect API key (Users and Access › Integrations) with a role allowed cloud-managed signing.
+2. A GitHub environment named `testflight` (Settings › Environments) with a required reviewer, so a pushed tag can't upload without approval. Limit it to tags matching `v*`, and give it the key as the secrets `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8`, the text of the `.p8` file.
+3. The repository variable `TESTFLIGHT_UPLOAD` set to `true` (Settings › Secrets and variables › Actions › Variables).
 
-- An App Store Connect API key (Users and Access › Integrations) with a role allowed cloud-managed signing.
-- Its key ID, issuer ID and `.p8` file as repository secrets, such as `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8`.
-- The archive step without `CODE_SIGNING_ALLOWED=NO`, with `-allowProvisioningUpdates` and the key passed via `-authenticationKeyPath`, `-authenticationKeyID` and `-authenticationKeyIssuerID`.
-- An `xcodebuild -exportArchive` step whose export options use method `app-store-connect` and destination `upload`.
-- A GitHub environment with a required reviewer, so a pushed tag can't upload without approval.
+From then on, skip step 3: push the tag and approve the upload when the workflow asks. It archives the tagged commit, signs it for the team in `Config/Signing.xcconfig` and uploads it, and the GitHub Release follows once the upload has gone through. What to Test and the external testing group are still set in App Store Connect.

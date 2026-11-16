@@ -141,6 +141,8 @@ final class InkLassoOverlay: UIView {
     var scale: CGFloat = 1 {
         didSet { if scale != oldValue { redraw() } }
     }
+    /// Whether a touch at a point should go to what lies under the overlay, such as a selected picture's handles.
+    var passesThrough: ((CGPoint) -> Bool)?
 
     private let lasso = CAShapeLayer(), lassoUnder = CAShapeLayer()
     private let box = CAShapeLayer(), boxUnder = CAShapeLayer()
@@ -169,6 +171,10 @@ final class InkLassoOverlay: UIView {
     }
 
     required init?(coder: NSCoder) { fatalError() }
+
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        super.point(inside: point, with: event) && passesThrough?(point) != true
+    }
 
     private func colour() {
         let mustard = UIColor.mustard.resolvedColor(with: traitCollection).cgColor

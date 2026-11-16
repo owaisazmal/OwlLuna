@@ -85,12 +85,12 @@ enum ShelfGrouping {
         return "\(parts.year ?? 0)-\(parts.month ?? 0)"
     }
 
-    /// Favourites stand on a shelf of their own at the top, in the order shown, and leave the shelves below.
+    /// Favourites lead the shelf they stand on, and both they and the rest keep the order shown.
     /// Not in Favourites itself, where every notebook is one, nor in Recently Deleted.
-    static func favouritesFirst(_ records: [NotebookRecord], in scope: LibraryScope) -> (favourites: [NotebookRecord], rest: [NotebookRecord]) {
+    static func favouritesFirst(_ records: [NotebookRecord], in scope: LibraryScope) -> [NotebookRecord] {
         switch scope {
-        case .favorites, .trash: ([], records)
-        case .all, .folder, .tag, .smart: (records.filter(\.isFavorite), records.filter { !$0.isFavorite })
+        case .favorites, .trash: records
+        case .all, .folder, .tag, .smart: records.filter(\.isFavorite) + records.filter { !$0.isFavorite }
         }
     }
 }

@@ -125,7 +125,7 @@ final class LibraryShelfTests: XCTestCase {
 
     // MARK: Favourites first
 
-    func testFavouritesStandFirstExceptInFavouritesAndRecentlyDeleted() async throws {
+    func testFavouritesLeadTheirShelfExceptInFavouritesAndRecentlyDeleted() async throws {
         let store = try makeStore()
         let optics = try await makeNotebook("Optics", in: store)
         let waves = try await makeNotebook("Waves", in: store, favorite: true)
@@ -133,18 +133,18 @@ final class LibraryShelfTests: XCTestCase {
         let lenses = try await makeNotebook("Lenses", in: store, favorite: true)
         let shown = [optics, waves, atoms, lenses]
 
-        func split(_ scope: LibraryScope) -> [[String]] {
-            let shelves = ShelfGrouping.favouritesFirst(shown, in: scope)
-            return [shelves.favourites.map(\.title), shelves.rest.map(\.title)]
+        func titles(_ records: [NotebookRecord], _ scope: LibraryScope) -> [String] {
+            ShelfGrouping.favouritesFirst(records, in: scope).map(\.title)
         }
 
         for scope in [LibraryScope.all, .folder(UUID()), .tag("exam"), .smart(UUID())] {
-            XCTAssertEqual(split(scope), [["Waves", "Lenses"], ["Optics", "Atoms"]], "each keeps the order it was shown in, \(scope)")
+            XCTAssertEqual(titles(shown, scope), ["Waves", "Lenses", "Optics", "Atoms"], "favourites, then the rest, each in the order shown, \(scope)")
         }
         for scope in [LibraryScope.favorites, .trash] {
-            XCTAssertEqual(split(scope), [[], ["Optics", "Waves", "Atoms", "Lenses"]], "\(scope)")
+            XCTAssertEqual(titles(shown, scope), ["Optics", "Waves", "Atoms", "Lenses"], "\(scope)")
         }
-        XCTAssertTrue(ShelfGrouping.favouritesFirst([optics, atoms], in: .all).favourites.isEmpty)
+        XCTAssertEqual(titles([optics, atoms], .all), ["Optics", "Atoms"], "no favourites, nothing moves")
+        XCTAssertEqual(titles([waves, lenses], .all), ["Waves", "Lenses"])
         await store.finishWritingNotebooks()
     }
 

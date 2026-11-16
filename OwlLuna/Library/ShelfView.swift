@@ -602,14 +602,13 @@ struct ShelfView: View {
     private func groups(_ visible: [NotebookRecord]) -> [Shelf] {
         guard !visible.isEmpty else { return [] }
         if !searchText.isEmpty { return [Shelf(id: "results", title: String(localized: "Results"), records: visible)] }
-        let (favourites, rest) = ShelfGrouping.favouritesFirst(visible, in: scope)
-        let top = favourites.isEmpty ? [] : [Shelf(id: "favourites", title: String(localized: "Favourites"), records: favourites)]
-        return top + filed(rest)
+        return filed(visible).map { shelf in
+            Shelf(id: shelf.id, title: shelf.title, records: ShelfGrouping.favouritesFirst(shelf.records, in: scope), cloth: shelf.cloth)
+        }
     }
 
     /// The shelves the notebooks stand on: one in title order, one per folder, or by when they were last used.
     private func filed(_ visible: [NotebookRecord]) -> [Shelf] {
-        guard !visible.isEmpty else { return [] }
         if scope == .trash || sort == .title {
             return [Shelf(id: "all", title: sort == .title ? sort.directionName(reversed: sortReversed) : title, records: visible)]
         }

@@ -65,6 +65,16 @@ final class PageCanvasView: PKCanvasView {
     }
 }
 
+/// The page stack's scroll view. It leaves a drag to something else when asked, as when a finger lands on selected ink.
+final class PageScrollView: UIScrollView {
+    var yieldsDrag: ((UIPanGestureRecognizer) -> Bool)?
+
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        if gestureRecognizer === panGestureRecognizer, yieldsDrag?(panGestureRecognizer) == true { return false }
+        return super.gestureRecognizerShouldBegin(gestureRecognizer)
+    }
+}
+
 /// Stays first responder so the page stack's key commands work on every page, and routes ⌘Z to the document.
 final class ResponderAnchor: UIView {
     weak var undoProxy: UndoManager?

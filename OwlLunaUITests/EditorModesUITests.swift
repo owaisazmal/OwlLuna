@@ -504,7 +504,7 @@ final class EditorModesUITests: XCTestCase {
         XCTAssertEqual(strokeCount(first), 5, "writing carries on afterwards")
     }
 
-    /// Issue 34: after PencilKit's lasso moved ink, one finger must still scroll where only the Pencil draws.
+    /// Issues 34 and 39: after the lasso moved ink, one finger must still scroll where only the Pencil draws.
     func testOneFingerScrollsAfterTheLassoMovesInk() throws {
         // Upright the whole page fits on screen and the canvas has nowhere to scroll; on its side the canvas shows part of the page.
         XCUIDevice.shared.orientation = .landscapeLeft
@@ -531,15 +531,68 @@ final class EditorModesUITests: XCTestCase {
         app.buttons["editor.tools.lasso"].tap()
         point(100, 115).press(forDuration: 0.1, thenDragTo: point(510, 165), withVelocity: 400, thenHoldForDuration: 0.2)
         point(260, 128).press(forDuration: 0.2, thenDragTo: point(260, 200), withVelocity: 300, thenHoldForDuration: 0.1)
-        XCTAssertTrue(undo.isEnabled, "PencilKit's lasso caught the first line and moved it")
+        XCTAssertTrue(undo.isEnabled, "the lasso caught the first line and moved it")
         attach(app, "lasso-moved-ink")
 
         app.buttons["Hide Tools"].firstMatch.tap()
         second.waitUntilStill()
         let top = second.frame.minY
+        // The line now runs at y 212. A finger that lands on it moves it once more, and the pages stay put.
+        point(300, 212).press(forDuration: 0.1, thenDragTo: point(300, 262), withVelocity: 300, thenHoldForDuration: 0.1)
+        XCTAssertEqual(second.frame.minY, top, accuracy: 1, "a finger on the caught ink moves it, not the pages")
+        undo.tap()
+        XCTAssertTrue(undo.isEnabled, "each move is an undo step of its own")
         point(560, 150).press(forDuration: 0.05, thenDragTo: point(560, 50), withVelocity: 600, thenHoldForDuration: 0.2)
         second.waitUntilStill()
         XCTAssertLessThan(second.frame.minY, top - 50, "one finger scrolls the pages")
+    }
+
+    /// Issue 39: the tray's lasso keeps what it caught while the pages are zoomed, and carries it onto the next page.
+    func testTheLassoKeepsItsInkThroughAZoomAndCarriesItToTheNextPage() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-storageRoot", "modes", "-resetStorage", "-seedLibrary", "3", "-seedReplay", "-drawingInput", "anyInput"]
+        app.launch()
+        let notebook = app.buttons["notebook.Lecture Replay"]
+        XCTAssertTrue(notebook.waitForExistence(timeout: 30))
+        notebook.tap()
+        let first = app.element("page.canvas.1"), second = app.element("page.canvas.2")
+        XCTAssertTrue(first.waitForExistence(timeout: 20))
+        first.waitUntilStill()
+        XCTAssertEqual(strokeCount(first), 4)
+
+        let lasso = app.buttons["editor.tools.lasso"], status = app.staticTexts["editor.ink.status"]
+        lasso.tap()
+        first.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.43))
+            .press(forDuration: 0.1, thenDragTo: first.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.53)), withVelocity: 400, thenHoldForDuration: 0.2)
+        XCTAssertTrue(status.waitForExistence(timeout: 5), "a drag across the last line of writing catches it")
+        XCTAssertEqual(status.label, "1 stroke. Drag it to move it.")
+        XCTAssertTrue(lasso.isHittable, "the tools stay out: the lasso is one of them")
+
+        first.pinch(withScale: 1.8, velocity: 2)
+        first.waitUntilStill()
+        XCTAssertEqual(status.label, "1 stroke. Drag it to move it.", "zoomed in, the line is still caught")
+        attach(app, "lasso-kept-through-zoom")
+        app.buttons["More"].firstMatch.tap()
+        app.buttons["Fit Width"].firstMatch.tap()
+        first.waitUntilStill()
+        XCTAssertEqual(status.label, "1 stroke. Drag it to move it.", "and fitted to the width again")
+
+        // The caught line runs at 48% of the page's height; 7% past its foot is the head of the next page.
+        let page = first.frame
+        func point(_ x: CGFloat, _ y: CGFloat) -> XCUICoordinate {
+            app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: page.minX + x * page.width, dy: page.minY + y * page.height))
+        }
+        point(0.4, 0.48).press(forDuration: 0.1, thenDragTo: point(0.4, 1.07), withVelocity: 400, thenHoldForDuration: 0.2)
+        XCTAssertEqual(strokeCount(first), 3, "dragged past the foot of the page, the line leaves it")
+        XCTAssertEqual(strokeCount(second), 3, "and joins the next page")
+        attach(app, "lasso-carried")
+        app.buttons["editor.ink.undo"].tap()
+        XCTAssertEqual(strokeCount(first), 4, "one undo puts both pages back")
+        XCTAssertEqual(strokeCount(second), 2)
+
+        app.buttons["editor.tools.1"].tap()
+        XCTAssertTrue(status.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["editor.ribbon"].exists, "the editor never left writing")
     }
 
     func testDrawAndHoldStraightensAStroke() throws {

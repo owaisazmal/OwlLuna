@@ -273,7 +273,7 @@ fileprivate struct EditorContent: View {
             }
             .overlay(alignment: .top) { banners }
             .overlay(alignment: .top) {
-                if session.mode == .selecting {
+                if session.mode == .selecting || session.inkSelectionCount > 0 {
                     inkBar
                 } else if session.mode == .finding {
                     findBar
@@ -1019,7 +1019,7 @@ fileprivate struct EditorContent: View {
         .accessibilityIdentifier("editor.arrange.tape")
     }
 
-    /// While ink is being selected across pages: what to do, then what can be done with what was caught.
+    /// While ink is being selected, or the tray's lasso has caught some: what to do, then what can be done with it.
     private var inkBar: some View {
         let count = session.inkSelectionCount
         // With ink caught, the buttons need the room in a narrow pane and at the largest text sizes.
@@ -1059,7 +1059,7 @@ fileprivate struct EditorContent: View {
                 .disabled(!session.canUndo)
                 .accessibilityIdentifier("editor.ink.undo")
             barRule
-            barDone { enter(.writing) }
+            barDone { if session.mode == .selecting { enter(.writing) } else { session.canvas?.clearInkSelection() } }
                 .accessibilityIdentifier("editor.ink.done")
         }
         .floatingBar(leading: says ? Space.x5 : Space.x1)

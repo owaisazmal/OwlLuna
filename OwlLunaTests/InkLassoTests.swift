@@ -95,4 +95,95 @@ final class InkLassoTests: XCTestCase {
         guard case .ink(let reread, _) = await package.readInk(second) else { return XCTFail("the moved ink wasn't saved on its new page") }
         XCTAssertEqual(reread.strokes.count, 1)
     }
+
+    // MARK: The tray's lasso
+
+    private let everything = [CGPoint(x: -5000, y: -5000), CGPoint(x: 5000, y: -5000), CGPoint(x: 5000, y: 5000), CGPoint(x: -5000, y: 5000)]
+
+    /// An editor in a window, on blank pages with `ink` on the first, with a toolbox of its own.
+    private func openEditor(pages count: Int, ink: PKDrawing, toolbox: Toolbox) async throws -> (session: EditorSession, controller: PageStackController) {
+        let flow = UserDefaults.standard.object(forKey: SettingsKey.pageFlow)
+        UserDefaults.standard.set(PageFlow.continuous.rawValue, forKey: SettingsKey.pageFlow)
+        addTeardownBlock { UserDefaults.standard.set(flow, forKey: SettingsKey.pageFlow) }
+        let root = temporaryRoot(self)
+        let manifest = NotebookManifest(title: "Notes", defaults: paper, pages: (0..<count).map { _ in paper.newPage() })
+        let package = NotebookPackage(root: root, id: manifest.id)
+        try await package.create(manifest)
+        _ = try await package.write(SaveSnapshot(manifest: manifest, ink: [manifest.pages[0].id: ink]))
+        let session = EditorSession(document: try await NotebookDocument.open(manifest.id, root: root))
+        let controller = PageStackController(session: session, toolbox: toolbox)
+        session.canvas = controller
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene)
+        window.frame = CGRect(x: 0, y: 0, width: 834, height: 1194)
+        window.rootViewController = controller
+        window.makeKeyAndVisible()
+        addTeardownBlock { @MainActor in window.isHidden = true }
+        controller.view.layoutIfNeeded()
+        for _ in 0..<100 where controller.canvas(forPage: 0)?.isLoaded != true { try? await Task.sleep(for: .seconds(0.05)) }
+        return (session, controller)
+    }
+
+    /// Issue 39: PencilKit's lasso lost what it had caught whenever a page was drawn again at a new zoom.
+    func testTheTraysLassoKeepsItsInkThroughAZoomAndLocksNothing() async throws {
+        let toolbox = Toolbox(defaults: nil)
+        let (session, controller) = try await openEditor(pages: 2, ink: PKDrawing(strokes: [line(y: 100), line(y: 200)]), toolbox: toolbox)
+        let document = session.document, first = document.pages[0].id
+        controller.catchInk(inside: everything)
+        XCTAssertEqual(session.inkSelectionCount, 0, "a pen in hand catches nothing")
+
+        toolbox.take(.lasso)
+        controller.catchInk(inside: everything)
+        XCTAssertEqual(session.inkSelectionCount, 2)
+        XCTAssertEqual(session.mode, .writing, "the lasso is a tool in hand, not a mode")
+        XCTAssertTrue(session.showsToolTray)
+        session.setZoomWindow(true)
+        XCTAssertTrue(session.isZoomWindowOpen, "and the pages stay unlocked: the zoom window still opens")
+        session.setZoomWindow(false)
+        XCTAssertEqual(session.inkSelectionCount, 2)
+
+        controller.setZoom(2)
+        XCTAssertEqual(session.inkSelectionCount, 2, "a new zoom keeps what was caught")
+        let scroll = try XCTUnwrap(controller.view.subviews.lazy.compactMap { $0 as? UIScrollView }.first)
+        scroll.zoomScale = 0.7
+        controller.scrollViewDidEndZooming(scroll, with: nil, atScale: 0.7)
+        XCTAssertEqual(controller.zoom, 1.4, accuracy: 0.01)
+        XCTAssertEqual(session.inkSelectionCount, 2, "and so does a pinch")
+        controller.duplicateInkSelection()
+        XCTAssertEqual(document.loadedInk(first)?.strokes.count, 4, "it can still be worked on")
+        XCTAssertEqual(session.inkSelectionCount, 2)
+
+        session.enter(.presenting)
+        XCTAssertEqual(session.inkSelectionCount, 0, "presenting lets it go")
+        controller.catchInk(inside: everything)
+        XCTAssertEqual(session.inkSelectionCount, 0, "and nothing is caught while the pages are locked")
+        session.enter(.writing)
+        controller.catchInk(inside: everything)
+        XCTAssertEqual(session.inkSelectionCount, 4, "the lasso is back in hand afterwards")
+        toolbox.take(.pen(try XCTUnwrap(toolbox.shelf.usable.first).id))
+        XCTAssertEqual(session.inkSelectionCount, 0, "taking a pen up lets it go")
+    }
+
+    /// Only the pages on show and the ones beside them have a canvas, so ink carried further has to outlast its page's.
+    func testInkTheLassoCaughtOutlastsItsPagesCanvas() async throws {
+        let toolbox = Toolbox(defaults: nil)
+        toolbox.take(.lasso)
+        let (session, controller) = try await openEditor(pages: 6, ink: PKDrawing(strokes: [line(y: 100), line(y: 200)]), toolbox: toolbox)
+        let document = session.document, first = document.pages[0].id
+        // The lasso was in hand before the notebook opened: it is ready once the pages have appeared.
+        for _ in 0..<40 where session.inkSelectionCount == 0 {
+            controller.catchInk(inside: everything)
+            try? await Task.sleep(for: .seconds(0.05))
+        }
+        XCTAssertEqual(session.inkSelectionCount, 2)
+
+        session.go(to: 5, animated: false)
+        XCTAssertNil(controller.canvas(forPage: 0), "scrolled far off, the page has no canvas")
+        XCTAssertEqual(session.inkSelectionCount, 2, "what was caught on it is still caught")
+        document.releaseCleanInk()
+        XCTAssertNotNil(document.loadedInk(first), "and its ink stays in memory meanwhile")
+        controller.deleteInkSelection()
+        XCTAssertEqual(document.loadedInk(first)?.strokes.count, 0, "so it can still be changed from there")
+        XCTAssertEqual(session.inkSelectionCount, 0)
+    }
 }

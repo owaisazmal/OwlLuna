@@ -25,6 +25,7 @@ protocol EditorCanvasControlling: AnyObject {
     func paneBecameActive()
     func setSelectingInk(_ selecting: Bool)
     func catchInk(inside outline: [CGPoint])
+    func clearInkSelection()
     func keepHeldLoop()
     func duplicateInkSelection()
     func deleteInkSelection()
@@ -103,7 +104,7 @@ final class EditorSession {
     /// The page a link was followed from, while the page it opened is still showing.
     private(set) var linkReturn: UUID?
     private(set) var mode = EditorMode.writing
-    /// How many strokes the lasso across pages has caught.
+    /// How many strokes the lasso has caught, with the tray's lasso in hand or while selecting ink.
     var inkSelectionCount = 0
     /// Whether the round loop that started the selection can still be kept as the circle it reads as.
     var canKeepHeldLoop = false

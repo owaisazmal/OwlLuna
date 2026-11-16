@@ -31,7 +31,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
                                  UIPencilInteractionDelegate {
     private let session: EditorSession
     private var document: NotebookDocument { session.document }
-    private let scrollView = UIScrollView()
+    private let scrollView = PageScrollView()
     private let contentView = UIView()
     private lazy var addPageCard = AddPageCard { [weak self] in self?.session.addPage() }
     /// The room under the last page the card takes, with the gap above the tools; kept while a pinch is under way.
@@ -76,9 +76,18 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     /// The overlay for selecting ink across pages, while that is on, and what has been caught.
     private var inkLasso: InkLassoOverlay?
     private var inkSelection: InkSelection = [:]
+    /// Selecting ink as a mode of its own locks the pages. The tray's lasso lays the same overlay and locks nothing.
+    private var isSelectingInk = false
     private var lassoMoveOrigin: CGPoint?
     private var isMovingInk = false
     private lazy var lassoPan = UIPanGestureRecognizer(target: self, action: #selector(lassoPanned))
+    /// Where a finger scrolls, one that lands on what the lasso caught drags it.
+    private lazy var lassoDrag = UIPanGestureRecognizer(target: self, action: #selector(lassoPanned))
+    /// Whichever of the two is holding caught ink.
+    private weak var lassoHolder: UIPanGestureRecognizer?
+    private lazy var lassoTap = UITapGestureRecognizer(target: self, action: #selector(lassoTapped))
+    /// Scrolls the pages while ink is held near the top or the foot of them.
+    private var lassoScroll: CADisplayLink?
     /// The held loop that started the selection, while Keep Circle can still put it back as the circle it reads as.
     private var heldLoop: (pageID: UUID, stamp: Date, circle: PKStroke, name: String)? {
         didSet { if session.canKeepHeldLoop != (heldLoop != nil) { session.canKeepHeldLoop = heldLoop != nil } }
@@ -101,7 +110,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     private lazy var shapePan = UIPanGestureRecognizer(target: self, action: #selector(shapePanned))
     /// Nothing on the page can be changed by hand while it is presented or replayed, while ink or text is being
     /// selected, or while it is being searched.
-    private var isLocked: Bool { isPresenting || replay != nil || inkLasso != nil || isFinding || textOverlay != nil }
+    private var isLocked: Bool { isPresenting || replay != nil || isSelectingInk || isFinding || textOverlay != nil }
     /// The zoom window: what it covers, the strip it is written in, and the outline on the page of what it shows.
     private var zoomWindow: ZoomWindow?
     private var zoomPanel: ZoomWindowPanel?
@@ -151,7 +160,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     /// while ink is selected across pages, which needs them all laid out.
     private var pageFlow = PageFlow.continuous
     private var singleID: UUID?
-    private var isSingle: Bool { pageFlow == .single && inkLasso == nil }
+    private var isSingle: Bool { pageFlow == .single && !isSelectingInk }
     private var lastSafeTop: CGFloat = 0
     /// The view's top in its window at the last change of size, to tell a bar going above the pages from one below.
     private var lastTop: CGFloat?
@@ -261,6 +270,11 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             pan.maximumNumberOfTouches = 1
             pan.allowedTouchTypes = Self.scrollTouchTypes + [NSNumber(value: UITouch.TouchType.pencil.rawValue)]
         }
+        lassoDrag.maximumNumberOfTouches = 1
+        lassoDrag.allowedTouchTypes = Self.scrollTouchTypes
+        for pan in [lassoPan, lassoDrag] { pan.delegate = self }
+        lassoTap.allowedTouchTypes = lassoPan.allowedTouchTypes
+        scrollView.yieldsDrag = { [weak self] pan in self?.fingerMovesInk(pan) ?? false }
         shapePan.maximumNumberOfTouches = 1
         shapePan.delegate = self
         NotificationCenter.default.addObserver(self, selector: #selector(toolChanged), name: Toolbox.didChange, object: toolbox)
@@ -524,14 +538,15 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             UIKeyCommand(title: String(localized: "Next Page"), action: #selector(nextPage), input: UIKeyCommand.inputRightArrow),
             UIKeyCommand(title: String(localized: "Previous Page"), action: #selector(previousPage), input: UIKeyCommand.inputLeftArrow),
         ]
-        let selected = session.selection == nil ? [] : cropView != nil ? [
+        // Ink the lasso caught is deleted and let go the same way. In Select Ink, Escape is the bar's Done.
+        let hasInk = session.selection == nil && canNudge
+        let selected = session.selection == nil && !hasInk ? [] : cropView != nil ? [
             UIKeyCommand(title: String(localized: "Cancel"), action: #selector(cancelCrop), input: UIKeyCommand.inputEscape),
             UIKeyCommand(title: String(localized: "Done"), action: #selector(keepCrop), input: "\r"),
         ] : [
             UIKeyCommand(title: String(localized: "Delete"), action: #selector(deleteSelectedItem), input: UIKeyCommand.inputDelete),
             UIKeyCommand(action: #selector(deleteSelectedItem), input: "\u{8}"),
-            UIKeyCommand(title: String(localized: "Done"), action: #selector(clearSelection), input: UIKeyCommand.inputEscape),
-        ]
+        ] + (hasInk && isSelectingInk ? [] : [UIKeyCommand(title: String(localized: "Done"), action: #selector(clearSelection), input: UIKeyCommand.inputEscape)])
         for command in commands + nudges + presenting + selected { command.wantsPriorityOverSystemBehavior = true }
         return commands + nudges + presenting + selected
     }
@@ -812,7 +827,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
                 if slot.canvas == nil, slot.card == nil { attachCanvas(page, to: slot) }
             }
             offerPageTurns()
-            document.pinInk(keep.union(zoomWindow.map { [$0.pageID] } ?? []))
+            pinInk()
             let prefetch = isSolo ? window : max(0, visible.lowerBound - 3)...min(count - 1, visible.upperBound + 3)
             document.prefetchInk(pages[prefetch].map(\.id))
         }
@@ -862,7 +877,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         night = now
         guard isViewLoaded else { return }
         if session.isEditingText { finishTyping() }
-        if inkLasso != nil { setInkSelection([:]) }
+        clearInkSelection()
         for (id, slot) in slots where slot.page.turnsDark(true) { removeSlot(id) }
         updateWindow(force: true)
         refreshZoomWindow()
@@ -991,7 +1006,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     private func show(_ ink: PKDrawing, in canvas: PageCanvasView) {
         applyingDrawing {
-            canvas.drawing = replayed(ink, on: canvas.pageID)
+            canvas.drawing = replayed(withoutHeldInk(ink, on: canvas.pageID), on: canvas.pageID)
             canvas.strokeCount = nil
         }
         canvas.isLoaded = true
@@ -1063,6 +1078,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
         guard !isApplyingDrawing, let canvas = canvasView as? PageCanvasView, canvas.isLoaded, let id = canvas.pageID else { return }
         canvas.strokeCount = nil
+        // Ink written in the zoom window renumbers the strokes the lasso holds on that page.
+        if inkSelection[id] != nil { setInkSelection([:]) }
         let before = document.loadedInk(id)
         let rest = canvas === zoomCanvas ? nil : strokeHold.takeHold(for: canvas.drawing.strokes.last)
         if pencilGesture(on: canvas, pageID: id, before: before, rest: rest) {
@@ -1328,7 +1345,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     func document(_ document: NotebookDocument, didReplaceInkOf pageID: UUID) {
         // An undo or redo under the selection moves strokes about, so what was caught is let go.
-        if inkLasso != nil, !isMovingInk, !inkSelection.isEmpty { setInkSelection([:]) }
+        if !isMovingInk, !inkSelection.isEmpty { clearInkSelection() }
         guard let ink = document.loadedInk(pageID) else { return }
         replayPages[pageID] = nil
         if zoomWindow?.pageID == pageID, let zoomCanvas { showZoomInk(ink, in: zoomCanvas) }
@@ -1410,7 +1427,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         if let link = item(selection)?.link {
             session.follow(link, from: selection.pageID)
         } else if item(selection)?.tape != nil {
-            if replay == nil, inkLasso == nil { session.toggleTape(selection.itemID) }
+            if replay == nil, !isSelectingInk { session.toggleTape(selection.itemID) }
         } else if !isLocked, !document.isReadOnly {
             select(selection)
         }
@@ -1423,6 +1440,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     }
 
     func select(_ selection: ItemSelection?) {
+        if selection != nil, !inkSelection.isEmpty { setInkSelection([:]) }
         if textView != nil, selection != typing { endTextEditing() }
         if cropView != nil, selection != session.selection { endCrop(keeping: true) }
         if session.selection != selection { session.selection = selection }
@@ -1551,10 +1569,13 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         if gestureRecognizer === shapePan { return !isLocked && !document.isReadOnly && toolbox.pen != nil }
+        if gestureRecognizer === lassoPan { return lassoMoveOrigin == nil }
+        // A hand that rests on the caught ink while the Pencil works is not a finger come to move it.
+        if gestureRecognizer === lassoDrag { return lassoMoveOrigin == nil && !strokeHold.pencilIsNear() }
         if gestureRecognizer === checkTap { return typedCheckbox(at: gestureRecognizer.location(in: textView)) != nil }
         if let tap = fingerTaps.first(where: { $0.recognizer === gestureRecognizer })?.tap { return allowsFingerTap(tap, gestureRecognizer) }
         guard gestureRecognizer === tapeTap else { return true }
-        return replay == nil && inkLasso == nil && textOverlay == nil && !isOnSelection(gestureRecognizer)
+        return replay == nil && !isSelectingInk && textOverlay == nil && !isOnSelection(gestureRecognizer)
             && item(at: gestureRecognizer.location(in: scrollView), tapeOnly: true) != nil
     }
 
@@ -1574,8 +1595,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     @objc private func tappedPage(_ gesture: UITapGestureRecognizer) {
         guard !isOnSelection(gesture), !isFinding, cropView == nil else { return }
         if replay != nil { return seekReplay(to: gesture.location(in: scrollView)) }
-        if inkLasso != nil { return setInkSelection([:]) }
-        if textOverlay != nil { return }
+        if isSelectingInk || textOverlay != nil { return }
         let hit = isPresenting || !fingersDraw ? item(at: gesture.location(in: scrollView)) : nil
         if let hit, item(hit)?.tape != nil { return }
         if let hit, let link = item(hit)?.link { return session.follow(link, from: hit.pageID) }
@@ -1763,7 +1783,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     /// Only a touch on a box of the checklist being typed in is a tick; every other touch is the text view's.
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-        gestureRecognizer !== checkTap || typedCheckbox(at: touch.location(in: textView)) != nil
+        if gestureRecognizer === lassoPan || gestureRecognizer === lassoDrag { return lassoTakes(touch, for: gestureRecognizer) }
+        return gestureRecognizer !== checkTap || typedCheckbox(at: touch.location(in: textView)) != nil
     }
 
     @objc private func tappedTypedCheckbox(_ gesture: UITapGestureRecognizer) {
@@ -1909,8 +1930,13 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         place(images, onPage: nil, at: nil)
     }
 
-    @objc private func deleteSelectedItem() { session.deleteSelection() }
-    @objc private func clearSelection() { select(nil) }
+    @objc private func deleteSelectedItem() {
+        if session.selection != nil { session.deleteSelection() } else { deleteInkSelection() }
+    }
+
+    @objc private func clearSelection() {
+        if session.selection != nil { select(nil) } else { clearInkSelection() }
+    }
 
     /// What's showing of a page, in page points; the whole page when none of it is.
     func visibleRect(ofPage index: Int) -> CGRect? {
@@ -1975,6 +2001,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         }
         updateInsets()
         updateWindow(force: true)
+        if !inkSelection.isEmpty { setInkSelection(inkSelection.filter { index(of: $0.key) != nil }) }
         if let pendingPage { session.pageDidChange(pendingPage) }
     }
 
@@ -2042,7 +2069,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             session.zoomWindowDidClose()
         }
         select(nil)
-        if inkLasso != nil { setInkSelection([:]) }
+        clearInkSelection()
         scrollView.setContentOffset(scrollView.contentOffset, animated: false)
         if lastBounds != .zero, view.window != nil {
             Motion.crossFade(scrollView.layer)
@@ -2149,6 +2176,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     func toolTrayDidChange() {
         setDrawingPolicy(drawingPolicy)
         updateShapeOverlay()
+        updateInkLasso()
         layoutZoomPanel()
         updateInsets()
         if !isModalShowing, textView == nil { anchor.becomeFirstResponder() }
@@ -2183,7 +2211,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     private func updateScrollTouches() {
         let fingersDraw = switch effectivePolicy {
         case _ where isPresenting: fingersPoint
-        case _ where inkLasso != nil || textOverlay != nil: true
+        case _ where isSelectingInk || textOverlay != nil: true
         case _ where document.isReadOnly || replay != nil || isFinding: false
         case .anyInput: true
         default: false
@@ -2295,32 +2323,49 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         return frames
     }
 
-    /// The ink of the pages that have a canvas: the pages a lasso can reach and a drag can land on.
+    /// The ink a lasso can reach and a drag can land on: the pages that have a canvas, and those holding what is caught.
     private var liveInk: [UUID: PKDrawing] {
         var result: [UUID: PKDrawing] = [:]
-        for id in canvases.keys { result[id] = document.loadedInk(id) }
+        for id in Set(canvases.keys).union(inkSelection.keys) { result[id] = document.loadedInk(id) }
         return result
     }
 
+    /// The ink kept in memory: the pages on show, the zoom window's, and those holding what is caught, however far they scroll.
+    private func pinInk() {
+        document.pinInk(Set(slots.keys).union(zoomWindow.map { [$0.pageID] } ?? []).union(inkSelection.keys))
+    }
+
     func setSelectingInk(_ selecting: Bool) {
-        guard selecting != (inkLasso != nil), isViewLoaded else { return }
-        if selecting {
-            select(nil)
-            let overlay = InkLassoOverlay(frame: contentView.bounds)
-            overlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            overlay.scale = bakedScale
-            // The overlay takes the touches itself: a canvas underneath would hold a drag back for half a second.
-            overlay.addGestureRecognizer(lassoPan)
-            contentView.addSubview(overlay)
-            inkLasso = overlay
-        } else {
-            restoreLiftedInk()
-            inkLasso?.removeFromSuperview()
-            inkLasso = nil
-            setInkSelection([:])
-        }
+        guard selecting != isSelectingInk, isViewLoaded else { return }
+        isSelectingInk = selecting
+        if selecting { select(nil) } else { clearInkSelection() }
         if pageFlow == .single { reflow() }
         lockDidChange()
+    }
+
+    /// The overlay lies over the pages while ink is selected as a mode, or while the tray's lasso is in hand and the
+    /// pages can be changed. It takes the touches itself: a canvas underneath would hold a drag back for half a second.
+    private func updateInkLasso() {
+        let wanted = isSelectingInk || toolbox.choice == .lasso && !isLocked && !document.isReadOnly
+        guard isViewLoaded, wanted != (inkLasso != nil) else { return }
+        guard wanted else {
+            clearInkSelection()
+            inkLasso?.removeFromSuperview()
+            inkLasso = nil
+            return
+        }
+        let overlay = InkLassoOverlay(frame: contentView.bounds)
+        overlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        overlay.scale = bakedScale
+        overlay.passesThrough = { [weak self, weak overlay] point in
+            guard let self, let overlay else { return false }
+            let above = [selectionView, cropView, textView] as [UIView?] + slots.values.map { $0.card as UIView? }
+            return above.contains { view in view.map { $0.point(inside: overlay.convert(point, to: $0), with: nil) } ?? false }
+        }
+        for recognizer in [lassoPan, lassoDrag, lassoTap] { overlay.addGestureRecognizer(recognizer) }
+        contentView.addSubview(overlay)
+        for above in [textOverlay, zoomTarget] as [UIView?] { if let above { contentView.bringSubviewToFront(above) } }
+        inkLasso = overlay
     }
 
     /// The pages were locked or let go: each canvas takes writing again or stops, and the tray and touches follow.
@@ -2335,6 +2380,19 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         inkLasso?.showSelection(InkLasso.bounds(of: inkSelection, drawings: liveInk, frames: stackFrames))
         let count = inkSelection.values.reduce(0) { $0 + $1.count }
         if session.inkSelectionCount != count { session.inkSelectionCount = count }
+        pinInk()
+    }
+
+    /// Lets go of what the lasso caught, putting back any of it that was being held.
+    func clearInkSelection() {
+        if lassoMoveOrigin != nil {
+            let holder = lassoHolder
+            endInkDrag()
+            restoreLiftedInk()
+            holder?.isEnabled = false
+            holder?.isEnabled = true
+        }
+        setInkSelection([:])
     }
 
     private func stackPoint(_ gesture: UIGestureRecognizer) -> CGPoint {
@@ -2342,38 +2400,118 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         return CGPoint(x: point.x / bakedScale, y: point.y / bakedScale)
     }
 
+    /// Whether a point of the stack is on what the lasso caught, with a fingertip's margin on the screen.
+    private func isOnInkSelection(_ point: CGPoint) -> Bool {
+        guard let bounds = inkLasso?.selectionBounds else { return false }
+        let margin = 14 / max(effectiveScale, 0.01)
+        return bounds.insetBy(dx: -margin, dy: -margin).contains(point)
+    }
+
+    /// The Pencil lassos, and so does a finger where fingers draw. Where they scroll, a finger only drags what is
+    /// caught. A drag under way takes no more touches: they are left to scroll and zoom.
+    private func lassoTakes(_ touch: UITouch, for recognizer: UIGestureRecognizer) -> Bool {
+        if recognizer.state == .began || recognizer.state == .changed { return false }
+        if recognizer === lassoPan { return touch.type == .pencil || fingersDraw }
+        let point = touch.location(in: contentView)
+        return !fingersDraw && bakedScale > 0 && isOnInkSelection(CGPoint(x: point.x / bakedScale, y: point.y / bakedScale))
+    }
+
+    /// Where a finger scrolls, one that came down alone on what is caught moves it and the pages stay put.
+    private func fingerMovesInk(_ pan: UIPanGestureRecognizer) -> Bool {
+        guard inkLasso != nil, !fingersDraw, lassoMoveOrigin == nil, !strokeHold.pencilIsNear(), pan.numberOfTouches == 1, bakedScale > 0 else { return false }
+        let point = pan.location(in: contentView), moved = pan.translation(in: contentView)
+        return isOnInkSelection(CGPoint(x: (point.x - moved.x) / bakedScale, y: (point.y - moved.y) / bakedScale))
+    }
+
     /// A drag that starts on what is selected moves it; one that starts anywhere else draws a new lasso.
     @objc private func lassoPanned(_ gesture: UIPanGestureRecognizer) {
         guard let overlay = inkLasso, bakedScale > 0 else { return }
-        let point = stackPoint(gesture)
+        let point = stackPoint(gesture), holds = lassoMoveOrigin != nil && gesture === lassoHolder
+        // Only the lasso's own drag draws a lasso, and not while ink is held.
+        let draws = lassoMoveOrigin == nil && gesture === lassoPan
         switch gesture.state {
         case .began:
-            if let bounds = overlay.selectionBounds, bounds.insetBy(dx: -14, dy: -14).contains(point) {
-                lassoMoveOrigin = point
+            let moved = gesture.translation(in: contentView)
+            let start = CGPoint(x: point.x - moved.x / bakedScale, y: point.y - moved.y / bakedScale)
+            // As writing does, the lasso puts a selected picture down.
+            if session.selection != nil { select(nil) }
+            if lassoMoveOrigin == nil, isOnInkSelection(start) {
+                lassoMoveOrigin = start
+                lassoHolder = gesture
                 liftInk()
-            } else {
-                lassoMoveOrigin = nil
+                beginInkDrag()
+                trackInkDrag()
+            } else if draws {
                 setInkSelection([:])
-                overlay.begin(at: point)
-            }
-        case .changed:
-            if let origin = lassoMoveOrigin {
-                overlay.drag(by: CGSize(width: point.x - origin.x, height: point.y - origin.y))
-            } else {
+                overlay.begin(at: start)
                 overlay.add(point)
             }
+        case .changed:
+            if holds { trackInkDrag() } else if draws { overlay.add(point) }
         case .ended:
-            if let origin = lassoMoveOrigin {
-                lassoMoveOrigin = nil
+            if holds, let origin = lassoMoveOrigin {
+                endInkDrag()
                 moveInkSelection(by: CGSize(width: point.x - origin.x, height: point.y - origin.y), copying: false)
-            } else {
+            } else if draws {
                 catchInk(inside: InkLasso.outline(from: overlay.end()))
             }
         default:
-            lassoMoveOrigin = nil
-            _ = overlay.end()
-            restoreLiftedInk()
+            if holds {
+                endInkDrag()
+                restoreLiftedInk()
+            } else if draws {
+                _ = overlay.end()
+            }
         }
+    }
+
+    /// A tap away from what is caught lets it go.
+    @objc private func lassoTapped(_ gesture: UITapGestureRecognizer) {
+        guard !inkSelection.isEmpty, bakedScale > 0, !isOnInkSelection(stackPoint(gesture)) else { return }
+        clearInkSelection()
+    }
+
+    /// The fingers that scroll and zoom start afresh, so they can do both under ink that is held, and held near the
+    /// top or the foot of the pages the ink scrolls them itself.
+    private func beginInkDrag() {
+        for recognizer in [scrollView.panGestureRecognizer, scrollView.pinchGestureRecognizer] as [UIGestureRecognizer?] {
+            guard let recognizer, recognizer.isEnabled, recognizer.state != .began, recognizer.state != .changed else { continue }
+            recognizer.isEnabled = false
+            recognizer.isEnabled = true
+        }
+        let link = CADisplayLink(target: self, selector: #selector(scrollHeldInk))
+        link.add(to: .main, forMode: .common)
+        lassoScroll = link
+    }
+
+    private func endInkDrag() {
+        lassoMoveOrigin = nil
+        lassoHolder = nil
+        lassoScroll?.invalidate()
+        lassoScroll = nil
+    }
+
+    /// Keeps the held ink under the touch that holds it, also while the pages scroll or zoom under it.
+    private func trackInkDrag() {
+        guard let origin = lassoMoveOrigin, let holder = lassoHolder, let overlay = inkLasso, bakedScale > 0 else { return }
+        let point = stackPoint(holder)
+        overlay.drag(by: CGSize(width: point.x - origin.x, height: point.y - origin.y))
+    }
+
+    /// How near the top or the foot of the pages held ink starts to scroll them, and how fast at the very edge, in points a second.
+    private static let heldInkReach: CGFloat = 56
+    private static let heldInkSpeed: CGFloat = 900
+
+    /// Not until the ink has been carried some way, so that picking it up beside an edge scrolls nothing.
+    @objc private func scrollHeldInk(_ link: CADisplayLink) {
+        guard lassoMoveOrigin != nil, let holder = lassoHolder, !scrollView.isDragging, !scrollView.isZooming, !isBaking else { return }
+        let travel = holder.translation(in: view), touch = holder.location(in: view), area = readableArea, reach = Self.heldInkReach
+        guard hypot(travel.x, travel.y) >= 24 else { return }
+        let depth = touch.y < area.minY + reach ? touch.y - area.minY - reach : touch.y > area.maxY - reach ? touch.y - area.maxY + reach : 0
+        guard depth != 0 else { return }
+        let step = max(-1, min(1, depth / reach)) * Self.heldInkSpeed * CGFloat(link.targetTimestamp - link.timestamp)
+        let target = clamped(CGPoint(x: scrollView.contentOffset.x, y: scrollView.contentOffset.y + step))
+        if target != scrollView.contentOffset { scrollView.contentOffset = target }
     }
 
     /// Selects the ink inside an outline given in the page stack's points, as if a lasso had been drawn there.
@@ -2407,7 +2545,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             }
             if let image { images.append((image, bounds.offsetBy(dx: frame.minX, dy: frame.minY))) }
             if let canvas = canvases[id] {
-                applyingDrawing { canvas.drawing = InkLasso.removing([id: indices], from: [id: ink])[id] ?? ink }
+                applyingDrawing { canvas.drawing = ink.removingStrokes(at: Set(indices)) }
             }
         }
         overlay.lift(images)
@@ -2418,6 +2556,12 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         for id in inkSelection.keys {
             if let canvas = canvases[id], let ink = document.loadedInk(id) { show(ink, in: canvas) }
         }
+    }
+
+    /// While caught ink is held the overlay draws it, so a canvas made meanwhile shows its page without it.
+    private func withoutHeldInk(_ ink: PKDrawing, on pageID: UUID?) -> PKDrawing {
+        guard lassoMoveOrigin != nil, let pageID, let indices = inkSelection[pageID] else { return ink }
+        return ink.removingStrokes(at: Set(indices))
     }
 
     /// Commits a drag, or a copy, as one undo step across every page it touched.
@@ -2743,7 +2887,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         zoomWindow = ZoomWindow(pageID: page.id, pageSize: page.size, center: center ?? CGPoint(x: page.size.width / 2, y: page.size.height / 2),
                                 size: size, lineHeight: ZoomWindow.lineHeight(for: page, windowHeight: size.height))
         zoomReachedBand = false
-        document.pinInk(Set(canvases.keys).union([page.id]))
+        pinInk()
         showZoomWindow()
     }
 
@@ -2995,6 +3139,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             session.zoomWindowDidClose()
         }
         select(nil)
+        clearInkSelection()
         rememberView()
         scrollView.setContentOffset(scrollView.contentOffset, animated: false)
         if view.window != nil { Motion.crossFade(scrollView.layer) }
@@ -3031,6 +3176,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         let leaving = slides && !UIAccessibility.isReduceMotionEnabled ? scrollView.snapshotView(afterScreenUpdates: false) : nil
         if slides, leaving == nil { Motion.crossFade(scrollView.layer) }
         select(nil)
+        clearInkSelection()
         scrollView.setContentOffset(scrollView.contentOffset, animated: false)
         for id in Array(slots.keys) where id != pages[index].id { removeSlot(id) }
         singleID = pages[index].id
@@ -3238,6 +3384,10 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     }
 
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
+        // More fingers scroll and zoom the pages under ink that is held.
+        let pair = [gestureRecognizer, other]
+        if lassoMoveOrigin != nil, pair.contains(where: { $0 === lassoHolder }),
+           pair.contains(where: { $0 === scrollView.panGestureRecognizer || $0 === scrollView.pinchGestureRecognizer }) { return true }
         let doubleTap = fingerTaps.first { $0.tap == .doubleTap }?.recognizer
         return [laserGesture, itemTap, itemHold, strokeHold, tapeTap, checkTap, doubleTap].contains { $0 === gestureRecognizer || $0 === other }
     }
@@ -3257,6 +3407,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     @objc private func toolChanged() {
         for canvas in allCanvases + pool { syncTool(canvas) }
         updateShapeOverlay()
+        updateInkLasso()
         if toolbox.typesHandwriting { InkText.warmUp() }
         // Handwriting still waiting when the pen is put down, or the helper turned off, is read there and then.
         if !unreadWriting.isEmpty, !(toolbox.typesHandwriting && PencilGestures.writes(toolbox.tool)) { typeUnreadWriting() }
@@ -3344,6 +3495,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         guard !isBaking else { return }
         updateWindow()
+        trackInkDrag()
     }
 
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
@@ -3373,6 +3525,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         guard !isBaking else { return }
         updateInsets()
         updateWindow()
+        trackInkDrag()
     }
 
     func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
@@ -3385,5 +3538,6 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         scrollView.contentOffset = clamped(CGPoint(x: (offset.x + inset.left) * ratio - scrollView.contentInset.left,
                                                    y: (offset.y + inset.top) * ratio - scrollView.contentInset.top))
         updateWindow(force: true)
+        trackInkDrag()
     }
 }
