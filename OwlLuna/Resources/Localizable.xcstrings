@@ -5847,7 +5847,7 @@
         }
       }
     },
-    "%lld strokes. Drag them to move them." : {
+    "%lld strokes. Drag to move, tap for more." : {
       "localizations" : {
         "de" : {
           "variations" : {
@@ -5855,13 +5855,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld Strich. Zum Bewegen ziehen."
+                  "value" : "%lld Strich. Ziehen bewegt, Tippen zeigt mehr."
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld Striche. Zum Bewegen ziehen."
+                  "value" : "%lld Striche. Ziehen bewegt, Tippen zeigt mehr."
                 }
               }
             }
@@ -5873,13 +5873,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld stroke. Drag it to move it."
+                  "value" : "%lld stroke. Drag to move, tap for more."
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld strokes. Drag them to move them."
+                  "value" : "%lld strokes. Drag to move, tap for more."
                 }
               }
             }
@@ -5891,13 +5891,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld trazo. Arrástralo para moverlo."
+                  "value" : "%lld trazo. Arrastra para mover, toca para más."
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld trazos. Arrástralos para moverlos."
+                  "value" : "%lld trazos. Arrastra para mover, toca para más."
                 }
               }
             }
@@ -5909,13 +5909,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld trait. Faites-le glisser pour le déplacer."
+                  "value" : "%lld trait. Glissez pour déplacer, touchez pour plus."
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld traits. Faites-les glisser pour les déplacer."
+                  "value" : "%lld traits. Glissez pour déplacer, touchez pour plus."
                 }
               }
             }
@@ -10833,6 +10833,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Personnaliser les outils"
+          }
+        }
+      }
+    },
+    "Cut" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausschneiden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cortar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couper"
+          }
+        }
+      }
+    },
+    "Cut Ink" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tinte ausschneiden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cortar tinta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couper l’encre"
           }
         }
       }
@@ -23626,6 +23670,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mot de passe"
+          }
+        }
+      }
+    },
+    "Paste" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einsetzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller"
+          }
+        }
+      }
+    },
+    "Paste Ink" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tinte einsetzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegar tinta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller l’encre"
           }
         }
       }

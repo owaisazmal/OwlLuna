@@ -26,7 +26,7 @@ Evidence:
 
 Fixtures, Debug only (Edit Scheme › Run › Arguments): `-seedLibrary N`, `-seedLongPDF` (300 pages), `-seedReplay`, `-seedHandwriting`, `-seedStudy`. Seeds only fill an empty library, and without `-storageRoot <name> -resetStorage` that is the real one, which syncs: answer Not Now to the iCloud question, or use an iPad outside the sync sitting. Settings › Backup › Back Up Library… carries a seeded library to a TestFlight iPad.
 
-Heavy stand-in, any build: write a full page on the default paper, about 150 strokes. ⋯ › Select Ink Across Pages, drag corner to corner, Duplicate, drag the copy over and tap Done. Repeat until there are about 600 strokes, then ⋯ › Duplicate Page to 30 pages or more (past the 24 the ink cache keeps).
+Heavy stand-in, any build: write a full page on the default paper, about 150 strokes. ⋯ › Select Ink Across Pages, drag corner to corner, tap the ink and Duplicate, drag the copy over and tap Done. Repeat until there are about 600 strokes, then ⋯ › Duplicate Page to 30 pages or more (past the 24 the ink cache keeps).
 
 The exact heavy fixture (100 pages of 500 strokes) only exists as a unit test. Run it on the iPad:
 
@@ -172,6 +172,19 @@ To finish, compare the two libraries notebook by notebook.
 4. With pen and highlighter on the page, rub with Eraser › Whole Strokes, then Part of a Stroke at a narrow and a wide width, undoing each rub.
 
 Expect: each kind looks like its picture in the roll and marks even at the thinnest Width. Low opacity is fainter, never darker. Ink keeps up with the tip, doesn't change on lift, and is sharp at 5×. Swatches match the ink in light, dark and on Chalkboard. The calligraphy pen only appears on iPadOS 26. Whole Strokes takes exactly the strokes touched, Part of a Stroke cuts only under the width shown, one Undo restores one rub, and erasing never scrolls.
+
+## Lasso
+
+The simulator has no Pencil, so only fingers have tried the lasso.
+
+1. ⋯ › Draw With › Apple Pencil Only. Write three lines, take the lasso and draw round one with the Pencil, your hand resting on the page.
+2. Pinch in and out, scroll with one finger away from the line, and tap ⋯ › Fit Width.
+3. Drag the line with the Pencil, and while you hold it scroll and pinch with the other hand. Then hold it near the foot of the page until the next page comes up, and drop it there. Undo.
+4. Drag the line with a finger, and while you hold it scroll with another finger. Tap away from it, take a pen, and scroll with one finger at once.
+5. Repeat steps 1 to 3 with Pencil and Finger: draw the lasso with a finger and scroll with two.
+6. Tap the caught line and Cut. Tap bare paper with the Pencil and Paste, on this page and on another notebook's. Copy a drawing in Notes and paste it here, then copy ink here and paste it in Notes.
+
+Expect: the line stays caught through every scroll and zoom, and the bar keeps its count. Held ink stays under the tip while the pages move and lands on the page it is dropped on, and one Undo puts it back. A finger on the caught line moves it, and anywhere else it scrolls. Scrolling works the moment a drag ends. The resting hand never draws a lasso, moves the line or scrolls, and no keyboard comes up. Pasted ink lands where the Pencil tapped, already caught. A drawing from Notes comes in as ink after iPadOS asks to allow the paste, and ink copied here is a drawing in Notes.
 
 ## Palm rejection and latency
 
@@ -454,7 +467,7 @@ A board has only been laid out at 5× in the simulator, never written on with a 
 2. Pinch out to 0.15×, drag several screens away and to a corner, and write there at 1× and 5×.
 3. Whiteboard › Show Everything, then Actual Size. Pan and pinch with the tools showing.
 4. Back to Pages, and reopen the board.
-5. Multiply the ink (Select Ink Across Pages, Duplicate) to several thousand strokes. Pan, pinch, Show Everything, reopen.
+5. Multiply the ink (Select Ink Across Pages, tap the ink, Duplicate) to several thousand strokes. Pan, pinch, Show Everything, reopen.
 6. Title menu › Export › This Page as a Time-lapse Video…. ⌘F a word written far out. Present the board on a display.
 
 Expect: ink lands under the tip and is sharp at any distance, with no blank tiles or jumps. Show Everything fits all the ink within about a second, and the board reopens quickly where you left it. Memory levels off. The time-lapse shows all the ink in order, at most twenty seconds. Find brings the word into view, and the display shows the inked area with the laser. Keep Animation Hitches for 30 seconds of panning and Allocations for a minute.

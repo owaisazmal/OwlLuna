@@ -55,6 +55,19 @@ final class PageCanvasView: PKCanvasView {
         return view.subviews.flatMap { holder in (holder.layer.sublayers ?? []).filter { $0.delegate == nil } }
     }
 
+    /// The page's own actions for assistive technologies, such as turning it in single flow.
+    var pageActions: [UIAccessibilityCustomAction]?
+    /// Asked each time the actions are read: pasting the clipboard's ink, while there is some.
+    var pasteAction: (() -> UIAccessibilityCustomAction?)?
+
+    override var accessibilityCustomActions: [UIAccessibilityCustomAction]? {
+        get {
+            let all = (pageActions ?? []) + [pasteAction?()].compactMap { $0 }
+            return all.isEmpty ? nil : all
+        }
+        set { pageActions = newValue }
+    }
+
     override var accessibilityValue: String? {
         get {
             let count = strokeCount ?? drawing.strokes.count

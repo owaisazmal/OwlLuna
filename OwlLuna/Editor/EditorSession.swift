@@ -29,6 +29,10 @@ protocol EditorCanvasControlling: AnyObject {
     func keepHeldLoop()
     func duplicateInkSelection()
     func deleteInkSelection()
+    func copyInkSelection()
+    func cutInkSelection()
+    var canPasteInk: Bool { get }
+    @discardableResult func pasteInk(at point: CGPoint?) -> Bool
     func selectedInk() -> [PKDrawing]
     func selectedInkByPage() -> [(pageID: UUID, ink: PKDrawing)]
     func replaceInkSelection(with text: String) -> ItemSelection?
@@ -106,6 +110,8 @@ final class EditorSession {
     private(set) var mode = EditorMode.writing
     /// How many strokes the lasso has caught, with the tray's lasso in hand or while selecting ink.
     var inkSelectionCount = 0
+    /// The card open on the page for ink, on what is caught or where bare paper was tapped. The canvas opens it.
+    var inkMenu: InkMenu?
     /// Whether the round loop that started the selection can still be kept as the circle it reads as.
     var canKeepHeldLoop = false
     /// The study tape that is lifted for now. It isn't saved: every strip is back in place when the notebook is opened again.

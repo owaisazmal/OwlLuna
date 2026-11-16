@@ -266,7 +266,8 @@ fileprivate struct EditorContent: View {
             }
             .overlay(alignment: side.topCorner) {
                 switch session.mode {
-                case .writing: if railBar == nil { ribbons }
+                // In a narrow pane the bar for caught ink takes the ribbons' place, as it does in Select Ink.
+                case .writing: if railBar == nil, !(isCompact && session.inkSelectionCount > 0) { ribbons }
                 case .focus: focusExit
                 case .presenting, .replaying, .selecting, .finding, .selectingText: EmptyView()
                 }
@@ -274,7 +275,7 @@ fileprivate struct EditorContent: View {
             .overlay(alignment: .top) { banners }
             .overlay(alignment: .top) {
                 if session.mode == .selecting || session.inkSelectionCount > 0 {
-                    inkBar
+                    AnyView(inkBar)
                 } else if session.mode == .finding {
                     findBar
                 } else if session.mode == .selectingText {
@@ -316,6 +317,7 @@ fileprivate struct EditorContent: View {
                     InkDish(session: session, point: point)
                 }
             }
+            .overlay { AnyView(InkCard(session: session)) }
             .animation(Motion.adaptive(Motion.standard, reduceMotion: reduceMotion), value: session.showsToolTray)
             .onChange(of: session.showsToolTray) { session.canvas?.toolTrayDidChange() }
             .onChange(of: session.mode) { session.dish = nil }
@@ -1027,7 +1029,7 @@ fileprivate struct EditorContent: View {
         return HStack(spacing: 0) {
             if says {
                 Text(count == 0 ? String(localized: "Draw round ink on any page")
-                                : String(localized: "\(count) strokes. Drag them to move them."))
+                                : String(localized: "\(count) strokes. Drag to move, tap for more."))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.ink)
                     .lineLimit(1)
@@ -1050,10 +1052,6 @@ fileprivate struct EditorContent: View {
                     arrangeButton("Make Flashcard", "rectangle.on.rectangle.angled", action: makeCardFromInk)
                         .accessibilityIdentifier("editor.ink.card")
                 }
-                arrangeButton("Duplicate", "plus.square.on.square") { session.canvas?.duplicateInkSelection() }
-                    .accessibilityIdentifier("editor.ink.duplicate")
-                arrangeButton("Delete", "trash", role: .destructive) { session.canvas?.deleteInkSelection() }
-                    .accessibilityIdentifier("editor.ink.delete")
             }
             arrangeButton("Undo", "arrow.uturn.backward") { document.undoManager.undo() }
                 .disabled(!session.canUndo)
@@ -1068,6 +1066,15 @@ fileprivate struct EditorContent: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("Select Ink"))
         .accessibilityIdentifier("editor.ink.bar")
+        // What the card on the caught ink holds, for those who can't tap the ink itself.
+        .accessibilityActions {
+            if count > 0 {
+                Button("Cut") { session.canvas?.cutInkSelection() }
+                Button("Copy") { session.canvas?.copyInkSelection() }
+                Button("Duplicate") { session.canvas?.duplicateInkSelection() }
+                Button("Delete") { session.canvas?.deleteInkSelection() }
+            }
+        }
     }
 
     /// While the notebook is being searched: what to look for, how many times it was found, and the way from one to the next.

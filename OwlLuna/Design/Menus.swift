@@ -152,6 +152,15 @@ extension View {
     }
 }
 
+extension View {
+    /// Opens a card of rows under `rect` of this view while `isPresented` is true, for a menu that no button of its own opens.
+    func cardMenu<Rows: View>(_ title: Text, isPresented: Binding<Bool>, under rect: CGRect, @ViewBuilder rows: @escaping () -> Rows) -> some View {
+        modifier(PanelPresenter(isPresented: isPresented, within: rect) {
+            PanelChrome(fill: .board) { title } content: { MenuRows { rows() } }
+        })
+    }
+}
+
 private struct HeldMenu<Rows: View>: ViewModifier {
     let title: Text
     let enabled: Bool

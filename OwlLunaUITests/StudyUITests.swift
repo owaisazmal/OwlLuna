@@ -127,7 +127,7 @@ final class StudyUITests: XCTestCase {
         XCTAssertTrue(status.waitForExistence(timeout: 5))
         canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.12, dy: 0.14))
             .press(forDuration: 0.1, thenDragTo: canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.33)), withVelocity: 400, thenHoldForDuration: 0.2)
-        XCTAssertEqual(status.label, "8 strokes. Drag them to move them.")
+        XCTAssertEqual(status.label, "8 strokes. Drag to move, tap for more.")
 
         app.buttons["editor.ink.text"].tap()
         let editor = app.textViews["inktext.editor"]

@@ -104,9 +104,15 @@ The app delegate hands an external display's scene to `ExternalDisplaySceneDeleg
 
 Showing one page at a time is a layout choice (`PageFlow`, kept in `UserDefaults` as `pageFlow`), not an editor mode: `PageStackController.setPageFlow` lays out the one page and turns to the next or previous on a swipe, so writing, find, select and the zoom window all work inside it. Presenting is the mode that locks editing.
 
-## Selecting ink across pages
+## The lasso
 
-PencilKit's lasso can't leave its canvas, so this is an editor mode. `EditorMode.selecting` lays `InkLassoOverlay` over the page stack, and `InkLasso.moved` moves a stroke whose middle lands on another page into that page's drawing. `NotebookDocument.updateInk` replaces every affected page's ink with one undo step, and refuses a page whose ink isn't in memory; the lasso only reaches pinned pages.
+PencilKit's lasso can't leave its canvas, and it lets go of what it caught whenever its canvas is resized or drawn at a new zoom, which the page stack does on every pinch. So the lasso is the app's own. `InkLassoOverlay` lies over the page stack and takes the touches, and the canvases under it see none. The tray's lasso lays it while it is in hand and locks nothing. `EditorMode.selecting` lays it as a mode: the pages are locked, every finger selects, and single flow gives way to the stack.
+
+A selection is stroke indices by page, so scrolling and zooming leave it alone, and its pages stay pinned in memory after their canvases are recycled. `InkLasso.moved` moves a stroke whose middle lands on another page into that page's drawing. `NotebookDocument.updateInk` replaces every affected page's ink with one undo step, and refuses a page whose ink isn't in memory.
+
+Ink that is held follows its touch in stack points, so the pages can scroll and zoom under it. Held near the top or the foot of the pages it scrolls them. The Pencil never reaches the scroll view, so fingers scroll and pinch under ink it holds. A finger that holds ink has already spent the scroll view's drag, so `heldScroll` scrolls for the fingers that come after; the pinch still works on its own. Where only the Pencil draws, a finger scrolls unless it lands on the caught ink (`PageScrollView.yieldsDrag`). The zoom window's strip is a canvas of its own and still has PencilKit's lasso.
+
+A tap on caught ink opens `InkCard` with Cut, Copy, Duplicate and Delete, and a tap of whatever draws on bare paper offers Paste there. `InkClipboard` puts the ink on the pasteboard as PencilKit's own drawing type, with a PNG beside it for other apps, so it pastes into Notes and a drawing copied there pastes here. Pasted ink becomes new strokes, kept on the page, and is caught at once, with the lasso taken up if a pen was in hand.
 
 ## Handwriting to text
 
@@ -369,7 +375,8 @@ Every string goes through `String(localized:)`, a SwiftUI text literal or a `Loc
 ## Known limits
 
 - Undo keeps whole-page drawings, so steps shrink as pages get heavier: 200 for light pages down to 20 above about 2.4 MB of ink (`UndoBudget`, 48 MB). The budget is an estimate to check against a device memory trace.
-- PencilKit's lasso and ruler are page-scoped because each page is its own canvas. A cross-page ruler can't be built: the ruler's position and angle can't be read or set, and a stroke can't leave its canvas.
+- PencilKit's ruler is page-scoped because each page is its own canvas. A cross-page ruler can't be built: the ruler's position and angle can't be read or set, and a stroke can't leave its canvas.
+- The lasso has only had synthesised finger touches. The simulator has no Pencil, so the Pencil's lasso beside a resting hand needs a device check.
 - ⌘F is claimed by a first-responder view in the library, since the toolbar search swallows it otherwise. In the iPadOS 27 simulator under XCUITest ⌘F never reaches the app while ⌘G does, so it needs a device check.
 - iCloud sync has run on real iCloud along its main paths only. Evicted files, a notebook open on the other iPad, mass deletes and an account change have only run against the stand-in folder.
 - Transcription (`-fakeTranscript`), the second screen (`-secondScreenInset`), scanning (`-fakeScan`), Face ID (`-fakeUnlock`), translation (`-fakeTranslate`) and the calendar (`-fakeCalendar`) have only run through stand-ins. The tool tray, the zoom window and PDF text have only had synthesised touches, and two windows (`-windowButtons`) have only been tried one at a time.

@@ -1,5 +1,6 @@
 import UIKit
 import PencilKit
+import UniformTypeIdentifiers
 
 /// Ink picked out across pages: for each page, the places of the chosen strokes in that page's drawing.
 typealias InkSelection = [UUID: [Int]]
@@ -120,6 +121,49 @@ enum InkLasso {
             result[page] = drawing.removingStrokes(at: Set(indices))
         }
         return result
+    }
+}
+
+/// Ink on the clipboard, as PencilKit's own drawing type, so it pastes into Notes and comes back from it, beside a
+/// picture of it for everything else.
+@MainActor
+enum InkClipboard {
+    static let type = PKAppleDrawingTypeIdentifier as String
+    /// The general pasteboard; tests put their own here.
+    static var pasteboard = UIPasteboard.general
+    /// A picture of the ink is kept under this many pixels.
+    private static let pixelLimit: CGFloat = 8_000_000
+
+    static var hasInk: Bool { pasteboard.contains(pasteboardTypes: [type]) }
+
+    static func copy(_ ink: PKDrawing) {
+        var item: [String: Any] = [type: ink.dataRepresentation()]
+        let bounds = ink.bounds.insetBy(dx: -4, dy: -4)
+        if !bounds.isNull, !bounds.isEmpty {
+            let scale = min(2, (pixelLimit / (bounds.width * bounds.height)).squareRoot())
+            var image: UIImage?
+            UITraitCollection(userInterfaceStyle: .light).performAsCurrent { image = ink.image(from: bounds, scale: scale) }
+            if let png = image?.pngData() { item[UTType.png.identifier] = png }
+        }
+        pasteboard.setItems([item])
+    }
+
+    static func ink() -> PKDrawing? {
+        guard let data = pasteboard.data(forPasteboardType: type), let ink = try? PKDrawing(data: data), !ink.strokes.isEmpty else { return nil }
+        return ink
+    }
+
+    /// The ink as new strokes of its own, shifted so that its middle is at `center` and kept on a page of `size`
+    /// where it fits.
+    static func placed(_ ink: PKDrawing, at center: CGPoint, onPageOf size: CGSize) -> [PKStroke] {
+        let bounds = ink.bounds
+        guard !bounds.isNull else { return [] }
+        func shift(_ middle: CGFloat, _ length: CGFloat, _ target: CGFloat, _ room: CGFloat) -> CGFloat {
+            length >= room ? room / 2 - middle : min(max(target, length / 2), room - length / 2) - middle
+        }
+        let move = CGAffineTransform(translationX: shift(bounds.midX, bounds.width, center.x, size.width),
+                                     y: shift(bounds.midY, bounds.height, center.y, size.height))
+        return ink.strokes.map { PKStroke(ink: $0.ink, path: $0.path, transform: $0.transform.concatenating(move), mask: $0.mask, randomSeed: $0.randomSeed) }
     }
 }
 

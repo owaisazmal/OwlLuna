@@ -51,7 +51,7 @@ final class PencilGestureUITests: XCTestCase {
         draw(CGVector(dx: 0.15, dy: 0.45), CGVector(dx: 0.8, dy: 0.55), hold: 1.2)
         let status = app.staticTexts["editor.ink.status"]
         XCTAssertTrue(status.waitForExistence(timeout: 5), "a held loop round ink starts selecting")
-        XCTAssertEqual(status.label, "1 stroke. Drag it to move it.")
+        XCTAssertEqual(status.label, "1 stroke. Drag to move, tap for more.")
         XCTAssertEqual(strokeCount(canvas), start + 3, "and the loop is not kept as ink")
         app.buttons["editor.ink.undo"].tap()
         XCTAssertTrue(undo.waitForExistence(timeout: 5), "undo goes back to writing")
@@ -61,6 +61,8 @@ final class PencilGestureUITests: XCTestCase {
 
         draw(CGVector(dx: 0.15, dy: 0.45), CGVector(dx: 0.8, dy: 0.55), hold: 1.2)
         XCTAssertTrue(status.waitForExistence(timeout: 5))
+        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.45, dy: 0.5)).tap()
+        XCTAssertTrue(app.buttons["editor.ink.delete"].waitForExistence(timeout: 5), "a tap on the caught line opens its card")
         app.buttons["editor.ink.delete"].tap()
         XCTAssertEqual(strokeCount(canvas), start + 2)
         app.buttons["editor.ink.done"].tap()

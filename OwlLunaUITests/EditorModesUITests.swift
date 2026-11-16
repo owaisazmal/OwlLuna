@@ -479,7 +479,7 @@ final class EditorModesUITests: XCTestCase {
         }
 
         drag(CGVector(dx: 0.1, dy: 0.43), CGVector(dx: 0.9, dy: 0.53))
-        XCTAssertEqual(status.label, "1 stroke. Drag it to move it.", "a drag across the last line of writing catches it")
+        XCTAssertEqual(status.label, "1 stroke. Drag to move, tap for more.", "a drag across the last line of writing catches it")
         XCTAssertEqual(strokeCount(first), 4, "and draws nothing")
         attach(app, "ink-selected")
 
@@ -493,9 +493,15 @@ final class EditorModesUITests: XCTestCase {
         XCTAssertEqual(strokeCount(second), 2)
 
         drag(CGVector(dx: 0.1, dy: 0.13), CGVector(dx: 0.9, dy: 0.32))
-        XCTAssertEqual(status.label, "2 strokes. Drag them to move them.")
+        XCTAssertEqual(status.label, "2 strokes. Drag to move, tap for more.")
+        // A tap on what is caught opens its card. The copies land a little down and to the right, and are what is caught then.
+        first.coordinate(withNormalizedOffset: CGVector(dx: 0.4, dy: 0.22)).tap()
+        XCTAssertTrue(app.buttons["editor.ink.duplicate"].waitForExistence(timeout: 5))
+        attach(app, "ink-card")
         app.buttons["editor.ink.duplicate"].tap()
         XCTAssertEqual(strokeCount(first), 6)
+        first.coordinate(withNormalizedOffset: CGVector(dx: 0.4, dy: 0.25)).tap()
+        XCTAssertTrue(app.buttons["editor.ink.delete"].waitForExistence(timeout: 5))
         app.buttons["editor.ink.delete"].tap()
         XCTAssertEqual(strokeCount(first), 4, "the copies were what was selected")
         app.buttons["editor.ink.done"].tap()
@@ -565,17 +571,17 @@ final class EditorModesUITests: XCTestCase {
         first.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.43))
             .press(forDuration: 0.1, thenDragTo: first.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.53)), withVelocity: 400, thenHoldForDuration: 0.2)
         XCTAssertTrue(status.waitForExistence(timeout: 5), "a drag across the last line of writing catches it")
-        XCTAssertEqual(status.label, "1 stroke. Drag it to move it.")
+        XCTAssertEqual(status.label, "1 stroke. Drag to move, tap for more.")
         XCTAssertTrue(lasso.isHittable, "the tools stay out: the lasso is one of them")
 
         first.pinch(withScale: 1.8, velocity: 2)
         first.waitUntilStill()
-        XCTAssertEqual(status.label, "1 stroke. Drag it to move it.", "zoomed in, the line is still caught")
+        XCTAssertEqual(status.label, "1 stroke. Drag to move, tap for more.", "zoomed in, the line is still caught")
         attach(app, "lasso-kept-through-zoom")
         app.buttons["More"].firstMatch.tap()
         app.buttons["Fit Width"].firstMatch.tap()
         first.waitUntilStill()
-        XCTAssertEqual(status.label, "1 stroke. Drag it to move it.", "and fitted to the width again")
+        XCTAssertEqual(status.label, "1 stroke. Drag to move, tap for more.", "and fitted to the width again")
 
         // The caught line runs at 48% of the page's height; 7% past its foot is the head of the next page.
         let page = first.frame
@@ -593,6 +599,54 @@ final class EditorModesUITests: XCTestCase {
         app.buttons["editor.tools.1"].tap()
         XCTAssertTrue(status.waitForNonExistence(timeout: 5))
         XCTAssertTrue(app.buttons["editor.ribbon"].exists, "the editor never left writing")
+    }
+
+    /// The card on caught ink cuts and copies it, and a tap on bare paper pastes it there.
+    func testCaughtInkIsCopiedCutAndPastedFromItsCard() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-storageRoot", "modes", "-resetStorage", "-seedLibrary", "3", "-seedReplay", "-drawingInput", "anyInput"]
+        app.launch()
+        let notebook = app.buttons["notebook.Lecture Replay"]
+        XCTAssertTrue(notebook.waitForExistence(timeout: 30))
+        notebook.tap()
+        let first = app.element("page.canvas.1")
+        XCTAssertTrue(first.waitForExistence(timeout: 20))
+        first.waitUntilStill()
+        XCTAssertEqual(strokeCount(first), 4)
+        func tap(_ x: CGFloat, _ y: CGFloat) { first.coordinate(withNormalizedOffset: CGVector(dx: x, dy: y)).tap() }
+        let status = app.staticTexts["editor.ink.status"], paste = app.buttons["editor.ink.paste"]
+
+        app.buttons["editor.tools.lasso"].tap()
+        first.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.43))
+            .press(forDuration: 0.1, thenDragTo: first.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.53)), withVelocity: 400, thenHoldForDuration: 0.2)
+        XCTAssertTrue(status.waitForExistence(timeout: 5))
+        tap(0.4, 0.48)
+        XCTAssertTrue(app.buttons["editor.ink.copy"].waitForExistence(timeout: 5), "a tap on the caught line opens its card")
+        attach(app, "ink-card-on-lasso")
+        // A card's rows take their text size when it opens, so the audit's change of size mid-card isn't asked of them.
+        try audit(app, [.contrast, .elementDetection, .hitRegion, .sufficientElementDescription], screen: "ink card", popover: true)
+        app.buttons["editor.ink.copy"].tap()
+        XCTAssertEqual(strokeCount(first), 4, "copying leaves the page as it was")
+
+        tap(0.5, 0.75)
+        XCTAssertTrue(status.waitForNonExistence(timeout: 5), "a tap away lets the line go")
+        tap(0.5, 0.75)
+        XCTAssertTrue(paste.waitForExistence(timeout: 5), "with nothing caught, a tap on bare paper offers to paste")
+        attach(app, "ink-paste-card")
+        paste.tap()
+        XCTAssertEqual(strokeCount(first), 5)
+        XCTAssertTrue(status.waitForExistence(timeout: 5), "the pasted line is caught where it landed")
+
+        tap(0.5, 0.75)
+        XCTAssertTrue(app.buttons["editor.ink.cut"].waitForExistence(timeout: 5))
+        app.buttons["editor.ink.cut"].tap()
+        XCTAssertEqual(strokeCount(first), 4, "cutting takes it off the page")
+        tap(0.3, 0.9)
+        XCTAssertTrue(paste.waitForExistence(timeout: 5))
+        paste.tap()
+        XCTAssertEqual(strokeCount(first), 5, "and it pastes again from the clipboard")
+        app.buttons["editor.ink.undo"].tap()
+        XCTAssertEqual(strokeCount(first), 4)
     }
 
     func testDrawAndHoldStraightensAStroke() throws {

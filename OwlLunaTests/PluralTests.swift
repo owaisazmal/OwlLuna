@@ -22,7 +22,7 @@ final class PluralTests: XCTestCase {
         XCTAssertEqual(try text("\(0) pages", "fr"), "0 page", "French counts nought as one")
         XCTAssertEqual(try text("\(1) pages", "es"), "1 página")
         XCTAssertEqual(try text("\(5) pages", "de"), "5 Seiten")
-        XCTAssertEqual(try text("\(1) strokes. Drag them to move them.", "en"), "1 stroke. Drag it to move it.")
+        XCTAssertEqual(try text("\(1) strokes. Drag to move, tap for more.", "en"), "1 stroke. Drag to move, tap for more.")
         XCTAssertEqual(try text("\(1) notebooks waiting until they're closed", "de"), "1 Notizbuch wartet, bis es geschlossen ist")
         XCTAssertEqual(try text("\(1) more matches", "en"), "1 more match")
         XCTAssertEqual(try text("\(12) more matches", "en"), "12 more matches")

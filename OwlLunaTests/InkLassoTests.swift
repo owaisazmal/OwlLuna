@@ -1,5 +1,6 @@
 import XCTest
 import PencilKit
+import UniformTypeIdentifiers
 @testable import OwlLuna
 
 /// Selecting ink across pages and moving it between them.
@@ -185,5 +186,75 @@ final class InkLassoTests: XCTestCase {
         controller.deleteInkSelection()
         XCTAssertEqual(document.loadedInk(first)?.strokes.count, 0, "so it can still be changed from there")
         XCTAssertEqual(session.inkSelectionCount, 0)
+    }
+
+    // MARK: Ink on the clipboard
+
+    func testCaughtInkIsCopiedCutAndPastedAsInk() async throws {
+        let board = UIPasteboard.withUniqueName()
+        InkClipboard.pasteboard = board
+        addTeardownBlock { @MainActor in
+            InkClipboard.pasteboard = .general
+            UIPasteboard.remove(withName: board.name)
+        }
+        let toolbox = Toolbox(defaults: nil)
+        let pen = toolbox.choice
+        let (session, controller) = try await openEditor(pages: 2, ink: PKDrawing(strokes: [line(y: 100), line(y: 200)]), toolbox: toolbox)
+        let document = session.document, first = document.pages[0].id, second = document.pages[1].id
+        for _ in 0..<100 where controller.canvas(forPage: 1)?.isLoaded != true { try? await Task.sleep(for: .seconds(0.05)) }
+        XCTAssertFalse(controller.canPasteInk, "nothing is on the clipboard yet")
+
+        // The first page stands 16 points into the stack: this box holds its upper line only.
+        toolbox.take(.lasso)
+        controller.catchInk(inside: [CGPoint(x: 96, y: 96), CGPoint(x: 336, y: 96), CGPoint(x: 336, y: 136), CGPoint(x: 96, y: 136)])
+        XCTAssertEqual(session.inkSelectionCount, 1)
+        controller.copyInkSelection()
+        XCTAssertEqual(InkClipboard.ink()?.strokes.count, 1)
+        XCTAssertTrue(board.contains(pasteboardTypes: [UTType.png.identifier]), "a picture of it goes along for other apps")
+        XCTAssertEqual(document.loadedInk(first)?.strokes.count, 2, "copying leaves the page as it was")
+        XCTAssertTrue(controller.canPasteInk)
+
+        toolbox.take(pen)
+        XCTAssertTrue(controller.pasteInk())
+        XCTAssertEqual(document.loadedInk(first)?.strokes.count, 3)
+        XCTAssertEqual(document.undoManager.undoActionName, "Paste Ink")
+        XCTAssertEqual(toolbox.choice, .lasso, "pasted ink is caught, so the lasso is taken up")
+        XCTAssertEqual(session.inkSelectionCount, 1)
+        let shown = try XCTUnwrap(controller.visibleCenter(ofPage: 0)), pasted = try XCTUnwrap(document.loadedInk(first)?.strokes.last)
+        XCTAssertEqual(pasted.renderBounds.midX, shown.x, accuracy: 2, "it lands in the middle of what shows of the page")
+        XCTAssertEqual(pasted.renderBounds.midY, shown.y, accuracy: 2)
+
+        controller.cutInkSelection()
+        XCTAssertEqual(document.loadedInk(first)?.strokes.count, 2, "cutting takes the copy off again")
+        XCTAssertEqual(document.undoManager.undoActionName, "Cut Ink")
+        XCTAssertEqual(session.inkSelectionCount, 0)
+        XCTAssertEqual(InkClipboard.ink()?.strokes.count, 1, "and leaves it on the clipboard")
+
+        XCTAssertTrue(controller.pasteInk(at: CGPoint(x: 16 + 300, y: 824 + 400)))
+        let landed = try XCTUnwrap(document.loadedInk(second)?.strokes.last)
+        XCTAssertEqual(document.loadedInk(second)?.strokes.count, 1, "pasted at a point, it goes on the page under that point")
+        XCTAssertEqual(landed.renderBounds.midX, 300, accuracy: 2)
+        XCTAssertEqual(landed.renderBounds.midY, 400, accuracy: 2)
+        XCTAssertEqual(session.inkSelectionCount, 1)
+
+        let action = try XCTUnwrap(controller.canvas(forPage: 0)?.accessibilityCustomActions?.first { $0.name == "Paste" }, "VoiceOver pastes from the page itself")
+        XCTAssertTrue(action.actionHandler?(action) ?? false)
+        XCTAssertEqual(document.loadedInk(first)?.strokes.count, 3)
+
+        session.enter(.presenting)
+        XCTAssertFalse(controller.canPasteInk, "nothing is pasted while the pages are locked")
+        XCTAssertFalse(controller.pasteInk())
+    }
+
+    func testPastedInkIsKeptOnThePage() {
+        let size = CGSize(width: 612, height: 792), ink = PKDrawing(strokes: [line(y: 100), line(y: 140)])
+        let corner = PKDrawing(strokes: InkClipboard.placed(ink, at: CGPoint(x: 5, y: 790), onPageOf: size))
+        XCTAssertEqual(corner.strokes.count, 2)
+        XCTAssertGreaterThanOrEqual(corner.bounds.minX, -0.5, "ink pasted by an edge is moved in from it")
+        XCTAssertLessThanOrEqual(corner.bounds.maxY, 792.5)
+        XCTAssertEqual(corner.bounds.height, ink.bounds.height, accuracy: 0.5, "and keeps its shape")
+        let wide = PKDrawing(strokes: [stroke(from: CGPoint(x: 0, y: 50), to: CGPoint(x: 900, y: 50))])
+        let centred = PKDrawing(strokes: InkClipboard.placed(wide, at: CGPoint(x: 100, y: 300), onPageOf: size))
+        XCTAssertEqual(centred.bounds.midX, 306, accuracy: 1, "ink wider than the page is centred on it")
     }
 }

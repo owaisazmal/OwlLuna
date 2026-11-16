@@ -47,6 +47,8 @@ struct PanelPresenter<Panel: View>: ViewModifier {
     var chained = false
     /// A notice stands in the middle of the screen. Its button's work is done before its binding is put back, as an alert's is.
     var notice = false
+    /// The part of the view the panel hangs from, in the view's own points; all of it when nil.
+    var within: CGRect?
     @ViewBuilder var panel: () -> Panel
     @State private var spot = PanelSpot()
     @State private var covering = false
@@ -75,7 +77,10 @@ struct PanelPresenter<Panel: View>: ViewModifier {
 
     private func cover(_ shown: Bool) {
         guard shown != covering else { return }
-        if shown { anchor = spot.frame.insetBy(dx: 0, dy: min(0, (spot.frame.height - least) / 2)) }
+        if shown {
+            let frame = spot.frame, place = within.map { $0.offsetBy(dx: frame.minX, dy: frame.minY) } ?? frame
+            anchor = place.insetBy(dx: 0, dy: min(0, (place.height - least) / 2))
+        }
         var transaction = Transaction()
         transaction.disablesAnimations = true
         withTransaction(transaction) { covering = shown }
