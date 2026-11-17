@@ -1033,6 +1033,9 @@ fileprivate struct EditorContent: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.ink)
                     .lineLimit(1)
+                    // It carries the bar's actions for assistive technologies, so it is as tall as anything else that acts.
+                    .frame(minHeight: 44)
+                    .contentShape(.accessibility, Rectangle())
                     .padding(.trailing, Space.x2)
                     .accessibilityIdentifier("editor.ink.status")
             }

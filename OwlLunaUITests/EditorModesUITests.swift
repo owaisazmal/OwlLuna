@@ -649,6 +649,68 @@ final class EditorModesUITests: XCTestCase {
         XCTAssertEqual(strokeCount(first), 4)
     }
 
+    /// The box round caught ink has a tab on each corner, a bar on each side and a knob: they resize, stretch and turn it.
+    func testCaughtInkIsResizedStretchedAndTurnedByItsHandles() throws {
+        let app = XCUIApplication()
+        // "System Setting": on a simulator fingers draw while the tools are out, and only the Pencil once they are put away.
+        app.launchArguments = ["-storageRoot", "modes", "-resetStorage", "-seedLibrary", "3", "-seedReplay", "-drawingInput", "system"]
+        app.launch()
+        let notebook = app.buttons["notebook.Lecture Replay"]
+        XCTAssertTrue(notebook.waitForExistence(timeout: 30))
+        notebook.tap()
+        let first = app.element("page.canvas.1")
+        XCTAssertTrue(first.waitForExistence(timeout: 20))
+        first.waitUntilStill()
+        let status = app.staticTexts["editor.ink.status"], undo = app.buttons["editor.undo"]
+        let tab = app.otherElements["page.ink.bottomRight"], bar = app.otherElements["page.ink.right"], knob = app.otherElements["page.ink.knob"]
+        /// The whole numbers in what a handle says of the ink: its width and height in points.
+        func size(_ handle: XCUIElement) -> [Double] { ((handle.value as? String) ?? "").split { !$0.isNumber }.compactMap { Double($0) } }
+        func drag(_ handle: XCUIElement, by offset: CGVector) {
+            let from = handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            from.press(forDuration: 0.1, thenDragTo: from.withOffset(offset), withVelocity: 300, thenHoldForDuration: 0.2)
+        }
+
+        app.buttons["editor.tools.lasso"].tap()
+        first.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.43))
+            .press(forDuration: 0.1, thenDragTo: first.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.53)), withVelocity: 400, thenHoldForDuration: 0.2)
+        XCTAssertTrue(status.waitForExistence(timeout: 5))
+        XCTAssertTrue(tab.waitForExistence(timeout: 5), "the box round the caught line wears its handles")
+        XCTAssertEqual(knob.value as? String, "Upright")
+        let before = size(tab)
+        XCTAssertEqual(before.count, 2)
+        attach(app, "ink-handles")
+        try audit(app, [.contrast, .elementDetection, .hitRegion, .sufficientElementDescription], screen: "ink handles")
+
+        drag(tab, by: CGVector(dx: 80, dy: 40))
+        let larger = size(tab)
+        XCTAssertGreaterThan(larger[0], before[0] + 20, "a corner tab dragged outwards makes the line larger")
+        XCTAssertEqual(larger[0] / larger[1], before[0] / before[1], accuracy: 0.7, "and keeps its proportions")
+        XCTAssertEqual(status.label, "1 stroke. Drag to move, tap for more.", "the line stays caught")
+
+        // With the tools put away a finger scrolls the pages, and one that lands on a handle still works it.
+        app.buttons["Hide Tools"].firstMatch.tap()
+        first.waitUntilStill()
+        let top = first.frame.minY
+        drag(bar, by: CGVector(dx: -60, dy: 0))
+        let narrower = size(tab)
+        XCTAssertLessThan(narrower[0], larger[0] - 20, "a side bar dragged inwards makes the line narrower")
+        XCTAssertEqual(narrower[1], larger[1], accuracy: 1, "and no shorter")
+        XCTAssertEqual(first.frame.minY, top, accuracy: 1, "the pages stay put under a finger on a handle")
+
+        // The knob stands about sixty points over the middle of the box: carried level with it, it has turned a quarter.
+        drag(knob, by: CGVector(dx: 60, dy: 60))
+        XCTAssertEqual(knob.value as? String, "Turned 90° right", "the knob turns the line, settling on the quarter turn")
+        XCTAssertEqual(size(tab)[0], narrower[0], accuracy: 1, "its box stands turned with it")
+        attach(app, "ink-turned")
+
+        undo.tap()
+        XCTAssertTrue(status.waitForNonExistence(timeout: 5), "undoing lets the line go")
+        undo.tap()
+        XCTAssertTrue(undo.isEnabled)
+        undo.tap()
+        XCTAssertFalse(undo.isEnabled, "each drag of a handle was one undo step")
+    }
+
     func testDrawAndHoldStraightensAStroke() throws {
         let app = XCUIApplication()
         let canvas = openNotebook(app, input: "anyInput")

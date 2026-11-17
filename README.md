@@ -25,7 +25,7 @@ The App Store version comes later. To build it yourself, see [Getting started](#
 - Shapes: drag out a line, arrow, circle, rectangle or triangle in the current pen's ink.
 - Pencil gestures: scribble over ink to erase it, loop round ink to select it, and choose what double-tap and squeeze do. A squeeze can bring an ink dish of your pens to the Pencil's tip.
 - Finger taps: two fingers undo and three redo, or choose another action for each, and for a one-finger double-tap.
-- Lasso ink, carry it to another page, and cut, copy and paste it, also to and from Notes.
+- Lasso ink, resize, stretch and turn it, carry it to another page, and cut, copy and paste it, also to and from Notes.
 - Handwriting to text, read on the device: convert a selection, or have writing set as type as you go. Translate it with Apple's translator.
 - A zoom window for writing small and neat.
 - Whiteboards: a page with no edges, for diagrams and brainstorming.

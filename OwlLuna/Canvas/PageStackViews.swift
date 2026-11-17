@@ -78,12 +78,15 @@ final class PageCanvasView: PKCanvasView {
     }
 }
 
-/// The page stack's scroll view. It leaves a drag to something else when asked, as when a finger lands on selected ink.
+/// The page stack's scroll view. It leaves a drag to something else when asked, as when a finger lands on selected
+/// ink, and holds its zoom while a handle is shaping that ink.
 final class PageScrollView: UIScrollView {
     var yieldsDrag: ((UIPanGestureRecognizer) -> Bool)?
+    var holdsZoom: (() -> Bool)?
 
     override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         if gestureRecognizer === panGestureRecognizer, yieldsDrag?(panGestureRecognizer) == true { return false }
+        if gestureRecognizer === pinchGestureRecognizer, holdsZoom?() == true { return false }
         return super.gestureRecognizerShouldBegin(gestureRecognizer)
     }
 }

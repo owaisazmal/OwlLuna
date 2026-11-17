@@ -196,7 +196,7 @@ final class ItemSelectionView: UIView, UIGestureRecognizerDelegate {
     }
 
     /// Settles on the quarter turns when within three degrees of one.
-    static func snapped(_ angle: CGFloat) -> CGFloat {
+    nonisolated static func snapped(_ angle: CGFloat) -> CGFloat {
         let quarter = CGFloat.pi / 2
         let nearest = (angle / quarter).rounded() * quarter
         return abs(angle - nearest) < 3 * .pi / 180 ? nearest : angle
@@ -383,7 +383,7 @@ private final class SideGrip: UIView {
 }
 
 /// A pan that keeps where the finger came down, as its own translation only counts from where it was recognised.
-private final class GripPan: UIPanGestureRecognizer {
+final class GripPan: UIPanGestureRecognizer {
     private var down: CGPoint = .zero
 
     func start(in view: UIView) -> CGPoint { view.convert(down, from: nil) }

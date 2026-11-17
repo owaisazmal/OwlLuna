@@ -50,15 +50,27 @@ enum InkLasso {
 
     /// The rectangle round the selection, in stack points.
     static func bounds(of selection: InkSelection, drawings: [UUID: PKDrawing], frames: [UUID: CGRect]) -> CGRect? {
+        box(of: selection, drawings: drawings, frames: frames)?.bounds
+    }
+
+    /// The box round the selection, in stack points, standing at `turn` as its ink was left turned: the ink is
+    /// measured as it lies turned back upright.
+    static func box(of selection: InkSelection, turn: CGFloat = 0, drawings: [UUID: PKDrawing], frames: [UUID: CGRect]) -> InkBox? {
+        let upright = CGAffineTransform(rotationAngle: -turn)
         var result: CGRect?
         for (page, indices) in selection {
-            guard let drawing = drawings[page], let frame = frames[page] else { continue }
-            for index in indices where drawing.strokes.indices.contains(index) {
-                let box = drawing.strokes[index].renderBounds.offsetBy(dx: frame.minX, dy: frame.minY)
+            guard let strokes = drawings[page]?.strokes, let frame = frames[page] else { continue }
+            for index in indices where strokes.indices.contains(index) {
+                var stroke = strokes[index], box = stroke.renderBounds.offsetBy(dx: frame.minX, dy: frame.minY)
+                if turn != 0 {
+                    stroke.transform = stroke.transform.concatenating(CGAffineTransform(translationX: frame.minX, y: frame.minY)).concatenating(upright)
+                    box = stroke.renderBounds
+                }
                 result = result?.union(box) ?? box
             }
         }
-        return result
+        guard let result, !result.isNull else { return nil }
+        return InkBox(center: CGPoint(x: result.midX, y: result.midY).applying(CGAffineTransform(rotationAngle: turn)), size: result.size, turn: turn)
     }
 
     /// The page a point in the stack belongs to: the one it is on, or else the nearest.
@@ -70,11 +82,17 @@ enum InkLasso {
         return frames.min { distance($0.value) < distance($1.value) }?.key
     }
 
-    /// Moves, or copies, the selected strokes by `delta`. A stroke whose middle lands on another page becomes that
-    /// page's ink; on a page whose drawing isn't given it stays where it came from. Returns the drawings that changed
-    /// and where the strokes are now.
+    /// Moves, or copies, the selected strokes by `delta`.
     static func moved(_ selection: InkSelection, by delta: CGSize, copying: Bool = false,
                       drawings: [UUID: PKDrawing], frames: [UUID: CGRect]) -> (drawings: [UUID: PKDrawing], selection: InkSelection) {
+        changed(selection, by: CGAffineTransform(translationX: delta.width, y: delta.height), copying: copying, drawings: drawings, frames: frames)
+    }
+
+    /// Changes the selected strokes by `change`, given in stack points, or copies them changed. A stroke whose middle
+    /// lands on another page becomes that page's ink; on a page whose drawing isn't given it stays where it came from.
+    /// Returns the drawings that changed and where the strokes are now.
+    static func changed(_ selection: InkSelection, by change: CGAffineTransform, copying: Bool = false,
+                        drawings: [UUID: PKDrawing], frames: [UUID: CGRect]) -> (drawings: [UUID: PKDrawing], selection: InkSelection) {
         var strokes: [UUID: [PKStroke]] = [:]
         var arrivals: [UUID: [PKStroke]] = [:]
         var result: InkSelection = [:]
@@ -85,13 +103,13 @@ enum InkLasso {
             for (index, stroke) in drawing.strokes.enumerated() {
                 guard chosen.contains(index) else { kept.append(stroke); continue }
                 let box = stroke.renderBounds
-                let middle = CGPoint(x: frame.minX + box.midX + delta.width, y: frame.minY + box.midY + delta.height)
+                let middle = CGPoint(x: frame.minX + box.midX, y: frame.minY + box.midY).applying(change)
                 var target = Self.page(at: middle, frames: frames) ?? page
                 if drawings[target] == nil { target = page }
                 let origin = frames[target] ?? frame
-                var moved = stroke
-                moved.transform = stroke.transform.concatenating(CGAffineTransform(translationX: delta.width + frame.minX - origin.minX,
-                                                                                   y: delta.height + frame.minY - origin.minY))
+                let onPage = CGAffineTransform(translationX: frame.minX, y: frame.minY).concatenating(change)
+                    .concatenating(CGAffineTransform(translationX: -origin.minX, y: -origin.minY))
+                let moved = Self.changed(stroke, by: onPage)
                 if copying {
                     kept.append(stroke)
                     // A copy is a stroke of its own, or a canvas would take it for the one it was copied from.
@@ -112,6 +130,24 @@ enum InkLasso {
             strokes[page] = all
         }
         return (strokes.mapValues { PKDrawing(strokes: $0) }, result)
+    }
+
+    /// A stroke changed by `change`, in its page's points. Moved, turned or resized evenly, it keeps its path and its
+    /// line scales with it. Stretched one way, its path is stretched instead, so its line stays as thick as it was.
+    static func changed(_ stroke: PKStroke, by change: CGAffineTransform) -> PKStroke {
+        var result = stroke
+        let own = stroke.transform
+        guard !change.isEven, abs(own.a * own.d - own.b * own.c) > 1e-9 else {
+            result.transform = own.concatenating(change)
+            return result
+        }
+        let inPath = own.concatenating(change).concatenating(own.inverted())
+        result.path = PKStrokePath(controlPoints: stroke.path.map { $0.moved(to: $0.location.applying(inPath)) }, creationDate: stroke.path.creationDate)
+        if let mask = stroke.mask?.copy() as? UIBezierPath {
+            mask.apply(inPath)
+            result.mask = mask
+        }
+        return result
     }
 
     static func removing(_ selection: InkSelection, from drawings: [UUID: PKDrawing]) -> [UUID: PKDrawing] {
@@ -167,6 +203,22 @@ enum InkClipboard {
     }
 }
 
+private extension PKStrokePoint {
+    /// The same touch of the nib at another place.
+    func moved(to place: CGPoint) -> PKStrokePoint {
+        if #available(iOS 27.0, *) {
+            return PKStrokePoint(location: place, timeOffset: timeOffset, size: size, opacity: opacity, force: force, azimuth: azimuth, altitude: altitude,
+                                 secondaryScale: secondaryScale, threshold: threshold, lateralJitter: lateralJitter)
+        }
+        if #available(iOS 26.0, *) {
+            return PKStrokePoint(location: place, timeOffset: timeOffset, size: size, opacity: opacity, force: force, azimuth: azimuth, altitude: altitude,
+                                 secondaryScale: secondaryScale, threshold: threshold)
+        }
+        return PKStrokePoint(location: place, timeOffset: timeOffset, size: size, opacity: opacity, force: force, azimuth: azimuth, altitude: altitude,
+                             secondaryScale: secondaryScale)
+    }
+}
+
 extension PKDrawing {
     /// Only the strokes at `indices`, in the order they were drawn.
     func keepingStrokes(at indices: Set<Int>) -> PKDrawing {
@@ -180,27 +232,41 @@ extension PKDrawing {
 }
 
 /// Drawn over the page stack while ink is being selected across pages: the lasso as it is drawn, the stitched box
-/// round what it caught, and the caught ink itself while it is being dragged.
+/// round what it caught with the handles that shape it, and the caught ink itself while it is being dragged.
 final class InkLassoOverlay: UIView {
     var scale: CGFloat = 1 {
         didSet { if scale != oldValue { redraw() } }
     }
     /// Whether a touch at a point should go to what lies under the overlay, such as a selected picture's handles.
     var passesThrough: ((CGPoint) -> Bool)?
+    /// Whether the box wears its handles. Ink that can't be changed has none.
+    var hasHandles = true {
+        didSet { if hasHandles != oldValue { redraw() } }
+    }
+    /// A step on a handle from an assistive technology.
+    var onStep: ((InkHandle, _ up: Bool) -> Void)?
 
     private let lasso = CAShapeLayer(), lassoUnder = CAShapeLayer()
-    private let box = CAShapeLayer(), boxUnder = CAShapeLayer()
+    private let outline = CAShapeLayer(), outlineUnder = CAShapeLayer()
+    private let stalk = CAShapeLayer(), stalkUnder = CAShapeLayer()
     private let floating = UIView()
+    private let grips = InkHandle.allCases.map { InkGrip(handle: $0) }
     private var path: [CGPoint] = []
-    private(set) var selectionBounds: CGRect?
+    /// The box round what is caught, as it stands on the pages.
+    private(set) var selectionBox: InkBox?
     private var lifted: [(view: UIImageView, rect: CGRect)] = []
-    private var drag = CGSize.zero
+    /// What a drag has done to the lifted ink so far, in stack points.
+    private var change = CGAffineTransform.identity
+
+    /// The upright rectangle round what is caught, in stack points.
+    var selectionBounds: CGRect? { selectionBox?.bounds }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .clear
         isAccessibilityElement = false
-        for (layer, width, dash) in [(lassoUnder, 3.5 as CGFloat, false), (lasso, 2, true), (boxUnder, 3.5, false), (box, 2, true)] {
+        for (layer, width, dash) in [(lassoUnder, 3.5 as CGFloat, false), (lasso, 2, true), (outlineUnder, 3.5, false), (outline, 2, true),
+                                     (stalkUnder, 3.5, false), (stalk, 2, false)] {
             layer.fillColor = nil
             layer.lineWidth = width
             layer.lineCap = .round
@@ -210,6 +276,11 @@ final class InkLassoOverlay: UIView {
         }
         floating.isUserInteractionEnabled = false
         addSubview(floating)
+        for grip in grips {
+            grip.isHidden = true
+            grip.onStep = { [weak self, handle = grip.handle] up in self?.onStep?(handle, up) }
+            addSubview(grip)
+        }
         colour()
         registerForTraitChanges([UITraitUserInterfaceStyle.self, UITraitAccessibilityContrast.self]) { (self: Self, _) in self.colour() }
     }
@@ -223,30 +294,53 @@ final class InkLassoOverlay: UIView {
     private func colour() {
         let mustard = UIColor.mustard.resolvedColor(with: traitCollection).cgColor
         let ink = UIColor.ink.resolvedColor(with: traitCollection).withAlphaComponent(0.55).cgColor
-        lasso.strokeColor = mustard
-        box.strokeColor = mustard
-        lassoUnder.strokeColor = ink
-        boxUnder.strokeColor = ink
+        for line in [lasso, outline, stalk] { line.strokeColor = mustard }
+        for line in [lassoUnder, outlineUnder, stalkUnder] { line.strokeColor = ink }
+        for grip in grips { grip.colour(traitCollection) }
     }
 
     private func onScreen(_ point: CGPoint) -> CGPoint { CGPoint(x: point.x * scale, y: point.y * scale) }
 
+    /// The box and its handles as they are drawn: where a drag has taken them so far.
+    private var layout: InkBoxLayout? {
+        selectionBox.map { InkBoxLayout($0.applying(change), scale: scale, in: bounds) }
+    }
+
     private func redraw() {
+        let layout = layout, handled = hasHandles && path.isEmpty
+        // The box and its handles go to the screen together.
         CATransaction.withoutActions {
             let line = UIBezierPath()
             for (index, point) in path.enumerated() { index == 0 ? line.move(to: onScreen(point)) : line.addLine(to: onScreen(point)) }
             lasso.path = path.isEmpty ? nil : line.cgPath
             lassoUnder.path = lasso.path
-            if let selectionBounds {
-                let rect = selectionBounds.scaled(by: scale).insetBy(dx: -8, dy: -8).offsetBy(dx: drag.width * scale, dy: drag.height * scale)
-                box.path = UIBezierPath(roundedRect: rect, cornerRadius: Radius.plate).cgPath
+            if let layout {
+                let size = layout.outline
+                let stitched = UIBezierPath(roundedRect: CGRect(x: -size.width / 2, y: -size.height / 2, width: size.width, height: size.height),
+                                            cornerRadius: Radius.plate)
+                stitched.apply(CGAffineTransform(rotationAngle: layout.box.turn).concatenating(CGAffineTransform(translationX: layout.box.center.x, y: layout.box.center.y)))
+                outline.path = stitched.cgPath
+                let stem = UIBezierPath()
+                stem.move(to: layout.stalkFoot)
+                stem.addLine(to: layout.center(of: .knob))
+                stalk.path = handled ? stem.cgPath : nil
             } else {
-                box.path = nil
+                outline.path = nil
+                stalk.path = nil
             }
-            boxUnder.path = box.path
+            outlineUnder.path = outline.path
+            stalkUnder.path = stalk.path
+            for grip in grips {
+                grip.isHidden = layout == nil || !handled
+                guard let layout, handled else { continue }
+                grip.transform = .identity
+                grip.center = layout.center(of: grip.handle)
+                grip.transform = CGAffineTransform(rotationAngle: layout.box.turn)
+                if let selectionBox { grip.show(selectionBox.applying(change)) }
+            }
         }
         for item in lifted { item.view.frame = item.rect.scaled(by: scale) }
-        floating.transform = CGAffineTransform(translationX: drag.width * scale, y: drag.height * scale)
+        floating.transform = CGAffineTransform(a: change.a, b: change.b, c: change.c, d: change.d, tx: change.tx * scale, ty: change.ty * scale)
     }
 
     // MARK: The lasso
@@ -273,12 +367,18 @@ final class InkLassoOverlay: UIView {
 
     // MARK: What it caught
 
-    func showSelection(_ bounds: CGRect?) {
-        selectionBounds = bounds
+    func showSelection(_ box: InkBox?) {
+        selectionBox = box
         redraw()
     }
 
-    /// Shows the caught ink as pictures that follow the finger; the canvases have stopped drawing it.
+    /// The handle a touch at a point of the stack takes hold of, if it lands on one.
+    func handle(at point: CGPoint) -> InkHandle? {
+        guard hasHandles, path.isEmpty, let layout else { return nil }
+        return layout.handle(at: onScreen(point))
+    }
+
+    /// Shows the caught ink as pictures that follow a drag; the canvases have stopped drawing it.
     func lift(_ images: [(image: UIImage, rect: CGRect)]) {
         drop()
         lifted = images.map { item in
@@ -289,15 +389,16 @@ final class InkLassoOverlay: UIView {
         redraw()
     }
 
-    func drag(by delta: CGSize) {
-        drag = delta
+    /// Shows the lifted ink and its box as a drag has changed them so far, in stack points.
+    func follow(_ change: CGAffineTransform) {
+        self.change = change
         redraw()
     }
 
     func drop() {
         lifted.forEach { $0.view.removeFromSuperview() }
         lifted = []
-        drag = .zero
+        change = .identity
         redraw()
     }
 }

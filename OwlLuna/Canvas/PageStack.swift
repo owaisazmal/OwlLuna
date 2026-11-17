@@ -80,9 +80,9 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     private var isSelectingInk = false
     private var lassoMoveOrigin: CGPoint?
     private var isMovingInk = false
-    private lazy var lassoPan = UIPanGestureRecognizer(target: self, action: #selector(lassoPanned))
+    private lazy var lassoPan = GripPan(target: self, action: #selector(lassoPanned))
     /// Where a finger scrolls, one that lands on what the lasso caught drags it.
-    private lazy var lassoDrag = UIPanGestureRecognizer(target: self, action: #selector(lassoPanned))
+    private lazy var lassoDrag = GripPan(target: self, action: #selector(lassoPanned))
     /// Whichever of the two is holding caught ink.
     private weak var lassoHolder: UIPanGestureRecognizer?
     /// Scrolls the pages under ink a finger holds. The scroll view's own drag is spent on that finger.
@@ -92,6 +92,15 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     private var lassoTapDraws = false
     /// Scrolls the pages while ink is held near the top or the foot of them.
     private var lassoScroll: CADisplayLink?
+    /// How far the box round caught ink stands turned, for as long as the same ink stays caught.
+    private var inkTurn: CGFloat = 0
+    /// Takes hold of a handle on the box round caught ink, with the Pencil or a finger.
+    private lazy var inkGrip = GripPan(target: self, action: #selector(inkGripped))
+    /// The handle a drag has hold of, the box as it stood when it was taken, where in the stack the touch came down,
+    /// and the longest the drag may make a side.
+    private var inkShaping: (handle: InkHandle, box: InkBox, start: CGPoint, most: CGFloat)?
+    /// Whether the touch now on a handle is a finger, which could be a resting hand.
+    private var inkGripIsFinger = false
     /// The held loop that started the selection, while Keep Circle can still put it back as the circle it reads as.
     private var heldLoop: (pageID: UUID, stamp: Date, circle: PKStroke, name: String)? {
         didSet { if session.canKeepHeldLoop != (heldLoop != nil) { session.canKeepHeldLoop = heldLoop != nil } }
@@ -270,16 +279,17 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         strokeHold.fingersDraw = { [weak self] in self?.effectivePolicy == .anyInput }
         strokeHold.onPencilDown = { FingerDrawHint.pencilTouched() }
         strokeHold.onFingerDrag = { [weak self] in self?.fingerDragged() }
-        for pan in [lassoPan, textPan] {
+        for pan in [lassoPan, textPan, inkGrip] {
             pan.maximumNumberOfTouches = 1
             pan.allowedTouchTypes = Self.scrollTouchTypes + [NSNumber(value: UITouch.TouchType.pencil.rawValue)]
         }
         lassoDrag.maximumNumberOfTouches = 1
         for pan in [lassoDrag, heldScroll] { pan.allowedTouchTypes = Self.scrollTouchTypes }
-        for recognizer in [lassoPan, lassoDrag, heldScroll, lassoTap] { recognizer.delegate = self }
+        for recognizer in [lassoPan, lassoDrag, heldScroll, lassoTap, inkGrip] { recognizer.delegate = self }
         scrollView.addGestureRecognizer(heldScroll)
         lassoTap.allowedTouchTypes = lassoPan.allowedTouchTypes
         scrollView.yieldsDrag = { [weak self] pan in self?.fingerMovesInk(pan) ?? false }
+        scrollView.holdsZoom = { [weak self] in self?.inkShaping != nil }
         shapePan.maximumNumberOfTouches = 1
         shapePan.delegate = self
         NotificationCenter.default.addObserver(self, selector: #selector(toolChanged), name: Toolbox.didChange, object: toolbox)
@@ -1575,14 +1585,15 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         if gestureRecognizer === shapePan { return !isLocked && !document.isReadOnly && toolbox.pen != nil }
-        if gestureRecognizer === lassoPan { return lassoMoveOrigin == nil }
+        if gestureRecognizer === lassoPan { return !holdsInk }
         if gestureRecognizer === heldScroll { return lassoMoveOrigin != nil }
-        // A hand that rests on the caught ink while the Pencil works is not a finger come to move it.
-        if gestureRecognizer === lassoDrag { return lassoMoveOrigin == nil && !strokeHold.pencilIsNear() }
+        // A hand that rests on the caught ink while the Pencil works is not a finger come to move it, or to shape it.
+        if gestureRecognizer === lassoDrag { return !holdsInk && !strokeHold.pencilIsNear() }
+        if gestureRecognizer === inkGrip { return !holdsInk && !scrollView.isZooming && !(inkGripIsFinger && !fingersDraw && strokeHold.pencilIsNear()) }
         if gestureRecognizer === checkTap { return typedCheckbox(at: gestureRecognizer.location(in: textView)) != nil }
         if let tap = fingerTaps.first(where: { $0.recognizer === gestureRecognizer })?.tap { return allowsFingerTap(tap, gestureRecognizer) }
         guard gestureRecognizer === tapeTap else { return true }
-        return replay == nil && !isSelectingInk && textOverlay == nil && !isOnSelection(gestureRecognizer)
+        return replay == nil && !isSelectingInk && textOverlay == nil && !isOnSelection(gestureRecognizer) && !isOnCaughtInk(gestureRecognizer)
             && item(at: gestureRecognizer.location(in: scrollView), tapeOnly: true) != nil
     }
 
@@ -1602,7 +1613,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     @objc private func tappedPage(_ gesture: UITapGestureRecognizer) {
         guard !isOnSelection(gesture), !isFinding, cropView == nil else { return }
         if replay != nil { return seekReplay(to: gesture.location(in: scrollView)) }
-        if isSelectingInk || textOverlay != nil { return }
+        if isSelectingInk || textOverlay != nil || isOnCaughtInk(gesture) { return }
         let hit = isPresenting || !fingersDraw ? item(at: gesture.location(in: scrollView)) : nil
         if let hit, item(hit)?.tape != nil { return }
         if let hit, let link = item(hit)?.link { return session.follow(link, from: hit.pageID) }
@@ -1648,7 +1659,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     /// Touch and hold picks one up with a finger or the Pencil, and drops the dot the hold would have drawn.
     @objc private func heldPage(_ gesture: UILongPressGestureRecognizer) {
-        guard gesture.state == .began, !isLocked, !document.isReadOnly, !isOnSelection(gesture), cropView == nil,
+        guard gesture.state == .began, !isLocked, !document.isReadOnly, !isOnSelection(gesture), !isOnCaughtInk(gesture), cropView == nil,
               let hit = item(at: gesture.location(in: scrollView)) else { return }
         if let canvas = canvases[hit.pageID], canvas.drawingGestureRecognizer.isEnabled {
             canvas.drawingGestureRecognizer.isEnabled = false
@@ -1791,6 +1802,12 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     /// Only a touch on a box of the checklist being typed in is a tick; every other touch is the text view's.
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
         if gestureRecognizer === lassoPan || gestureRecognizer === lassoDrag { return lassoTakes(touch, for: gestureRecognizer) }
+        if gestureRecognizer === inkGrip || gestureRecognizer === lassoTap {
+            // A touch on a handle is the handle's alone, and a tap there does nothing.
+            let onHandle = !holdsInk && !scrollView.isZooming && inkHandle(under: touch) != nil
+            if gestureRecognizer === inkGrip { inkGripIsFinger = touch.type != .pencil }
+            if onHandle != (gestureRecognizer === inkGrip) { return false }
+        }
         if gestureRecognizer === lassoTap { lassoTapDraws = touch.type == .pencil || fingersDraw }
         // Only fingers that land while ink is held, and only once the scroll view can no longer scroll for them.
         if gestureRecognizer === heldScroll { return lassoMoveOrigin != nil && scrollView.panGestureRecognizer.state == .failed }
@@ -2017,7 +2034,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         }
         updateInsets()
         updateWindow(force: true)
-        if !inkSelection.isEmpty { setInkSelection(inkSelection.filter { index(of: $0.key) != nil }) }
+        if !inkSelection.isEmpty { setInkSelection(inkSelection.filter { index(of: $0.key) != nil }, turn: inkTurn) }
         if let pendingPage { session.pageDidChange(pendingPage) }
     }
 
@@ -2379,7 +2396,9 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             let above = [selectionView, cropView, textView] as [UIView?] + slots.values.map { $0.card as UIView? }
             return above.contains { view in view.map { $0.point(inside: overlay.convert(point, to: $0), with: nil) } ?? false }
         }
-        for recognizer in [lassoPan, lassoDrag, lassoTap] { overlay.addGestureRecognizer(recognizer) }
+        overlay.hasHandles = !document.isReadOnly
+        overlay.onStep = { [weak self] handle, up in self?.stepInk(handle, up: up) }
+        for recognizer in [lassoPan, lassoDrag, lassoTap, inkGrip] { overlay.addGestureRecognizer(recognizer) }
         contentView.addSubview(overlay)
         for above in [textOverlay, zoomTarget] as [UIView?] { if let above { contentView.bringSubviewToFront(above) } }
         inkLasso = overlay
@@ -2391,10 +2410,12 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         toolTrayDidChange()
     }
 
-    private func setInkSelection(_ selection: InkSelection) {
+    /// The box round newly caught ink stands upright. Ink that was turned and is still caught keeps its box at that `turn`.
+    private func setInkSelection(_ selection: InkSelection, turn: CGFloat = 0) {
         heldLoop = nil
         inkSelection = selection.filter { !$0.value.isEmpty }
-        inkLasso?.showSelection(InkLasso.bounds(of: inkSelection, drawings: liveInk, frames: stackFrames))
+        inkTurn = inkSelection.isEmpty || abs(turn) < 1e-6 ? 0 : turn
+        inkLasso?.showSelection(InkLasso.box(of: inkSelection, turn: inkTurn, drawings: liveInk, frames: stackFrames))
         let count = inkSelection.values.reduce(0) { $0 + $1.count }
         if session.inkSelectionCount != count { session.inkSelectionCount = count }
         pinInk()
@@ -2409,47 +2430,73 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             holder?.isEnabled = false
             holder?.isEnabled = true
         }
+        if inkShaping != nil {
+            inkShaping = nil
+            restoreLiftedInk()
+            inkGrip.isEnabled = false
+            inkGrip.isEnabled = true
+        }
         setInkSelection([:])
     }
+
+    /// Whether caught ink is off its pages just now: a drag is carrying it, or a handle is shaping it.
+    private var holdsInk: Bool { lassoMoveOrigin != nil || inkShaping != nil }
 
     private func stackPoint(_ gesture: UIGestureRecognizer) -> CGPoint {
         let point = gesture.location(in: contentView)
         return CGPoint(x: point.x / bakedScale, y: point.y / bakedScale)
     }
 
-    /// Whether a point of the stack is on what the lasso caught, with a fingertip's margin on the screen.
+    /// Whether a point of the stack is on what the lasso caught, with a fingertip's margin on the screen, and not
+    /// on one of the box's handles.
     private func isOnInkSelection(_ point: CGPoint) -> Bool {
-        guard let bounds = inkLasso?.selectionBounds else { return false }
-        let margin = 14 / max(effectiveScale, 0.01)
-        return bounds.insetBy(dx: -margin, dy: -margin).contains(point)
+        guard let overlay = inkLasso, let box = overlay.selectionBox, overlay.handle(at: point) == nil else { return false }
+        let scale = max(effectiveScale, 0.01)
+        return box.grown(toAtLeast: InkBoxLayout.leastSide / scale).contains(point, margin: 14 / scale)
+    }
+
+    /// Whether a touch is on what the lasso caught or on a handle of its box, and so the lasso's and not the page's.
+    private func isOnCaughtInk(_ gesture: UIGestureRecognizer) -> Bool {
+        guard let overlay = inkLasso, bakedScale > 0 else { return false }
+        let point = stackPoint(gesture)
+        return isOnInkSelection(point) || overlay.handle(at: point) != nil
+    }
+
+    /// The handle of the box round caught ink that a touch lands on.
+    private func inkHandle(under touch: UITouch) -> InkHandle? {
+        guard bakedScale > 0 else { return nil }
+        let point = touch.location(in: contentView)
+        return inkLasso?.handle(at: CGPoint(x: point.x / bakedScale, y: point.y / bakedScale))
     }
 
     /// The Pencil lassos, and so does a finger where fingers draw. Where they scroll, a finger only drags what is
     /// caught. A drag under way takes no more touches: they are left to scroll and zoom.
     private func lassoTakes(_ touch: UITouch, for recognizer: UIGestureRecognizer) -> Bool {
         if recognizer.state == .began || recognizer.state == .changed { return false }
+        if !holdsInk, inkHandle(under: touch) != nil { return false }
         if recognizer === lassoPan { return touch.type == .pencil || fingersDraw }
         let point = touch.location(in: contentView)
         return !fingersDraw && bakedScale > 0 && isOnInkSelection(CGPoint(x: point.x / bakedScale, y: point.y / bakedScale))
     }
 
-    /// Where a finger scrolls, one that came down alone on what is caught moves it and the pages stay put.
+    /// Where a finger scrolls, one that came down alone on what is caught or on a handle of its box moves or shapes
+    /// it, and the pages stay put, as they do while a handle is held. Those drags only take a touch that landed there.
     private func fingerMovesInk(_ pan: UIPanGestureRecognizer) -> Bool {
-        guard inkLasso != nil, !fingersDraw, lassoMoveOrigin == nil, !strokeHold.pencilIsNear(), pan.numberOfTouches == 1, bakedScale > 0 else { return false }
-        let point = pan.location(in: contentView), moved = pan.translation(in: contentView)
-        return isOnInkSelection(CGPoint(x: (point.x - moved.x) / bakedScale, y: (point.y - moved.y) / bakedScale))
+        if inkShaping != nil { return true }
+        guard inkLasso != nil, !fingersDraw, lassoMoveOrigin == nil, !strokeHold.pencilIsNear(), pan.numberOfTouches == 1 else { return false }
+        return lassoDrag.numberOfTouches == 1 || inkGrip.numberOfTouches == 1
     }
 
     /// A drag that starts on what is selected moves it; one that starts anywhere else draws a new lasso.
-    @objc private func lassoPanned(_ gesture: UIPanGestureRecognizer) {
+    @objc private func lassoPanned(_ gesture: GripPan) {
         guard let overlay = inkLasso, bakedScale > 0 else { return }
         let point = stackPoint(gesture), holds = lassoMoveOrigin != nil && gesture === lassoHolder
         // Only the lasso's own drag draws a lasso, and not while ink is held.
         let draws = lassoMoveOrigin == nil && gesture === lassoPan
         switch gesture.state {
         case .began:
-            let moved = gesture.translation(in: contentView)
-            let start = CGPoint(x: point.x - moved.x / bakedScale, y: point.y - moved.y / bakedScale)
+            // Where the touch came down decides what it does, not where it had got to when the drag was recognised.
+            let down = gesture.start(in: contentView), start = CGPoint(x: down.x / bakedScale, y: down.y / bakedScale)
             // As writing does, the lasso puts a selected picture down.
             if session.selection != nil { select(nil) }
             if lassoMoveOrigin == nil, isOnInkSelection(start) {
@@ -2512,11 +2559,65 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         lassoScroll = nil
     }
 
-    /// Keeps the held ink under the touch that holds it, also while the pages scroll or zoom under it.
+    /// Keeps the held ink under the touch that holds it, or as a handle has shaped it, also while the pages scroll or
+    /// zoom under it.
     private func trackInkDrag() {
-        guard let origin = lassoMoveOrigin, let holder = lassoHolder, let overlay = inkLasso, bakedScale > 0 else { return }
+        guard let origin = lassoMoveOrigin, let holder = lassoHolder, let overlay = inkLasso, bakedScale > 0 else { return trackInkShape() }
         let point = stackPoint(holder)
-        overlay.drag(by: CGSize(width: point.x - origin.x, height: point.y - origin.y))
+        overlay.follow(CGAffineTransform(translationX: point.x - origin.x, y: point.y - origin.y))
+    }
+
+    // MARK: Shaping caught ink by its handles
+
+    /// A handle of the box is dragged: the ink is lifted, follows the drag, and is put down changed as one undo step.
+    @objc private func inkGripped(_ gesture: GripPan) {
+        guard let overlay = inkLasso, bakedScale > 0 else { return }
+        switch gesture.state {
+        case .began:
+            let down = gesture.start(in: contentView), start = CGPoint(x: down.x / bakedScale, y: down.y / bakedScale)
+            guard !holdsInk, let handle = overlay.handle(at: start), let box = overlay.selectionBox else { return }
+            // As writing does, shaping ink puts a selected picture down.
+            if session.selection != nil { select(nil) }
+            inkShaping = (handle, box, start, longestInkSide(for: box))
+            liftInk()
+            trackInkShape()
+        case .changed:
+            trackInkShape()
+        case .ended:
+            guard let shaping = inkShaping else { return }
+            let change = shaping.box.change(dragging: shaping.handle, from: shaping.start, to: stackPoint(gesture), most: shaping.most)
+            inkShaping = nil
+            guard !shaping.box.isLeftAlone(by: change) else { return restoreLiftedInk() }
+            changeInkSelection(by: change, actionName: Self.actionName(for: shaping.handle))
+        default:
+            guard inkShaping != nil else { return }
+            inkShaping = nil
+            restoreLiftedInk()
+        }
+    }
+
+    /// Keeps the lifted ink as the handle's drag has shaped it so far, also while the pages move under it.
+    private func trackInkShape() {
+        guard let shaping = inkShaping, let overlay = inkLasso, bakedScale > 0 else { return }
+        overlay.follow(shaping.box.change(dragging: shaping.handle, from: shaping.start, to: stackPoint(inkGrip), most: shaping.most))
+    }
+
+    /// A handle makes ink no longer than half as long again as the longer side of the page its middle is on.
+    private func longestInkSide(for box: InkBox) -> CGFloat {
+        let size = InkLasso.page(at: box.center, frames: stackFrames).flatMap(index(of:)).map { pages[$0].size } ?? .zero
+        return max(size.width, size.height, 1) * 1.5
+    }
+
+    private static func actionName(for handle: InkHandle) -> String {
+        handle == .knob ? String(localized: "Rotate Ink") : String(localized: "Resize Ink")
+    }
+
+    /// A step on one of the box's handles from an assistive technology, as one undo step.
+    private func stepInk(_ handle: InkHandle, up: Bool) {
+        guard !holdsInk, !document.isReadOnly, let box = inkLasso?.selectionBox else { return }
+        let change = box.change(stepping: handle, up: up, most: longestInkSide(for: box))
+        guard !box.isLeftAlone(by: change) else { return }
+        changeInkSelection(by: change, actionName: Self.actionName(for: handle))
     }
 
     /// The pages follow the fingers. A pinch moves them itself.
@@ -2590,19 +2691,28 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     /// While caught ink is held the overlay draws it, so a canvas made meanwhile shows its page without it.
     private func withoutHeldInk(_ ink: PKDrawing, on pageID: UUID?) -> PKDrawing {
-        guard lassoMoveOrigin != nil, let pageID, let indices = inkSelection[pageID] else { return ink }
+        guard holdsInk, let pageID, let indices = inkSelection[pageID] else { return ink }
         return ink.removingStrokes(at: Set(indices))
     }
 
     /// Commits a drag, or a copy, as one undo step across every page it touched.
     private func moveInkSelection(by delta: CGSize, copying: Bool) {
-        guard !inkSelection.isEmpty, copying || abs(delta.width) + abs(delta.height) >= 1 else { return restoreLiftedInk() }
-        let moved = InkLasso.moved(inkSelection, by: delta, copying: copying, drawings: liveInk, frames: stackFrames)
+        guard copying || abs(delta.width) + abs(delta.height) >= 1 else { return restoreLiftedInk() }
+        changeInkSelection(by: CGAffineTransform(translationX: delta.width, y: delta.height), copying: copying,
+                           actionName: copying ? String(localized: "Duplicate Ink") : String(localized: "Move Ink"))
+    }
+
+    /// Puts caught ink down changed, or a copy of it, as one undo step across every page it touched. Its box keeps
+    /// whatever turn the ink has been given.
+    private func changeInkSelection(by change: CGAffineTransform, copying: Bool = false, actionName: String) {
+        guard !inkSelection.isEmpty else { return restoreLiftedInk() }
+        let changed = InkLasso.changed(inkSelection, by: change, copying: copying, drawings: liveInk, frames: stackFrames)
+        let turn = InkBox(center: .zero, size: CGSize(width: 1, height: 1), turn: inkTurn).applying(change).turn
         isMovingInk = true
-        let done = document.updateInk(moved.drawings, actionName: copying ? String(localized: "Duplicate Ink") : String(localized: "Move Ink"))
+        let done = document.updateInk(changed.drawings, actionName: actionName)
         isMovingInk = false
         inkLasso?.drop()
-        if done { setInkSelection(moved.selection) } else { restoreLiftedInk() }
+        if done { setInkSelection(changed.selection, turn: turn) } else { restoreLiftedInk() }
     }
 
     func duplicateInkSelection() {
