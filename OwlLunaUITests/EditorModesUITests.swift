@@ -109,6 +109,40 @@ final class EditorModesUITests: XCTestCase {
         XCTAssertTrue(first.exists)
     }
 
+    /// Issue 35: a tap that misses the bar and lands on the status bar leaves the pages alone, unless Settings asks for the first page.
+    func testATapOnTheStatusBarKeepsThePageUnlessSettingsAsks() throws {
+        let app = XCUIApplication()
+        let ribbon = app.buttons["editor.ribbon"]
+        func openLastPage(_ arguments: [String] = []) {
+            app.launchArguments = ["-storageRoot", "modes", "-resetStorage", "-seedLibrary", "3", "-drawingInput", "pencilOnly"] + arguments
+            app.launch()
+            let notebook = app.buttons["notebook.Physics II 3"]
+            XCTAssertTrue(notebook.waitForExistence(timeout: 30))
+            notebook.tap()
+            XCTAssertTrue(ribbon.waitForExistence(timeout: 20))
+            let window = app.windows.firstMatch
+            for _ in 0..<6 where ribbon.label != "Page 3 of 3" {
+                window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
+                    .press(forDuration: 0.05, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)), withVelocity: 1500, thenHoldForDuration: 0.1)
+            }
+            XCTAssertEqual(ribbon.label, "Page 3 of 3")
+        }
+        func tapOverTheTitle() {
+            let title = app.element("editor.title").frame
+            app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: title.midX, dy: 12)).tap()
+        }
+
+        openLastPage()
+        tapOverTheTitle()
+        let first = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "Page 1 of 3"), object: ribbon)
+        XCTAssertEqual(XCTWaiter().wait(for: [first], timeout: 3), .timedOut, "the pages stay where they were")
+        XCTAssertEqual(ribbon.label, "Page 3 of 3")
+
+        openLastPage(["-topTapScrolls", "YES"])
+        tapOverTheTitle()
+        wait(for: [expectation(for: NSPredicate(format: "label == %@", "Page 1 of 3"), evaluatedWith: ribbon)], timeout: 10)
+    }
+
     func testABookmarkedPageIsListedInTheOutline() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-storageRoot", "modes", "-resetStorage", "-seedLibrary", "3", "-drawingInput", "anyInput"]

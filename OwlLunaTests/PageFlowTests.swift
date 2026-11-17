@@ -220,4 +220,28 @@ final class PageFlowTests: XCTestCase {
         XCTAssertEqual(controller.currentPage, 0, "a turn of the device keeps the page")
         XCTAssertEqual(controller.liveCanvasCount, 1)
     }
+
+    func testATapOnTheStatusBarGoesToTheFirstPageOnlyWhereSettingsAsks() async throws {
+        let saved = UserDefaults.standard.object(forKey: SettingsKey.topTapScrolls)
+        addTeardownBlock { UserDefaults.standard.set(saved, forKey: SettingsKey.topTapScrolls) }
+        UserDefaults.standard.removeObject(forKey: SettingsKey.topTapScrolls)
+        let board = NotebookPage.board(template: .dotted, color: .white)
+        let (session, controller, _) = try await open([letter(), letter(), board], flow: .continuous, at: 1)
+        let scroll = try scrollView(of: controller)
+        XCTAssertFalse(scroll.scrollsToTop, "a tap that misses the bar leaves the pages where they are")
+
+        UserDefaults.standard.set(true, forKey: SettingsKey.topTapScrolls)
+        for _ in 0..<40 where !scroll.scrollsToTop { await pause(0.05) }
+        XCTAssertTrue(scroll.scrollsToTop, "turned on in Settings, it works in the notebook already open")
+        session.go(to: 2)
+        XCTAssertEqual(controller.openBoardID, board.id)
+        XCTAssertFalse(scroll.scrollsToTop, "a board has no first page to go to")
+        session.leaveBoard()
+        XCTAssertNil(controller.openBoardID)
+        XCTAssertTrue(scroll.scrollsToTop)
+
+        UserDefaults.standard.set(false, forKey: SettingsKey.topTapScrolls)
+        for _ in 0..<40 where scroll.scrollsToTop { await pause(0.05) }
+        XCTAssertFalse(scroll.scrollsToTop)
+    }
 }

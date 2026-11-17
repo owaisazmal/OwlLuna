@@ -23,6 +23,7 @@ struct OwlLunaSettingsView: View {
     @AppStorage(SettingsKey.fingerDoubleTap) private var fingerDoubleTap = FingerTap.doubleTap.initial
     @AppStorage(SettingsKey.twoFingerTap) private var twoFingerTap = FingerTap.twoFingers.initial
     @AppStorage(SettingsKey.threeFingerTap) private var threeFingerTap = FingerTap.threeFingers.initial
+    @AppStorage(SettingsKey.topTapScrolls) private var topTapScrolls = false
     @AppStorage(SettingsKey.pencilSeen) private var pencilSeen = false
 
     /// An iPhone shows the Pencil's choices once a Pencil has touched it; a Mac never does.
@@ -213,8 +214,8 @@ struct OwlLunaSettingsView: View {
     /// Where fingers draw, a double-tap would draw two dots first, so it is only offered where a Pencil draws.
     private var fingerSection: some View {
         SettingsSection("Finger Gestures", note: hasPencil
-                        ? "Tap with two or three fingers anywhere on the pages. Double-Tap works with one finger on bare paper, while only Apple Pencil draws."
-                        : "Tap with two or three fingers anywhere on the pages.") {
+                        ? "Tap with two or three fingers anywhere on the pages. Double-Tap works with one finger on bare paper, while only Apple Pencil draws. With Tap Status Bar to Scroll to Top on, a tap on the strip with the clock scrolls the pages back to the top."
+                        : "Tap with two or three fingers anywhere on the pages. With Tap Status Bar to Scroll to Top on, a tap on the strip with the clock scrolls the pages back to the top.") {
             if hasPencil {
                 SettingsChoiceRow(title: "Double-Tap", value: fingerDoubleTap.fingerName, selection: $fingerDoubleTap) {
                     ForEach(GestureAction.fingerChoices) { Text($0.fingerName).tag($0) }
@@ -229,6 +230,9 @@ struct OwlLunaSettingsView: View {
                 ForEach(GestureAction.fingerChoices) { Text($0.fingerName).tag($0) }
             }
             .accessibilityIdentifier("settings.fingers.threeFingerTap")
+            Toggle("Tap Status Bar to Scroll to Top", isOn: $topTapScrolls)
+                .accessibilityIdentifier("settings.fingers.topTap")
+                .settingsRow()
         }
     }
 

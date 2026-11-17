@@ -139,46 +139,68 @@
         }
       }
     },
-    "Tap with two or three fingers anywhere on the pages." : {
+    "Tap Status Bar to Scroll to Top" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tippe mit zwei oder drei Fingern irgendwo auf die Seiten."
+            "value" : "Statusleiste antippen zum Hochscrollen"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toca con dos o tres dedos en cualquier parte de las páginas."
+            "value" : "Tocar la barra de estado para volver arriba"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Touchez les pages avec deux ou trois doigts, n’importe où."
+            "value" : "Toucher la barre d’état pour revenir en haut"
           }
         }
       }
     },
-    "Tap with two or three fingers anywhere on the pages. Double-Tap works with one finger on bare paper, while only Apple Pencil draws." : {
+    "Tap with two or three fingers anywhere on the pages. With Tap Status Bar to Scroll to Top on, a tap on the strip with the clock scrolls the pages back to the top." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tippe mit zwei oder drei Fingern irgendwo auf die Seiten. Doppeltippen funktioniert mit einem Finger auf leerem Papier, solange nur der Apple Pencil zeichnet."
+            "value" : "Tippe mit zwei oder drei Fingern irgendwo auf die Seiten. Ist „Statusleiste antippen zum Hochscrollen“ an, scrollt ein Tippen auf die Leiste mit der Uhrzeit die Seiten zurück nach oben."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toca con dos o tres dedos en cualquier parte de las páginas. Doble toque funciona con un dedo sobre el papel en blanco, mientras solo dibuje el Apple Pencil."
+            "value" : "Toca con dos o tres dedos en cualquier parte de las páginas. Con «Tocar la barra de estado para volver arriba» activado, un toque en la franja de la hora lleva las páginas de vuelta al principio."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Touchez les pages avec deux ou trois doigts, n’importe où. Toucher deux fois se fait avec un doigt sur le papier vierge, tant que seul l’Apple Pencil dessine."
+            "value" : "Touchez les pages avec deux ou trois doigts, n’importe où. Avec « Toucher la barre d’état pour revenir en haut » activé, un toucher sur la bande de l’heure fait remonter les pages tout en haut."
+          }
+        }
+      }
+    },
+    "Tap with two or three fingers anywhere on the pages. Double-Tap works with one finger on bare paper, while only Apple Pencil draws. With Tap Status Bar to Scroll to Top on, a tap on the strip with the clock scrolls the pages back to the top." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe mit zwei oder drei Fingern irgendwo auf die Seiten. Doppeltippen funktioniert mit einem Finger auf leerem Papier, solange nur der Apple Pencil zeichnet. Ist „Statusleiste antippen zum Hochscrollen“ an, scrollt ein Tippen auf die Leiste mit der Uhrzeit die Seiten zurück nach oben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca con dos o tres dedos en cualquier parte de las páginas. Doble toque funciona con un dedo sobre el papel en blanco, mientras solo dibuje el Apple Pencil. Con «Tocar la barra de estado para volver arriba» activado, un toque en la franja de la hora lleva las páginas de vuelta al principio."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touchez les pages avec deux ou trois doigts, n’importe où. Toucher deux fois se fait avec un doigt sur le papier vierge, tant que seul l’Apple Pencil dessine. Avec « Toucher la barre d’état pour revenir en haut » activé, un toucher sur la bande de l’heure fait remonter les pages tout en haut."
           }
         }
       }

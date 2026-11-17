@@ -220,8 +220,9 @@ Expect: one action each time, never the system's picker or palette: the eraser a
 2. Write a long line with the side of your hand on the page, lifting and landing it as you go. Tap with two fingers just as the Pencil lifts.
 3. Set Settings › Finger Gestures › Double-Tap to Show or Hide Tools. Double-tap bare paper, a picture, a link and a checklist box. Set Draw With to Pencil and Finger and double-tap bare paper again.
 4. Swipe left and right with three fingers.
+5. On a late page of a long notebook, tap the status bar, then just over the title and just over Undo, with a finger and with the Pencil. Turn on Settings › Finger Gestures › Tap Status Bar to Scroll to Top and tap the status bar again.
 
-Expect: each two-finger tap undoes one step and each three-finger tap redoes one, leaving no mark and no system Undo bar. The resting hand never undoes anything, and nor does the tap as the Pencil lifts. The double-tap shows and hides the tools on bare paper only; elsewhere a tap does what it always did, and with fingers drawing it only draws. Note what the three-finger swipes do.
+Expect: each two-finger tap undoes one step and each three-finger tap redoes one, leaving no mark and no system Undo bar. The resting hand never undoes anything, and nor does the tap as the Pencil lifts. The double-tap shows and hides the tools on bare paper only; elsewhere a tap does what it always did, and with fingers drawing it only draws. Note what the three-finger swipes do. The taps at the top leave the pages where they are until the setting is on, and then go to the first page.
 
 ### Scribble and loop
 

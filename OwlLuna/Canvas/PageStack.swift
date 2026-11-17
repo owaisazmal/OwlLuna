@@ -234,7 +234,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         scrollView.delaysContentTouches = false
         scrollView.bouncesZoom = true
         scrollView.panGestureRecognizer.allowedTouchTypes = Self.scrollTouchTypes
-        scrollView.scrollsToTop = true
+        scrollView.scrollsToTop = false
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         addPageCard.isHidden = true
@@ -882,7 +882,13 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         Task { @MainActor [weak self] in
             self?.updateNight()
             self?.zoomPanel?.isLeftHanded = UserDefaults.standard.bool(forKey: SettingsKey.leftHanded)
+            self?.updateTopTap()
         }
+    }
+
+    /// A tap aimed at the bar often lands on the status bar, so that tap scrolls to the first page only where Settings asks.
+    private func updateTopTap() {
+        scrollView.scrollsToTop = !isSolo && UserDefaults.standard.bool(forKey: SettingsKey.topTapScrolls)
     }
 
     /// Light paper goes dark with the app, and comes back with it: its pages are made again.
@@ -2043,7 +2049,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     private func measure() {
         let bounds = view.bounds
         // A tap on the status bar would send a board to its far corner, and its scroll bars would say nothing.
-        scrollView.scrollsToTop = !isSolo
+        updateTopTap()
         scrollView.showsVerticalScrollIndicator = !isSolo
         scrollView.showsHorizontalScrollIndicator = !isSolo
         // A page on its own gives sideways, so a swipe past its edge can turn it.

@@ -164,6 +164,8 @@ PencilKit's `.default` drawing policy follows the system's Only Draw with Apple 
 
 Finger taps (`FingerTap`) run the same actions (`GestureAction`). They are tap recognisers on the page stack that wait out the Pencil for half a second after it lifts (`TouchRests.pencilIsNear`). They don't judge a palm by its width: the simulator's touches are 33 pt wide, wider than `LoneFingerHold.palmRadius`. One finger's double-tap only begins on bare paper where fingers don't draw. The two-finger tap is left out under `-fakePencilSqueeze`, which uses the same gesture.
 
+The status bar's tap is the page stack's `scrollsToTop`, off unless `SettingsKey.topTapScrolls` is on and never on for a whiteboard (`updateTopTap`). The system takes that tap a few points into the app's own bar too, over the title and Undo, where a hurried tap lands.
+
 Handwriting to Text tracks strokes by their path's creation date, PencilKit's only lasting identity for a stroke (`PageStackController.noteWriting`). Reading starts after `InkTyping.lookAhead` (0.4 s) of rest and the text is placed at `InkTyping.pause` (1 s), so recognition overlaps the pause. `InkText.warmUp` runs when the helper turns on, because a cold Vision read took 0.8 s against 0.37 s warm. `-scriptedInkText` and `-inkTypingPause` stand in for the recogniser in UI tests.
 
 ## Whiteboards

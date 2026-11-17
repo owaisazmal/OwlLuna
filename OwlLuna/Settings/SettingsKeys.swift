@@ -118,6 +118,7 @@ enum SettingsKey {
     static let fingerDoubleTap = "fingerDoubleTap"
     static let twoFingerTap = "twoFingerTap"
     static let threeFingerTap = "threeFingerTap"
+    static let topTapScrolls = "topTapScrolls"
     static let syncsWithICloud = "syncsWithICloud"
     static let lastSynced = "lastSynced"
     static let syncConflictCopies = "syncConflictCopies"
