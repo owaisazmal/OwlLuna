@@ -17,6 +17,17 @@ extension XCUIApplication {
         if clear.exists { clear.tap() }
         return field
     }
+
+    /// Opens the editor's More menu and taps `row`, opening the card that holds it first.
+    func chooseFromMore(_ row: String, in card: String) {
+        buttons["More"].firstMatch.tap()
+        let opener = buttons[card].firstMatch
+        XCTAssertTrue(opener.waitForExistence(timeout: 5), card)
+        opener.tap()
+        let button = buttons[row].firstMatch
+        XCTAssertTrue(button.waitForExistence(timeout: 5), row)
+        button.tap()
+    }
 }
 
 @MainActor

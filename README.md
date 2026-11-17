@@ -51,6 +51,7 @@ The App Store version comes later. To build it yourself, see [Getting started](#
 ### PDFs and pictures
 
 - Import PDFs and write on them. Select their text to copy or highlight it, and use a highlighter that snaps to a line of text. Scanned PDFs work too.
+- A PDF's own table of contents in the page navigator, with chapters that fold and a tap to jump to one.
 - Insert photos as pages, or scan paper with the camera. Printed words are read for search.
 - Pictures you can move, resize, rotate, crop and layer.
 - Forty vector stickers, plus stickers cut out of your own photos.

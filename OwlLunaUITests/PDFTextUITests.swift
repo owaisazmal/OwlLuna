@@ -41,8 +41,7 @@ final class PDFTextUITests: XCTestCase {
         let canvas = app.element("page.canvas.1")
         XCTAssertTrue(canvas.waitForExistence(timeout: 10))
 
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Select PDF Text"].firstMatch.tap()
+        app.chooseFromMore("Select PDF Text", in: "Select")
         XCTAssertTrue(app.staticTexts["editor.text.status"].waitForExistence(timeout: 5), "the bar says what to do")
         XCTAssertFalse(ribbon.exists, "the chrome is put away while text is selected")
         let copy = app.buttons["editor.text.copy"], highlight = app.buttons["editor.text.highlight"]

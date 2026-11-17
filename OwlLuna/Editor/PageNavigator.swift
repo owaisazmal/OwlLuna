@@ -24,17 +24,22 @@ struct PageNavigator: View {
     @State private var dropTarget: UUID?
     @FocusState private var goToFocused: Bool
     @State private var tab = Tab.pages
+    @State private var folds = OutlineFolds()
     @State private var barRoom = CGFloat.infinity
     @State private var tabsWidth: CGFloat = 0
     @State private var doneWidth: CGFloat = 0
     @State private var tagging: TagTarget?
 
-    enum Tab { case pages, outline }
+    enum Tab { case pages, bookmarks, contents }
 
     private var document: NotebookDocument { session.document }
     private var currentPage: Int { session.currentPage }
+    /// Contents has a tab only in a notebook whose PDF came with some.
+    private var tabs: [Tab] { session.contents.isEmpty ? [.pages, .bookmarks] : [.pages, .bookmarks, .contents] }
+    /// Three tabs leave a phone's bar no room beside Done, so there they take a row under it.
+    private var tabsFitBar: Bool { barRoom >= tabsWidth + doneWidth + 92 }
     /// Larger text, longer words and narrow windows leave no room for the field beside the tabs, so there it sits under the bar.
-    private var goToFitsBar: Bool { dynamicTypeSize <= .large && barRoom >= goToWidth + tabsWidth + doneWidth + 92 }
+    private var goToFitsBar: Bool { tabsFitBar && dynamicTypeSize <= .large && barRoom >= goToWidth + tabsWidth + doneWidth + 92 }
     private let goToWidth: CGFloat = 176
 
     var body: some View {
@@ -42,16 +47,27 @@ struct PageNavigator: View {
             Group {
                 switch tab {
                 case .pages: grid
-                case .outline:
-                    NotebookOutline(session: session) { index in
-                        dismiss()
-                        session.go(to: index)
-                    }
+                case .bookmarks: NotebookBookmarks(session: session, open: open)
+                case .contents: NotebookContents(session: session, folds: $folds, open: open)
                 }
             }
+            .safeAreaInset(edge: .top, spacing: 0) { if !tabsFitBar { tabsRow } }
             .background(Color.desk)
+            .background {
+                tabPicker(inBar: true)
+                    .fixedSize()
+                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { tabsWidth = $0 }
+                    .hidden()
+            }
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { barRoom = $0 }
             .sensoryFeedback(.alignment, trigger: dropTarget) { _, target in target != nil }
+            .task(id: document.pages.count) { await session.readContents() }
+            .onChange(of: session.contents, initial: true) { _, entries in
+                var fresh = OutlineFolds(entries)
+                if let here = fresh.entry(holding: currentPage, places: document.places) { fresh.open(to: here) }
+                folds = fresh
+                if entries.isEmpty, tab == .contents { tab = .pages }
+            }
             .navigationTitle(Text(document.pageCountText))
             .navigationBarTitleDisplayMode(.inline)
             .barGround(Color.desk)
@@ -71,18 +87,14 @@ struct PageNavigator: View {
                     }
                 }
                 .boardBackground()
-                ToolbarItem(placement: .principal) {
-                    OwlLunaSegmentedPicker("Show", selection: $tab, options: [Tab.pages, .outline], inBar: true) { tab in
-                        switch tab {
-                        case .pages: Text("Pages")
-                        case .outline: Text("Outline")
-                        }
+                if tabsFitBar {
+                    ToolbarItem(placement: .principal) {
+                        tabPicker(inBar: true)
+                            .fixedSize()
+                            .accessibilityIdentifier("navigator.tabs")
                     }
-                    .fixedSize()
-                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { tabsWidth = $0 }
-                    .accessibilityIdentifier("navigator.tabs")
+                    .boardBackground()
                 }
-                .boardBackground()
                 if tab == .pages, goToFitsBar {
                     ToolbarItem(placement: .topBarLeading) {
                         OwlLunaSearchField(prompt: "Go to page", text: $goToPage, systemImage: "number", isSearch: false, clears: false, identifier: "navigator.goto",
@@ -122,6 +134,30 @@ struct PageNavigator: View {
                     .presentationBackground(Color.surface)
             }
         }
+    }
+
+    private func tabPicker(inBar: Bool) -> some View {
+        OwlLunaSegmentedPicker("Show", selection: $tab, options: tabs, inBar: inBar) { tab in
+            switch tab {
+            case .pages: Text("Pages")
+            case .bookmarks: Text("Bookmarks")
+            case .contents: Text("Contents")
+            }
+        }
+    }
+
+    private var tabsRow: some View {
+        tabPicker(inBar: false)
+            .accessibilityIdentifier("navigator.tabs")
+            .padding(.horizontal, Space.x5)
+            .padding(.top, Space.x2)
+            .padding(.bottom, Space.x1)
+            .background(Color.desk)
+    }
+
+    private func open(_ index: Int) {
+        dismiss()
+        session.go(to: index)
     }
 
     private var grid: some View {
@@ -170,10 +206,7 @@ struct PageNavigator: View {
 
     private func cell(_ page: NotebookPage, at index: Int) -> some View {
         let isCurrent = index == currentPage
-        return Button {
-            dismiss()
-            session.go(to: index)
-        } label: {
+        return Button { open(index) } label: {
             PageThumbnailCell(document: document, page: page, index: index, isCurrent: isCurrent)
         }
         .buttonStyle(.plain)
@@ -243,8 +276,7 @@ struct PageNavigator: View {
 
     private func go() {
         guard let number = pageNumber else { return }
-        dismiss()
-        session.go(to: number - 1)
+        open(number - 1)
     }
 
     @ViewBuilder

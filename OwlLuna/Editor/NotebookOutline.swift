@@ -39,10 +39,13 @@ extension NotebookDocument {
 }
 
 struct OutlineEntry: Identifiable, Hashable, Sendable {
+    /// Its place in the list.
     let id: Int
     let title: String
     let level: Int
     let pageID: UUID
+    /// The entry this one is listed under.
+    var parent: Int?
 }
 
 /// The table of contents an imported PDF came with, mapped onto the notebook's pages.
@@ -58,28 +61,103 @@ enum PDFOutlineReader {
         var entries: [OutlineEntry] = []
         for file in files {
             guard let pdf = PDFDocument(url: assets.appending(path: file)), let root = pdf.outlineRoot, let ids = pageIDs[file] else { continue }
-            collect(root, level: 0, in: pdf, ids: ids, into: &entries)
+            collect(root, depth: 0, under: nil, in: pdf, ids: ids, into: &entries)
         }
         return entries
     }
 
-    private static func collect(_ node: PDFOutline, level: Int, in pdf: PDFDocument, ids: [Int: UUID], into entries: inout [OutlineEntry]) {
+    /// An entry whose own page is gone is left out, and what was under it moves up to the nearest entry still listed.
+    private static func collect(_ node: PDFOutline, depth: Int, under parent: OutlineEntry?, in pdf: PDFDocument, ids: [Int: UUID],
+                                into entries: inout [OutlineEntry]) {
         for index in 0..<node.numberOfChildren {
             guard let child = node.child(at: index), entries.count < 2000 else { continue }
             let title = child.label?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            var listed = parent
             if !title.isEmpty, let page = child.destination?.page, let pageID = ids[pdf.index(for: page)] {
-                entries.append(OutlineEntry(id: entries.count, title: title, level: min(level, 4), pageID: pageID))
+                let entry = OutlineEntry(id: entries.count, title: title, level: min(parent.map { $0.level + 1 } ?? 0, 4), pageID: pageID, parent: parent?.id)
+                entries.append(entry)
+                listed = entry
             }
-            if level < 6 { collect(child, level: level + 1, in: pdf, ids: ids, into: &entries) }
+            if depth < 6 { collect(child, depth: depth + 1, under: listed, in: pdf, ids: ids, into: &entries) }
         }
     }
 }
 
-/// The navigator's second tab: the pages you bookmarked, the pages you tagged, then an imported PDF's own contents.
-struct NotebookOutline: View {
+/// A PDF's contents with chapters that fold: which entries are on show, and which one a page falls under.
+struct OutlineFolds: Equatable {
+    private(set) var entries: [OutlineEntry] = []
+    private(set) var folded: Set<Int> = []
+    private var parents: Set<Int> = []
+
+    /// Every entry with others under it starts folded.
+    init(_ entries: [OutlineEntry] = []) {
+        self.entries = entries
+        parents = Set(entries.compactMap(\.parent))
+        folded = parents
+    }
+
+    func hasParts(_ entry: OutlineEntry) -> Bool { parents.contains(entry.id) }
+    func isFolded(_ entry: OutlineEntry) -> Bool { folded.contains(entry.id) }
+
+    /// The entries with nothing folded over them, in order.
+    var shown: [OutlineEntry] {
+        var hidden = Set<Int>()
+        return entries.filter { entry in
+            guard let parent = entry.parent, folded.contains(parent) || hidden.contains(parent) else { return true }
+            hidden.insert(entry.id)
+            return false
+        }
+    }
+
+    mutating func toggle(_ entry: OutlineEntry) {
+        guard hasParts(entry) else { return }
+        if folded.remove(entry.id) == nil { folded.insert(entry.id) }
+    }
+
+    /// Unfolds `entry` and everything it is listed under.
+    mutating func open(to entry: OutlineEntry) {
+        folded.remove(entry.id)
+        for above in chain(above: entry) { folded.remove(above.id) }
+    }
+
+    /// The entry a page falls under: the last one that begins on that page or before it.
+    func entry(holding page: Int, places: [UUID: Int]) -> OutlineEntry? {
+        var found: (entry: OutlineEntry, start: Int)?
+        for entry in entries {
+            guard let start = places[entry.pageID], start <= page, start >= found?.start ?? 0 else { continue }
+            found = (entry, start)
+        }
+        return found?.entry
+    }
+
+    /// The row to mark for a page: the entry it falls under, or the folded one that entry is put away in.
+    func mark(for page: Int, places: [UUID: Int]) -> OutlineEntry? {
+        guard let entry = entry(holding: page, places: places) else { return nil }
+        return chain(above: entry).last { folded.contains($0.id) } ?? entry
+    }
+
+    /// What `entry` is listed under, the nearest first.
+    private func chain(above entry: OutlineEntry) -> [OutlineEntry] {
+        var chain: [OutlineEntry] = [], below = entry
+        while let id = below.parent, id < below.id, let above = entries.first(where: { $0.id == id }) {
+            chain.append(above)
+            below = above
+        }
+        return chain
+    }
+}
+
+extension NotebookDocument {
+    /// Where each page is in the notebook.
+    var places: [UUID: Int] {
+        Dictionary(pages.enumerated().map { ($0.element.id, $0.offset) }) { first, _ in first }
+    }
+}
+
+/// The navigator's second tab: the pages you bookmarked, then the pages you tagged.
+struct NotebookBookmarks: View {
     let session: EditorSession
     let open: (Int) -> Void
-    @State private var contents: [OutlineEntry] = []
     @State private var renaming: UUID?
     @State private var name = ""
 
@@ -89,21 +167,13 @@ struct NotebookOutline: View {
         document.pages.enumerated().filter { include($0.element) }.map { (index: $0.offset, page: $0.element) }
     }
 
-    private var pdfFiles: [String] {
-        var seen = Set<String>()
-        return document.pages.compactMap { page in
-            guard case .pdf(let file, _) = page.background, seen.insert(file).inserted else { return nil }
-            return file
-        }
-    }
-
     var body: some View {
         let bookmarks = pages(where: { $0.bookmark != nil }), tagged = pages(where: { !$0.tags.isEmpty })
         Group {
-            if bookmarks.isEmpty, tagged.isEmpty, contents.isEmpty {
+            if bookmarks.isEmpty, tagged.isEmpty {
                 ScrollView {
                     EmptyPlate("No Bookmarks Yet", systemImage: "bookmark",
-                               message: Text("Tap the small ribbon beside the page number to bookmark a page. Bookmarks, tagged pages and a PDF's table of contents are listed here."))
+                               message: Text("Tap the small ribbon beside the page number to bookmark a page. Bookmarks and tagged pages are listed here."))
                 }
                 .scrollBounceBehavior(.basedOnSize)
             } else {
@@ -116,20 +186,8 @@ struct NotebookOutline: View {
                         }
                     }
                     if !tagged.isEmpty { TaggedPagesSection(pages: tagged, open: open) }
-                    if !contents.isEmpty {
-                        Section {
-                            ForEach(contents) { entry in contentsRow(entry) }
-                        } header: {
-                            Text("Contents")
-                        }
-                    }
                 }
             }
-        }
-        .task(id: pdfFiles) {
-            let pages = document.pages, assets = document.package.assetsDirectory
-            guard !pdfFiles.isEmpty else { contents = []; return }
-            contents = await Task.detached(priority: .userInitiated) { PDFOutlineReader.entries(pages: pages, assets: assets) }.value
         }
         .notice("Name Bookmark", isPresented: Binding(isPresent: $renaming)) {
             TextField("Name", text: $name)
@@ -137,7 +195,7 @@ struct NotebookOutline: View {
             Button("Cancel", role: .cancel) {}
             Button("Save") { if let renaming { document.setBookmark(name, forPage: renaming) } }
         }
-        .accessibilityIdentifier("navigator.outline")
+        .accessibilityIdentifier("navigator.bookmarks")
     }
 
     private func bookmarkRow(_ page: NotebookPage, at index: Int) -> some View {
@@ -173,24 +231,5 @@ struct NotebookOutline: View {
 
     private func removeBookmark(_ page: NotebookPage) {
         document.setBookmark(nil, forPage: page.id)
-    }
-
-    @ViewBuilder
-    private func contentsRow(_ entry: OutlineEntry) -> some View {
-        if let index = document.index(of: entry.pageID) {
-            Button { open(index) } label: {
-                HStack(spacing: Space.x3) {
-                    Text(entry.title)
-                        .font(entry.level == 0 ? .body.weight(.semibold) : .body)
-                        .foregroundStyle(Color.ink)
-                        .padding(.leading, CGFloat(entry.level) * Space.x4)
-                    Spacer(minLength: Space.x3)
-                    Text(index + 1, format: .number).monospacedDigit().foregroundStyle(Color.textSecondary)
-                }
-                .contentShape(Rectangle())
-            }
-            .accessibilityLabel(Text("\(entry.title), page \(index + 1)"))
-            .accessibilityHint(Text("Opens this page"))
-        }
     }
 }

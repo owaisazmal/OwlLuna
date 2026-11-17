@@ -126,6 +126,8 @@ At night the cover boards dim about 10% and labels stay light; paper and ink nev
 - Search matches are bold on a highlighter band: mustard at night, ochre `#806113` under LabelCream by day, because Apple's audit reads a pale band as faint text.
 - The tool tray (`ToolTray`) is one 48 pt board at the foot of the editor, over the desk, so it takes nothing from the page. Pens are labels with the ink as a blot: paper by day, wells at night with a lighter rim round the blot. The pen roll (`PenRoll`) and the ink dish (`InkDish`) draw ink the same way.
 - Floating bars (arrange, link back, presenter, replay) are boards with `Radius.bar` corners and a compact cloth Done. They grow with the text.
+- More is a few named rows (Page, View, Select, Study, Present), each opening a short card beside it. A card that would hold one row isn't made: the row stays in More. Export has its own button in the bar, and is a row of More in a narrow pane.
+- A PDF's contents (`NotebookContents`) are set like a printed contents page: dots run from each title to its page number, chapters fold, and the entry the page falls under has an accent edge.
 - Washes always have an edge: selected text (accent), find matches and the transcript's current line (mustard). The current find match also gets an Ink outline.
 - Stickers (`Sticker`) are pastel paper with a deeper edge and a shadow of layered tints, not blurs, so they stay vector in a PDF. Study tape (`TapeArt`) is opaque washi; lifted, it leaves a dashed outline.
 - Flashcards are cream index cards (`CardPaper`). In study, Show Answer and Good are cloth; Again and Easy are boards.

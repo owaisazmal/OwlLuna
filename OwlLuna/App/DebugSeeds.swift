@@ -171,13 +171,22 @@ enum LibrarySeed {
         }
     }
 
-    /// One notebook made from a generated 300-page PDF, for scrolling and zoom tests in the editor.
+    /// One notebook made from a generated 300-page PDF, for scrolling and zoom tests in the editor. Its contents list six
+    /// parts of fifty pages, with every tenth chapter under its part.
     static func writeLongPDF(root: StorageRoot) async {
         let id = UUID()
         let package = NotebookPackage(root: root, id: id)
         let source = FileManager.default.temporaryDirectory.appending(path: "seed-\(id.uuidString).pdf")
         let bounds = CGRect(origin: .zero, size: PageSize.letter.points)
         try? UIGraphicsPDFRenderer(bounds: bounds).writePDF(to: source) { context in
+            let parts: [[String: Any]] = (0..<6).map { part in
+                let chapters: [[String: Any]] = stride(from: 1, to: 50, by: 10).map { chapter in
+                    [kCGPDFOutlineTitle as String: "Chapter \(part * 50 + chapter)", kCGPDFOutlineDestination as String: part * 50 + chapter]
+                }
+                return [kCGPDFOutlineTitle as String: "Part \(part + 1)", kCGPDFOutlineDestination as String: part * 50 + 1,
+                        kCGPDFOutlineChildren as String: chapters]
+            }
+            CGPDFContextSetOutline(context.cgContext, [kCGPDFOutlineChildren as String: parts] as CFDictionary)
             for index in 0..<300 {
                 context.beginPage()
                 ("Chapter \(index + 1)" as NSString).draw(at: CGPoint(x: 72, y: 72), withAttributes: [.font: UIFont.systemFont(ofSize: 28)])

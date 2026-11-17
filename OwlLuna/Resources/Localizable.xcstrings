@@ -14994,6 +14994,28 @@
         }
       }
     },
+    "Hide Sections Under %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abschnitte unter %@ ausblenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar las secciones de %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer les sections de %@"
+          }
+        }
+      }
+    },
     "Hide Sidebar" : {
       "localizations" : {
         "de" : {
@@ -15556,6 +15578,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Étiquette Idée"
+          }
+        }
+      }
+    },
+    "Image…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bild …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imagen…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image…"
+          }
+        }
+      }
+    },
+    "Images…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilder …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imágenes…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Images…"
           }
         }
       }
@@ -22456,28 +22522,6 @@
         }
       }
     },
-    "Outline" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gliederung"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Esquema"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Contour"
-          }
-        }
-      }
-    },
     "OwlLuna" : {
       "localizations" : {
         "de" : {
@@ -23780,6 +23824,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Page PDF"
+          }
+        }
+      }
+    },
+    "PDF…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF…"
           }
         }
       }
@@ -28856,6 +28922,28 @@
         }
       }
     },
+    "Show Sections Under %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abschnitte unter %@ einblenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar las secciones de %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les sections de %@"
+          }
+        }
+      }
+    },
     "Show Sidebar" : {
       "localizations" : {
         "de" : {
@@ -29820,6 +29908,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Partir de"
+          }
+        }
+      }
+    },
+    "Start Presenting" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Präsentation starten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empezar a presentar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lancer la présentation"
           }
         }
       }
@@ -31632,24 +31742,24 @@
         }
       }
     },
-    "Tap the small ribbon beside the page number to bookmark a page. Bookmarks, tagged pages and a PDF's table of contents are listed here." : {
+    "Tap the small ribbon beside the page number to bookmark a page. Bookmarks and tagged pages are listed here." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tippe auf das kleine Band neben der Seitenzahl, um ein Lesezeichen zu setzen. Lesezeichen, getaggte Seiten und das Inhaltsverzeichnis eines PDFs werden hier aufgelistet."
+            "value" : "Tippe auf das kleine Band neben der Seitenzahl, um ein Lesezeichen zu setzen. Lesezeichen und getaggte Seiten werden hier aufgelistet."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toca la cinta pequeña junto al número de página para añadir un marcador. Aquí aparecen los marcadores, las páginas etiquetadas y la tabla de contenido de un PDF."
+            "value" : "Toca la cinta pequeña junto al número de página para añadir un marcador. Aquí aparecen los marcadores y las páginas etiquetadas."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Touchez le petit ruban à côté du numéro de page pour ajouter un signet à une page. Les signets, les pages étiquetées et la table des matières d’un PDF sont répertoriés ici."
+            "value" : "Touchez le petit ruban à côté du numéro de page pour ajouter un signet à une page. Les signets et les pages étiquetées sont répertoriés ici."
           }
         }
       }
@@ -31980,6 +32090,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Style de texte"
+          }
+        }
+      }
+    },
+    "Text…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texto…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte…"
           }
         }
       }
@@ -35482,6 +35614,28 @@
         }
       }
     },
+    "Time-lapse Video…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeitraffervideo …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vídeo time-lapse…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vidéo accélérée…"
+          }
+        }
+      }
+    },
     "Title" : {
       "localizations" : {
         "de" : {
@@ -37780,6 +37934,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Version %@"
+          }
+        }
+      }
+    },
+    "View" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ansicht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vista"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Affichage"
           }
         }
       }

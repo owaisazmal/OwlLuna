@@ -34,8 +34,7 @@ final class ZoomWindowUITests: XCTestCase {
         XCTAssertTrue(page.waitForExistence(timeout: 20))
         XCTAssertEqual(strokeCount(page), 8)
 
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Zoom Window"].firstMatch.tap()
+        app.chooseFromMore("Zoom Window", in: "View")
         let strip = app.descendants(matching: .any)["zoom.canvas"]
         XCTAssertTrue(strip.waitForExistence(timeout: 10))
         XCTAssertEqual(app.staticTexts["zoom.title"].label, "Zoom Window · Page 1")
@@ -73,6 +72,7 @@ final class ZoomWindowUITests: XCTestCase {
         app.buttons["zoom.close"].tap()
         XCTAssertTrue(strip.waitForNonExistence(timeout: 5))
         app.buttons["More"].firstMatch.tap()
+        app.buttons["View"].firstMatch.tap()
         XCTAssertTrue(app.buttons["Zoom Window"].firstMatch.waitForExistence(timeout: 5))
     }
 }

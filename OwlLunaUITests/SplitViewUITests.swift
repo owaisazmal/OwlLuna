@@ -46,6 +46,7 @@ final class SplitViewUITests: XCTestCase {
         app.buttons.matching(identifier: "More").element(boundBy: 0).tap()
         XCTAssertTrue(app.buttons["Recordings"].waitForExistence(timeout: 5), "and offers the rest from More")
         XCTAssertTrue(app.buttons["Record Audio"].exists)
+        XCTAssertTrue(app.buttons["editor.export"].exists, "Export too, which has its own button in a wide bar")
         attach(app, "split-narrow-more")
         app.buttons["Recordings"].tap()
         XCTAssertTrue(app.navigationBars["Recordings"].waitForExistence(timeout: 5))

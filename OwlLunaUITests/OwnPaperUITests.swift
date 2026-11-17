@@ -41,8 +41,7 @@ final class OwnPaperUITests: XCTestCase {
         sleep(1)
         attach(app, "page-on-own-paper")
 
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Change Paper…"].firstMatch.tap()
+        app.chooseFromMore("Change Paper…", in: "Page")
         XCTAssertTrue(drawer.waitForExistence(timeout: 10), "a page on your own paper can change its paper")
         let chosen = app.buttons["paper.mine.Lab Sheet"]
         XCTAssertTrue(chosen.waitForExistence(timeout: 10))

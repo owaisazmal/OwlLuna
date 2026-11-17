@@ -134,8 +134,7 @@ final class NotebookTabsUITests: XCTestCase {
         XCTAssertTrue(title(app).hasPrefix("Physics II 3"))
 
         // In focus mode the bar goes with the rest of the chrome, and comes back with it.
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Focus Mode"].firstMatch.tap()
+        app.chooseFromMore("Focus Mode", in: "View")
         XCTAssertTrue(app.buttons["tabs.add"].waitForNonExistence(timeout: 5))
         attach(app, "tabs-focus")
         app.buttons["editor.focus.exit"].tap()

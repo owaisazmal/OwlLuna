@@ -123,6 +123,9 @@ final class EditorSession {
     private(set) var scrubbing: TimeInterval?
     /// The zoom window: a magnified strip at the foot of the editor for writing small and neat.
     private(set) var isZoomWindowOpen = false
+    /// What an imported PDF lists as its contents, for the pages still in the notebook.
+    private(set) var contents: [OutlineEntry] = []
+    @ObservationIgnored private var contentsPages: [UUID]?
     @ObservationIgnored private var replayPage: UUID?
     var laserColor = LaserColor.red {
         didSet { canvas?.setLaserColor(laserColor) }
@@ -197,6 +200,17 @@ final class EditorSession {
     /// The page being written on, nil only while the notebook has none.
     var shownPage: NotebookPage? {
         document.pages.indices.contains(currentPage) ? document.pages[currentPage] : nil
+    }
+
+    /// Reads a PDF's contents off the main thread, and again only once the notebook's PDF pages have changed.
+    func readContents() async {
+        let pages = document.pages
+        let pdfPages = pages.filter { if case .pdf = $0.background { true } else { false } }.map(\.id)
+        guard pdfPages != contentsPages else { return }
+        contentsPages = pdfPages
+        let assets = document.package.assetsDirectory
+        let entries = pdfPages.isEmpty ? [] : await Task.detached(priority: .userInitiated) { PDFOutlineReader.entries(pages: pages, assets: assets) }.value
+        if contentsPages == pdfPages { contents = entries }
     }
 
     /// Where leaving the open whiteboard goes: the page it was opened from, or the nearest page before or after it.

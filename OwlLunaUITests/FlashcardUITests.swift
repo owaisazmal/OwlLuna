@@ -23,10 +23,7 @@ final class FlashcardUITests: XCTestCase {
     private func openMore(_ app: XCUIApplication, _ item: String) {
         app.buttons["notebook.Biology"].tap()
         XCTAssertTrue(app.descendants(matching: .any)["page.canvas.1"].waitForExistence(timeout: 20))
-        app.buttons["More"].firstMatch.tap()
-        let button = app.buttons[item].firstMatch
-        XCTAssertTrue(button.waitForExistence(timeout: 5), item)
-        button.tap()
+        app.chooseFromMore(item, in: "Study")
     }
 
     func testDueCardsAreStudiedFromTheLibrary() throws {
@@ -137,8 +134,7 @@ final class FlashcardUITests: XCTestCase {
         attach(app, "summary-on-page")
         app.buttons["editor.arrange.done"].tap()
 
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Flashcards…"].firstMatch.tap()
+        app.chooseFromMore("Flashcards…", in: "Study")
         let summary = app.element("deck.summary")
         XCTAssertTrue(summary.waitForExistence(timeout: 5))
         XCTAssertTrue(summary.label.hasPrefix("9 cards"), summary.label)

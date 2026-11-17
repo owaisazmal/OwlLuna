@@ -11,7 +11,7 @@ You need:
 - For the iPhone checks, an iPhone on iOS 18 or later, ideally an iPhone Duo.
 - For the Mac checks, a Mac on macOS 26 or later with a trackpad and a camera, signed in to the same test Apple Account.
 
-Names are spelt as the app spells them. In the editor, ⋯ is More, + is Add, and the title menu opens from the notebook's title. Keep a screen recording of every check, and film your hand with a phone where it matters. Write the build, the iPadOS version and the Pencil beside every result.
+Names are spelt as the app spells them. In the editor, ⋯ is More, + is Add, the arrow out of a box is Export, and the title menu opens from the notebook's title. More keeps most things on cards of their own, written here as ⋯ › View › Fit Width. Keep a screen recording of every check, and film your hand with a phone where it matters. Write the build, the iPadOS version and the Pencil beside every result.
 
 ## Before you start
 
@@ -178,7 +178,7 @@ Expect: each kind looks like its picture in the roll and marks even at the thinn
 The simulator has no Pencil, so only fingers have tried the lasso.
 
 1. ⋯ › Draw With › Apple Pencil Only. Write three lines, take the lasso and draw round one with the Pencil, your hand resting on the page.
-2. Pinch in and out, scroll with one finger away from the line, and tap ⋯ › Fit Width.
+2. Pinch in and out, scroll with one finger away from the line, and tap ⋯ › View › Fit Width.
 3. Drag the line with the Pencil, and while you hold it scroll and pinch with the other hand. Then hold it near the foot of the page until the next page comes up, and drop it there. Undo.
 4. Drag the line with a finger, and while you hold it scroll with another finger. Tap away from it, take a pen, and scroll with one finger at once.
 5. Repeat steps 1 to 3 with Pencil and Finger: draw the lasso with a finger and scroll with two.
@@ -252,7 +252,7 @@ Tunable (`ShapeSnap`, `TouchRests`, `ShapeRecognizer`): rest 0.45 s within 6 pt,
 
 ## Zoom window
 
-In a ruled notebook, ⋯ › Zoom Window.
+In a ruled notebook, ⋯ › View › Zoom Window.
 
 1. Write in the strip until you reach the tinted band, then rest. Write ten lines at each size (Zoom In, Zoom Out).
 2. Write a word across into the band without stopping. Rest at the end of a line and at the foot of a page.
@@ -279,7 +279,7 @@ Tunable (`InkTyping`): rest 1.0 s, reading from 0.4 s. Aim for about one second 
 
 Import PDF… a one-column PDF, a two-column paper and a scanned PDF with no text. Turn on Settings › Apple Pencil › Snap Highlighter to PDF Text.
 
-1. ⋯ › Select PDF Text. Drag across words, tap a word, then Select All on This Page. Copy into Notes. Highlight in each Highlight Colour.
+1. ⋯ › Select › Select PDF Text. Drag across words, tap a word, then Select All on This Page. Copy into Notes. Highlight in each Highlight Colour.
 2. In the two-column paper, drag along a line into the margin.
 3. Tap Done. Draw roughly along a line with the Highlighter, wavy and across two lines. Undo once, then erase a highlight.
 4. Repeat on the scanned PDF.
@@ -306,8 +306,9 @@ Use a readable PDF, a locked one and a broken one (a text file renamed `.pdf`), 
 3. Drag a PDF from Files onto OwlLuna's icon in the Dock, with the app closed, then with it open on a notebook.
 4. Share the locked PDF, type a wrong password, then the right one. Share the broken one.
 5. After each, look at the file in Files and at Xcode's Download Container: `Documents/Inbox` and `tmp/com.owais.OwlLuna-Inbox` must be empty.
+6. Import a textbook that has a table of contents. Tap the page ribbon, then Contents. Fold and unfold chapters, tap one, and open Contents again from a page deep in a chapter. Try it on an iPhone too.
 
-Expect: OwlLuna is offered where PDFs are shared, and takes the drop everywhere but Recently deleted, saying where it is going. Each PDF becomes a notebook named after the file, in the folder on show, with the same progress and notices as Import PDF. Dropped on the icon with the app closed, the splash goes at once and the import shows on the shelf. The original is never changed or moved, and nothing stays in either inbox.
+Expect: OwlLuna is offered where PDFs are shared, and takes the drop everywhere but Recently deleted, saying where it is going. Each PDF becomes a notebook named after the file, in the folder on show, with the same progress and notices as Import PDF. Dropped on the icon with the app closed, the splash goes at once and the import shows on the shelf. The original is never changed or moved, and nothing stays in either inbox. Contents is a tab only for a PDF that came with some. It opens with the chapter you are in unfolded and marked, a tap goes to that page, and on an iPhone the tabs sit under the bar.
 
 Sharing from Files to OwlLuna on the iPad Pro 11-inch simulator (iOS 27.0) made the notebook, emptied the inbox and left the file in Files. The drops haven't been tried outside unit tests.
 
@@ -379,7 +380,7 @@ Expect: in step 1 the indicator shows, no notice appears, the iPad locks as usua
 
 On iPadOS 26 with Apple Intelligence, use a page of handwritten lecture notes and a 30-page notebook or long PDF.
 
-1. ⋯ › Study Guide…, Write From › the page. Time Summary and Practice Questions.
+1. ⋯ › Study › Study Guide…, Write From › the page. Time Summary and Practice Questions.
 2. Add to Page, and Save N as Flashcards.
 3. Write From › Whole Notebook on the long one, timed. Then a transcribed recording.
 4. Open it on an iPad without Apple Intelligence.
@@ -442,7 +443,7 @@ Expect: step 1 moves nothing as the bars and tabs go and come back. A turn or a 
 
 So far only checked with a stand-in window. Connect a display (mirroring, Stage Manager off) and use a notebook with Presenter Notes… on three pages and study tape on one.
 
-1. ⋯ › Present (⌥⌘↩). Draw the laser and change its Laser Colour.
+1. ⋯ › Present › Start Presenting (⌥⌘↩). Draw the laser and change its Laser Colour.
 2. Pinch, turn pages with the arrows, the space bar and the bar, and lift the tape.
 3. Hide and show the panel with Notes and Next Page. Tap Done.
 4. Present, then unplug and replug the display.
@@ -452,7 +453,7 @@ Expect: the display shows only the page, on black, centred, following zoom and l
 
 ## One page at a time
 
-Only checked in the simulator and in tests. Use a written notebook of ten pages, with ⋯ › Pages › One Page at a Time.
+Only checked in the simulator and in tests. Use a written notebook of ten pages, with ⋯ › View › One Page at a Time.
 
 1. Write a page with your palm down, right up to the left and right edges, lifting the palm mid-word.
 2. Swipe left and right with a finger: a short drag, a long one past the side, and a flick.
@@ -470,7 +471,7 @@ A board has only been laid out at 5× in the simulator, never written on with a 
 3. Whiteboard › Show Everything, then Actual Size. Pan and pinch with the tools showing.
 4. Back to Pages, and reopen the board.
 5. Multiply the ink (Select Ink Across Pages, tap the ink, Duplicate) to several thousand strokes. Pan, pinch, Show Everything, reopen.
-6. Title menu › Export › This Page as a Time-lapse Video…. ⌘F a word written far out. Present the board on a display.
+6. Export › This Page › Time-lapse Video…. ⌘F a word written far out. Present the board on a display.
 
 Expect: ink lands under the tip and is sharp at any distance, with no blank tiles or jumps. Show Everything fits all the ink within about a second, and the board reopens quickly where you left it. Memory levels off. The time-lapse shows all the ink in order, at most twenty seconds. Find brings the word into view, and the display shows the inked area with the laser. Keep Animation Hitches for 30 seconds of panning and Allocations for a minute.
 

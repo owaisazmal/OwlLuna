@@ -237,9 +237,9 @@ final class AccessibilityAuditUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Done"].firstMatch.waitForExistence(timeout: 10))
         sleep(1)
         try check("page navigator", modal: true)
-        app.buttons["Outline"].firstMatch.tap()
+        app.buttons["Bookmarks"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["No Bookmarks Yet"].waitForExistence(timeout: 5))
-        try check("page outline", modal: true)
+        try check("page bookmarks", modal: true)
         app.buttons["Done"].firstMatch.tap()
 
         app.buttons["Add"].firstMatch.tap()
@@ -290,15 +290,13 @@ final class AccessibilityAuditUITests: XCTestCase {
             app.buttons["Cancel"].firstMatch.tap()
         }
 
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Focus Mode"].firstMatch.tap()
+        app.chooseFromMore("Focus Mode", in: "View")
         XCTAssertTrue(app.buttons["editor.focus.exit"].waitForExistence(timeout: 5))
         sleep(1)
         try check("focus mode")
         app.buttons["editor.focus.exit"].tap()
         XCTAssertTrue(app.buttons["editor.ribbon"].waitForExistence(timeout: 5))
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Presenter Notes…"].firstMatch.tap()
+        app.chooseFromMore("Presenter Notes…", in: "Present")
         let notes = app.textViews["presenter.notes.editor"]
         XCTAssertTrue(notes.waitForExistence(timeout: 10))
         notes.typeText("Open with the question")
@@ -307,8 +305,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.buttons["presenter.notes.done"].tap()
         XCTAssertTrue(notes.waitForNonExistence(timeout: 5))
 
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Present"].firstMatch.tap()
+        app.chooseFromMore("Start Presenting", in: "Present")
         XCTAssertTrue(app.buttons["editor.present.done"].waitForExistence(timeout: 5))
         sleep(1)
         try check("presenting", bar: app.otherElements["editor.present.bar"])
@@ -321,8 +318,8 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.buttons["editor.present.done"].tap()
         XCTAssertTrue(app.buttons["editor.ribbon"].waitForExistence(timeout: 5))
 
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Select Ink Across Pages"].firstMatch.tap()
+        // The textbook is a PDF, so its ink and its text are selected from one card.
+        app.chooseFromMore("Select Ink Across Pages", in: "Select")
         XCTAssertTrue(app.buttons["editor.ink.done"].waitForExistence(timeout: 5))
         sleep(1)
         try check("select ink", bar: app.otherElements["editor.ink.bar"])
@@ -432,8 +429,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.buttons["editor.find.done"].tap()
         XCTAssertTrue(app.buttons["editor.ribbon"].waitForExistence(timeout: 5))
 
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Zoom Window"].firstMatch.tap()
+        app.chooseFromMore("Zoom Window", in: "View")
         XCTAssertTrue(app.descendants(matching: .any)["zoom.canvas"].waitForExistence(timeout: 10))
         sleep(1)
         try check("zoom window")
@@ -447,8 +443,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         try check("today's events", bar: app.otherElements["editor.arrange.bar"])
         app.buttons["editor.arrange.done"].tap()
 
-        app.buttons["editor.title"].tap()
-        app.buttons["Export"].firstMatch.tap()
+        app.buttons["editor.export"].tap()
         let film = app.buttons["This Page as a Time-lapse Video…"].firstMatch
         XCTAssertTrue(film.waitForExistence(timeout: 5))
         film.tap()

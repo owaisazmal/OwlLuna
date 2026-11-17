@@ -493,6 +493,7 @@ fileprivate struct EditorContent: View {
             // A notebook coming back from behind the tab bar still has its undo history.
             session.refreshUndoState()
             refreshNotebookTitles()
+            Task { await session.readContents() }
         }
         .onChange(of: window?.active) { if pane != .single, window?.active == document.id { session.canvas?.paneBecameActive() } }
         .onChange(of: session.mode, initial: true) { if pane != .secondary { window?.hidesChrome = session.mode != .writing } }
@@ -650,6 +651,7 @@ fileprivate struct EditorContent: View {
                     recordButton
                     recordingsButton
                     toolsButton
+                    AnyView(exportMenu)
                     AnyView(moreMenu)
                 }
                 .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { buttonGroupWidth = $0 }
@@ -755,30 +757,6 @@ fileprivate struct EditorContent: View {
                 Button { tagging = .notebook } label: { Label("Tags…", systemImage: "tag") }
                 MoveToShelfMenu(current: document.manifest.library.folderID, move: moveToShelf)
             }
-            OwlLunaMenu {
-                let here = session.shownPage == nil ? nil : session.currentPage
-                Button { export = ExportJob(document: document, choosing: true, current: here) } label: {
-                    Label("Notebook as a PDF…", systemImage: "doc.richtext")
-                }
-                if session.shownPage != nil {
-                    Button { export = ExportJob(document: document, choosing: true, current: here, thisPage: true) } label: {
-                        Label("This Page as a PDF…", systemImage: "doc")
-                    }
-                }
-                Button { export = ExportJob(document: document, format: .images, choosing: true, current: here) } label: {
-                    Label("Every Page as an Image…", systemImage: "photo.on.rectangle")
-                }
-                if let page = session.shownPage {
-                    Button { export = ExportJob(document: document, format: .images, pages: [page]) } label: { Label("This Page as an Image…", systemImage: "photo") }
-                    Button { export = ExportJob(document: document, format: .timelapse, pages: [page]) } label: {
-                        Label("This Page as a Time-lapse Video…", systemImage: "film")
-                    }
-                    .disabled(document.loadedInk(page.id)?.strokes.isEmpty ?? (page.inkHash == nil))
-                }
-                Button { export = ExportJob(document: document, format: .text, choosing: true, current: here) } label: {
-                    Label("Notebook as Text…", systemImage: "doc.plaintext")
-                }
-            } label: { Label("Export", systemImage: "square.and.arrow.up") }
             if let window, pane != .secondary {
                 MenuBreak()
                 Button { window.pickingTab = true } label: { Label("Open Another Notebook in a Tab…", systemImage: "plus.rectangle.on.rectangle") }
@@ -803,6 +781,50 @@ fileprivate struct EditorContent: View {
         }
         .accessibilityLabel(Text("\(document.title), notebook options"))
         .accessibilityIdentifier("editor.title")
+    }
+
+    /// In the bar where there is room for it, and a row of More where there isn't.
+    private var exportMenu: some View {
+        OwlLunaMenu { exportRows } label: { Label("Export", systemImage: "square.and.arrow.up") }
+            .accessibilityIdentifier("editor.export")
+    }
+
+    /// What can be exported: the page on show, then the whole notebook.
+    @ViewBuilder
+    private var exportRows: some View {
+        let here = session.shownPage == nil ? nil : session.currentPage
+        if let page = session.shownPage {
+            Section {
+                exportRow("PDF…", "doc", spoken: "This Page as a PDF…") {
+                    export = ExportJob(document: document, choosing: true, current: here, thisPage: true)
+                }
+                exportRow("Image…", "photo", spoken: "This Page as an Image…") { export = ExportJob(document: document, format: .images, pages: [page]) }
+                exportRow("Time-lapse Video…", "film", spoken: "This Page as a Time-lapse Video…") {
+                    export = ExportJob(document: document, format: .timelapse, pages: [page])
+                }
+                .disabled(document.loadedInk(page.id)?.strokes.isEmpty ?? (page.inkHash == nil))
+            } header: {
+                Text("This Page")
+            }
+        }
+        Section {
+            exportRow("PDF…", "doc.richtext", spoken: "Notebook as a PDF…") { export = ExportJob(document: document, choosing: true, current: here) }
+            exportRow("Images…", "photo.on.rectangle", spoken: "Every Page as an Image…") {
+                export = ExportJob(document: document, format: .images, choosing: true, current: here)
+            }
+            exportRow("Text…", "doc.plaintext", spoken: "Notebook as Text…") {
+                export = ExportJob(document: document, format: .text, choosing: true, current: here)
+            }
+        } header: {
+            Text("Whole Notebook")
+        }
+    }
+
+    /// A row named in short under a band that says the rest: read out in full, and answering to either name.
+    private func exportRow(_ shown: LocalizedStringKey, _ symbol: String, spoken: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        Button(action: action) { Label(shown, systemImage: symbol) }
+            .accessibilityLabel(Text(spoken))
+            .accessibilityInputLabels([Text(shown), Text(spoken)])
     }
 
     private var cameraButton: some View {
@@ -1396,9 +1418,9 @@ fileprivate struct EditorContent: View {
         }
     }
 
+    /// A few named rows, each opening a short card of its own.
     private var moreMenu: some View {
         OwlLunaMenu {
-            let current = session.shownPage
             if isNarrow {
                 if !session.recorder.isRecording {
                     Button { session.recorder.startRecording() } label: { Label("Record Audio", systemImage: "mic") }
@@ -1409,67 +1431,24 @@ fileprivate struct EditorContent: View {
                     Label(session.showsTools ? "Hide Tools" : "Show Tools", systemImage: "pencil.tip.crop.circle")
                 }
                 .disabled(document.isReadOnly)
+                exportMenu
                 MenuBreak()
-            }
-            if let current, current.template != nil || current.notebookPaper != nil, !document.isReadOnly {
-                Button { paperMode = .change(pageID: current.id) } label: { Label("Change Paper…", systemImage: "paintpalette") }
-            }
-            Group {
-                if let current, current.bookmark != nil {
-                    Button { bookmarkName = current.bookmark ?? ""; namingBookmark = current.id } label: { Label("Name Bookmark…", systemImage: "bookmark") }
-                } else {
-                    Button(action: toggleBookmark) { Label("Bookmark Page", systemImage: "bookmark") }
-                }
-                if let current { Button { tagging = .page(current.id) } label: { Label("Tag Page…", systemImage: "tag") } }
-                Button { Task { await session.duplicatePage(at: session.currentPage) } } label: {
-                    Label("Duplicate Page", systemImage: "plus.square.on.square")
-                }
-                Button(role: .destructive) { confirmingDelete = true } label: { Label("Delete Page", systemImage: "trash") }
-            }
-            .disabled(document.isReadOnly)
-            MenuBreak()
-            if session.openBoard != nil {
-                // In a narrow pane the whiteboard has no button of its own in the bar.
-                if !showsBoardMenu {
-                    if session.pageBehindBoard != nil { leaveBoardButton }
-                    boardActions
-                }
-            } else {
-                Button { session.canvas?.fit(.width) } label: { Label("Fit Width", systemImage: "arrow.left.and.right") }
-                Button { session.canvas?.fit(.page) } label: { Label("Fit Page", systemImage: "arrow.up.and.down") }
-                OwlLunaMenu {
-                    OwlLunaPicker(selection: $session.pageFlow) {
-                        ForEach(PageFlow.allCases) { Text($0.displayName).tag($0) }
-                    }
-                } label: { Label("Pages", systemImage: "rectangle.portrait.on.rectangle.portrait") }
-            }
-            MenuBreak()
-            if !document.isReadOnly {
-                Button { enter(.selecting) } label: { Label("Select Ink Across Pages", systemImage: "lasso") }
-            }
-            if !session.liftedTapes.isEmpty {
-                Button { session.coverAllTapes() } label: { Label("Put All Tape Back", systemImage: "eye.slash") }
             }
             Button { enter(.finding) } label: { Label("Find in Notebook…", systemImage: "magnifyingglass") }
-            if document.hasPDFPages {
-                Button { enter(.selectingText) } label: { Label("Select PDF Text", systemImage: "text.cursor") }
+            OwlLunaMenu { pageRows } label: { Label("Page", systemImage: "doc") }
+                .disabled(document.isReadOnly)
+            OwlLunaMenu { viewRows } label: { Label("View", systemImage: "eye") }
+            // In a narrow pane the whiteboard has no button of its own in the bar.
+            if session.openBoard != nil, !showsBoardMenu {
+                OwlLunaMenu {
+                    if session.pageBehindBoard != nil { leaveBoardButton }
+                    boardActions
+                } label: { Label("Whiteboard", systemImage: "scribble.variable") }
             }
-            if !document.isReadOnly {
-                Button { session.setZoomWindow(!session.isZoomWindowOpen) } label: {
-                    Label(session.isZoomWindowOpen ? "Close Zoom Window" : "Zoom Window", systemImage: "plus.magnifyingglass")
-                }
-            }
-            MenuBreak()
-            Button { showingDeck = true } label: { Label("Flashcards…", systemImage: "rectangle.on.rectangle.angled") }
-            Button { studyGuide = StudyGuideRequest(scope: .notebook) } label: { Label("Study Guide…", systemImage: "text.badge.star") }
-            MenuBreak()
-            Button { enter(.focus) } label: { Label("Focus Mode", systemImage: "arrow.up.left.and.arrow.down.right") }
-            Button { enter(.presenting) } label: { Label("Present", systemImage: "play.rectangle") }
-            if let current, !document.isReadOnly {
-                Button { editingNotes = NotesTarget(id: current.id) } label: { Label("Presenter Notes…", systemImage: "note.text") }
-            }
+            selectRows
+            OwlLunaMenu { studyRows } label: { Label("Study", systemImage: "graduationcap") }
+            presentRows
             if DrawingInput.hasPencil {
-                MenuBreak()
                 OwlLunaMenu {
                     OwlLunaPicker(selection: $session.drawingInput) {
                         ForEach(DrawingInput.allCases) { Text($0.displayName).tag($0) }
@@ -1481,6 +1460,84 @@ fileprivate struct EditorContent: View {
         }
         .panel("Paper", item: Binding(get: { paperMode?.isAdding == false ? paperMode : nil }, set: { paperMode = $0 }), adapts: true) { mode in
             PaperDrawer(session: session, mode: mode)
+        }
+    }
+
+    @ViewBuilder
+    private var pageRows: some View {
+        let current = session.shownPage
+        if let current, current.template != nil || current.notebookPaper != nil {
+            Button { paperMode = .change(pageID: current.id) } label: { Label("Change Paper…", systemImage: "paintpalette") }
+        }
+        if let current, current.bookmark != nil {
+            Button { bookmarkName = current.bookmark ?? ""; namingBookmark = current.id } label: { Label("Name Bookmark…", systemImage: "bookmark") }
+        } else {
+            Button(action: toggleBookmark) { Label("Bookmark Page", systemImage: "bookmark") }
+        }
+        if let current { Button { tagging = .page(current.id) } label: { Label("Tag Page…", systemImage: "tag") } }
+        Button { Task { await session.duplicatePage(at: session.currentPage) } } label: {
+            Label("Duplicate Page", systemImage: "plus.square.on.square")
+        }
+        Button(role: .destructive) { confirmingDelete = true } label: { Label("Delete Page", systemImage: "trash") }
+    }
+
+    /// How the page is fitted and shown. An open whiteboard is fitted from its own card.
+    @ViewBuilder
+    private var viewRows: some View {
+        if session.openBoard == nil {
+            Button { session.canvas?.fit(.width) } label: { Label("Fit Width", systemImage: "arrow.left.and.right") }
+            Button { session.canvas?.fit(.page) } label: { Label("Fit Page", systemImage: "arrow.up.and.down") }
+        }
+        if !document.isReadOnly {
+            Button { session.setZoomWindow(!session.isZoomWindowOpen) } label: {
+                Label(session.isZoomWindowOpen ? "Close Zoom Window" : "Zoom Window", systemImage: "plus.magnifyingglass")
+            }
+        }
+        Button { enter(.focus) } label: { Label("Focus Mode", systemImage: "arrow.up.left.and.arrow.down.right") }
+        if session.openBoard == nil {
+            OwlLunaPicker("Pages", selection: $session.pageFlow) {
+                ForEach(PageFlow.allCases) { Text($0.displayName).tag($0) }
+            }
+        }
+    }
+
+    /// Two ways to select share a card. One alone stays a row of More.
+    @ViewBuilder
+    private var selectRows: some View {
+        let ink = Button { enter(.selecting) } label: { Label("Select Ink Across Pages", systemImage: "lasso") }
+        let text = Button { enter(.selectingText) } label: { Label("Select PDF Text", systemImage: "text.cursor") }
+        if document.isReadOnly {
+            if document.hasPDFPages { text }
+        } else if document.hasPDFPages {
+            OwlLunaMenu {
+                ink
+                text
+            } label: { Label("Select", systemImage: "lasso") }
+        } else {
+            ink
+        }
+    }
+
+    @ViewBuilder
+    private var studyRows: some View {
+        Button { showingDeck = true } label: { Label("Flashcards…", systemImage: "rectangle.on.rectangle.angled") }
+        Button { studyGuide = StudyGuideRequest(scope: .notebook) } label: { Label("Study Guide…", systemImage: "text.badge.star") }
+        if !session.liftedTapes.isEmpty {
+            Button { session.coverAllTapes() } label: { Label("Put All Tape Back", systemImage: "eye.slash") }
+        }
+    }
+
+    /// Presenting and the notes for it share a card. Where no notes can be written, presenting stays a row of More.
+    @ViewBuilder
+    private var presentRows: some View {
+        let start = Button { enter(.presenting) } label: { Label("Start Presenting", systemImage: "play.rectangle") }
+        if let current = session.shownPage, !document.isReadOnly {
+            OwlLunaMenu {
+                start
+                Button { editingNotes = NotesTarget(id: current.id) } label: { Label("Presenter Notes…", systemImage: "note.text") }
+            } label: { Label("Present", systemImage: "play.rectangle") }
+        } else {
+            start
         }
     }
 

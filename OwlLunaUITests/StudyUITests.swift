@@ -55,8 +55,7 @@ final class StudyUITests: XCTestCase {
         XCTAssertEqual(tape.value as? String, "Covering")
 
         tape.tap()
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Put All Tape Back"].firstMatch.tap()
+        app.chooseFromMore("Put All Tape Back", in: "Study")
         XCTAssertEqual(tape.value as? String, "Covering")
 
         tape.press(forDuration: 0.8)
@@ -71,8 +70,7 @@ final class StudyUITests: XCTestCase {
     func testAPageIsFilmedBeingWritten() throws {
         let app = XCUIApplication()
         _ = openStudyNotes(app)
-        app.buttons["editor.title"].tap()
-        app.buttons["Export"].firstMatch.tap()
+        app.buttons["editor.export"].tap()
         app.buttons["This Page as a Time-lapse Video…"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["Your video is ready."].waitForExistence(timeout: 60))
         XCTAssertTrue(app.descendants(matching: .any)["export.preview"].waitForExistence(timeout: 5), "the film plays in the sheet")

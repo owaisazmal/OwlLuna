@@ -74,6 +74,9 @@ struct HairlineRule: View {
 }
 
 extension View {
+    /// A ledger row that reaches the board's edges and insets itself: one with more than one thing in it to touch.
+    func ledgerFlush() -> some View { containerValue(\.isLedgerFlush, true) }
+
     /// The band over a named run of rows in a ledger or a menu: small semibold words on a well.
     func sectionBand() -> some View {
         font(.caption.weight(.semibold))

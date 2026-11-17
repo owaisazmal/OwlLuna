@@ -60,8 +60,7 @@ final class TagUITests: XCTestCase {
 
         notebook.tap()
         XCTAssertTrue(app.buttons["editor.ribbon"].waitForExistence(timeout: 20))
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Tag Page…"].firstMatch.tap()
+        app.chooseFromMore("Tag Page…", in: "Page")
         let suggestion = app.buttons["tags.suggestion.Exam"]
         XCTAssertTrue(suggestion.waitForExistence(timeout: 10), "the library's tags are offered")
         suggestion.tap()
@@ -71,16 +70,16 @@ final class TagUITests: XCTestCase {
         XCTAssertTrue(app.buttons["editor.undo"].isEnabled, "tagging a page is a step to undo")
 
         app.buttons["editor.ribbon"].tap()
-        let outline = app.buttons["Outline"].firstMatch
-        XCTAssertTrue(outline.waitForExistence(timeout: 10))
+        let bookmarks = app.buttons["Bookmarks"].firstMatch
+        XCTAssertTrue(bookmarks.waitForExistence(timeout: 10))
         let thumbnail = app.buttons["Page 1 of 3, current"]
         XCTAssertTrue(thumbnail.waitForExistence(timeout: 5))
         XCTAssertEqual(thumbnail.value as? String, "tagged Exam")
         attach(app, "tags-navigator")
-        outline.tap()
+        bookmarks.tap()
         let row = app.buttons["Exam, page 1"]
-        XCTAssertTrue(row.waitForExistence(timeout: 5), "the outline lists the tagged page")
-        attach(app, "tags-outline")
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "the tagged page is listed under the bookmarks")
+        attach(app, "tags-bookmarks")
         row.tap()
         XCTAssertTrue(row.waitForNonExistence(timeout: 10))
         app.buttons["editor.back"].tap()

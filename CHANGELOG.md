@@ -12,6 +12,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Favourite notebooks stand first on each shelf in All notebooks, folders, tags and smart shelves, in the order chosen, with the rest after them. Search results, Favourites and Recently Deleted are as before.
 - OwlLuna runs on the Mac, on macOS 26 or later. The app's bar is the top of the window, beside the traffic lights, and a right-click opens the menus a held tap opens on the iPad. The pointer draws from the start and the Apple Pencil's settings are left out. Messages and notes say Mac and point to System Settings, in English, French, German and Spanish.
 - Ink the lasso has caught can be resized, stretched and turned. Its box has a tab on each corner that resizes it in proportion, a bar on each side that stretches it one way, and a knob that turns it, settling on the quarter turns. Lines grow and shrink with a resize and keep their thickness in a stretch. The Pencil and a finger both work the handles, each drag is one undo step, and VoiceOver steps them.
+- A PDF that came with a table of contents has a Contents tab in the page navigator. Chapters fold, the one you are in is open and marked, and a tap goes to its page. Before, the contents were a flat list at the foot of the Outline tab.
 - Tap the page with two fingers to undo and with three to redo. Settings › Finger Gestures gives each another action, such as the eraser or the tool palette, or turns it off, and adds a one-finger double-tap on bare paper for when only the Pencil draws. A tap while the Pencil writes, or just after it lifts, is left alone. Pencil double-tap and squeeze can redo too.
 
 ### Changed
@@ -19,6 +20,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - A favourite notebook now has a red flag with a star sticking out of its pages, in place of the ribbon, which looked like a bookmark. List rows show the flag too.
 - The fineliner can be set twice as fine, down to a hairline half a point wide. Widths under 1 show two decimals.
 - The lasso keeps what it has caught while you scroll and zoom, and carries it to another page. Hold the ink near the top or the foot of the page and the pages scroll under it, or scroll and pinch with your other hand while you hold it. Tap what is caught for a card with Cut, Copy, Duplicate and Delete, and tap bare paper with the lasso to paste there. A tap elsewhere lets the ink go, and ⌘C, ⌘X, ⌘V, Delete and Escape work from a keyboard. Copied ink pastes into Notes and other apps as a drawing, and a drawing copied there pastes here as ink. Turn into Text and Make Flashcard stay in the bar. Before, a pinch lost the selection and ink dragged off its page disappeared.
+- More in the editor is a short list: Find in Notebook, then Page, View, Select, Study, Present and Draw With, each opening its own card. Before, it was one list of about twenty rows.
+- Export has its own button in the editor's bar, sorted into This Page and Whole Notebook. In a narrow pane and on an iPhone it is in More. Before, it was under the notebook's title.
+- The page navigator's Outline tab is now Bookmarks, and lists bookmarked and tagged pages.
 - A tap on the status bar no longer sends a notebook back to its first page. A tap meant for Undo or the title often landed there and lost your place. Settings › Finger Gestures › Tap Status Bar to Scroll to Top turns it back on.
 
 ### Fixed

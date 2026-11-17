@@ -36,8 +36,7 @@ final class EditorModesUITests: XCTestCase {
         XCTAssertTrue(canvas.waitForExistence(timeout: 10))
         let before = strokeCount(canvas)
 
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Focus Mode"].firstMatch.tap()
+        app.chooseFromMore("Focus Mode", in: "View")
         let exitFocus = app.buttons["editor.focus.exit"]
         XCTAssertTrue(exitFocus.waitForExistence(timeout: 5))
         XCTAssertTrue(ribbon.waitForNonExistence(timeout: 5), "the ribbon and the bar are put away")
@@ -48,8 +47,7 @@ final class EditorModesUITests: XCTestCase {
         exitFocus.tap()
         XCTAssertTrue(ribbon.waitForExistence(timeout: 5))
 
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Present"].firstMatch.tap()
+        app.chooseFromMore("Start Presenting", in: "Present")
         let done = app.buttons["editor.present.done"]
         XCTAssertTrue(done.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Page 1 of 3"].waitForExistence(timeout: 5))
@@ -72,7 +70,7 @@ final class EditorModesUITests: XCTestCase {
         XCTAssertTrue(second.waitForExistence(timeout: 10), "the stack starts continuous, with the next page under the first")
 
         app.buttons["More"].firstMatch.tap()
-        app.buttons["Pages"].firstMatch.tap()
+        app.buttons["View"].firstMatch.tap()
         let single = app.buttons["One Page at a Time"]
         XCTAssertTrue(single.waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Continuous"].isSelected, "the stack is marked as the choice in force")
@@ -101,7 +99,7 @@ final class EditorModesUITests: XCTestCase {
         XCTAssertEqual(ribbon.label, "Page 1 of 3")
 
         app.buttons["More"].firstMatch.tap()
-        app.buttons["Pages"].firstMatch.tap()
+        app.buttons["View"].firstMatch.tap()
         XCTAssertTrue(single.waitForExistence(timeout: 5))
         XCTAssertTrue(single.isSelected, "the picker marks the choice in force")
         app.buttons["Continuous"].tap()
@@ -143,7 +141,7 @@ final class EditorModesUITests: XCTestCase {
         wait(for: [expectation(for: NSPredicate(format: "label == %@", "Page 1 of 3"), evaluatedWith: ribbon)], timeout: 10)
     }
 
-    func testABookmarkedPageIsListedInTheOutline() throws {
+    func testABookmarkedPageIsListedUnderBookmarks() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-storageRoot", "modes", "-resetStorage", "-seedLibrary", "3", "-drawingInput", "anyInput"]
         app.launch()
@@ -158,17 +156,57 @@ final class EditorModesUITests: XCTestCase {
         attach(app, "bookmarked")
 
         app.buttons["editor.ribbon"].tap()
-        let outline = app.buttons["Outline"].firstMatch
-        XCTAssertTrue(outline.waitForExistence(timeout: 10))
+        let bookmarks = app.buttons["Bookmarks"].firstMatch
+        XCTAssertTrue(bookmarks.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["Contents"].exists, "a notebook with no PDF in it has no contents to show")
         attach(app, "navigator-pages")
-        outline.tap()
+        bookmarks.tap()
         let row = app.buttons["Page 1, page 1"]
         XCTAssertTrue(row.waitForExistence(timeout: 5), "the bookmark is listed under its page")
-        attach(app, "navigator-outline")
+        attach(app, "navigator-bookmarks")
         row.tap()
         XCTAssertTrue(bookmark.waitForExistence(timeout: 5))
         app.buttons["editor.undo"].tap()
         XCTAssertEqual(bookmark.label, "Bookmark Page", "bookmarking is one undo step")
+    }
+
+    func testAPDFsContentsFoldAndOpenTheirPages() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-storageRoot", "modes", "-resetStorage", "-seedLongPDF", "-drawingInput", "anyInput"]
+        app.launch()
+        let notebook = app.buttons["notebook.Textbook"]
+        XCTAssertTrue(notebook.waitForExistence(timeout: 60))
+        notebook.tap()
+        let ribbon = app.buttons["editor.ribbon"]
+        XCTAssertTrue(ribbon.waitForExistence(timeout: 20))
+
+        ribbon.tap()
+        let contents = app.buttons["Contents"].firstMatch
+        XCTAssertTrue(contents.waitForExistence(timeout: 10), "a PDF that came with contents has a tab for them")
+        contents.tap()
+        let part = app.buttons["Part 1, page 1"]
+        XCTAssertTrue(part.waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons["Chapter 1, page 1"].value as? String, "Current", "the part the page is in is open, with the chapter marked")
+        XCTAssertFalse(app.buttons["Chapter 61, page 61"].exists, "the other parts are folded")
+        attach(app, "navigator-contents")
+        try audit(app, [.contrast, .elementDetection, .hitRegion, .sufficientElementDescription], screen: "navigator contents", modal: true)
+
+        app.buttons["Show Sections Under Part 2"].tap()
+        let chapter = app.buttons["Chapter 61, page 61"]
+        XCTAssertTrue(chapter.waitForExistence(timeout: 5))
+        app.buttons["Hide Sections Under Part 1"].tap()
+        XCTAssertTrue(app.buttons["Chapter 11, page 11"].waitForNonExistence(timeout: 5))
+        XCTAssertEqual(part.value as? String, "Current", "folded, the part carries the mark for the chapter in it")
+        attach(app, "navigator-contents-folded")
+        chapter.tap()
+        wait(for: [expectation(for: NSPredicate(format: "label == %@", "Page 61 of 300"), evaluatedWith: ribbon)], timeout: 10)
+
+        ribbon.tap()
+        XCTAssertTrue(contents.waitForExistence(timeout: 10))
+        contents.tap()
+        XCTAssertTrue(chapter.waitForExistence(timeout: 5), "the list opens to where the notebook is")
+        XCTAssertEqual(chapter.value as? String, "Current")
+        XCTAssertFalse(app.buttons["Chapter 11, page 11"].exists)
     }
 
     func testAStickerCanBePlacedMovedAndRemoved() throws {
@@ -612,8 +650,7 @@ final class EditorModesUITests: XCTestCase {
         first.waitUntilStill()
         XCTAssertEqual(status.label, "1 stroke. Drag to move, tap for more.", "zoomed in, the line is still caught")
         attach(app, "lasso-kept-through-zoom")
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Fit Width"].firstMatch.tap()
+        app.chooseFromMore("Fit Width", in: "View")
         first.waitUntilStill()
         XCTAssertEqual(status.label, "1 stroke. Drag to move, tap for more.", "and fitted to the width again")
 
@@ -805,8 +842,7 @@ final class EditorModesUITests: XCTestCase {
         notebook.tap()
         XCTAssertTrue(app.descendants(matching: .any)["page.canvas.1"].waitForExistence(timeout: 20))
 
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Presenter Notes…"].firstMatch.tap()
+        app.chooseFromMore("Presenter Notes…", in: "Present")
         let editor = app.textViews["presenter.notes.editor"]
         XCTAssertTrue(editor.waitForExistence(timeout: 10))
         editor.typeText("Start with the question")
@@ -816,8 +852,7 @@ final class EditorModesUITests: XCTestCase {
         notesDone.tap()
         XCTAssertTrue(editor.waitForNonExistence(timeout: 5))
 
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Present"].firstMatch.tap()
+        app.chooseFromMore("Start Presenting", in: "Present")
         let panel = app.descendants(matching: .any)["presenter.panel"]
         XCTAssertTrue(panel.waitForExistence(timeout: 10), "with a second screen showing the page, the iPad keeps the notes beside it")
         XCTAssertTrue(app.staticTexts["Start with the question"].waitForExistence(timeout: 5))
@@ -844,8 +879,7 @@ final class EditorModesUITests: XCTestCase {
     func testPagesExportAsImagesAndTheLibraryBacksUp() throws {
         let app = XCUIApplication()
         _ = openNotebook(app, input: "anyInput")
-        app.buttons["editor.title"].tap()
-        app.buttons["Export"].firstMatch.tap()
+        app.buttons["editor.export"].tap()
         app.buttons["Every Page as an Image…"].firstMatch.tap()
         let start = app.buttons["export.start"]
         XCTAssertTrue(start.waitForExistence(timeout: 10), "the pages are chosen first")
@@ -922,8 +956,7 @@ final class EditorModesUITests: XCTestCase {
         let stage = app.images["presentation.stage.page"]
         XCTAssertFalse(stage.exists, "nothing is put on the second screen until presenting starts")
 
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Present"].firstMatch.tap()
+        app.chooseFromMore("Start Presenting", in: "Present")
         let done = app.buttons["editor.present.done"]
         XCTAssertTrue(done.waitForExistence(timeout: 5))
         XCTAssertTrue(app.images["editor.present.screen"].waitForExistence(timeout: 5), "the bar says the second screen is in use")
