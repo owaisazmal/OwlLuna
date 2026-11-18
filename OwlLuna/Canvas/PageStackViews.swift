@@ -13,6 +13,23 @@ final class PageCanvasView: PKCanvasView {
     private let holdGuard = LoneFingerHoldGuard()
     /// How many of PencilKit's handwriting holds wait for the guard, for tests.
     private(set) var guardedHolds = 0
+    /// The highlighter's canvas, under this one: its ink is multiplied into a light page, so print shows through it.
+    private(set) var ground: PageCanvasView?
+    /// On the highlighter's canvas, the page's canvas it lies under.
+    private(set) weak var sheet: PageCanvasView?
+    /// PencilKit's own lasso is used on this canvas, so with it in hand all the ink is here.
+    var lassoesItself = false
+    private var lay = InkLay.apart
+    private var drawsUnder = false
+    /// Which of the page's strokes are the highlighter's, in the order the page keeps them.
+    private var marks: [Bool] = []
+    private var whole: PKDrawing?
+    private var isLaying = false
+    /// The canvas that is drawing ink a tool change moved to it. Until it has, the other goes on showing that ink.
+    private weak var awaited: PageCanvasView?
+
+    /// Where a page's ink lies: the highlighter's under and the rest over, or all of it on one of the two canvases.
+    private enum InkLay { case apart, under, over }
 
     override var undoManager: UndoManager? { undoProxy ?? super.undoManager }
 
@@ -31,6 +48,179 @@ final class PageCanvasView: PKCanvasView {
     /// The stack scrolls, never the canvas. PencilKit turns the canvas's own pan back on after it drags a selection.
     override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         gestureRecognizer !== panGestureRecognizer && super.gestureRecognizerShouldBegin(gestureRecognizer)
+    }
+
+    // MARK: The highlighter's canvas
+
+    /// This canvas and the one under it.
+    var both: [PageCanvasView] { ground.map { [self, $0] } ?? [self] }
+    /// The page's canvas, asked of either of the two.
+    var owner: PageCanvasView { sheet ?? self }
+
+    /// Lays the highlighter's canvas under this one. It goes wherever this one is put.
+    func layGround() {
+        guard ground == nil, sheet == nil else { return }
+        let under = PageCanvasView(frame: frame)
+        under.sheet = self
+        under.isAccessibilityElement = false
+        under.accessibilityElementsHidden = true
+        ground = under
+        tint(under)
+        if let superview { superview.insertSubview(under, belowSubview: self) }
+    }
+
+    private func tint(_ under: PageCanvasView) {
+        under.overrideUserInterfaceStyle = overrideUserInterfaceStyle
+        under.layer.compositingFilter = overrideUserInterfaceStyle == .dark ? nil : "multiplyBlendMode"
+    }
+
+    override var overrideUserInterfaceStyle: UIUserInterfaceStyle {
+        didSet { if let ground { tint(ground) } }
+    }
+
+    override var drawingPolicy: PKCanvasViewDrawingPolicy {
+        didSet { ground?.drawingPolicy = drawingPolicy }
+    }
+
+    override func didMoveToSuperview() {
+        super.didMoveToSuperview()
+        guard let ground else { return }
+        if let superview { superview.insertSubview(ground, belowSubview: self) } else { ground.removeFromSuperview() }
+    }
+
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        drawsUnder ? nil : super.hitTest(point, with: event)
+    }
+
+    /// Both canvases are the same window onto the page: `frame`, with the page `content` large and scrolled to `offset`.
+    func place(frame: CGRect, content: CGSize, offset: CGPoint, scale: CGFloat) {
+        for canvas in both {
+            if canvas.zoomScale != scale || canvas.minimumZoomScale != scale || canvas.maximumZoomScale != scale {
+                canvas.minimumZoomScale = min(canvas.minimumZoomScale, scale)
+                canvas.maximumZoomScale = max(canvas.maximumZoomScale, scale)
+                canvas.zoomScale = scale
+                canvas.minimumZoomScale = scale
+                canvas.maximumZoomScale = scale
+            }
+            if canvas.frame != frame { canvas.frame = frame }
+            if canvas.contentSize != content { canvas.contentSize = content }
+            if canvas.contentOffset != offset { canvas.contentOffset = offset }
+        }
+    }
+
+    /// Takes the tool in hand. The highlighter draws on the canvas under this one and the eraser rubs there: at the
+    /// highlighter's ink alone, or at all the ink, which is put there for it.
+    func take(_ tool: PKTool, ruler: Bool, highlighterOnly: Bool) {
+        let erases = tool is PKEraserTool
+        let lay: InkLay = lassoesItself && tool is PKLassoTool ? .over : erases && !highlighterOnly ? .under : .apart
+        drawsUnder = ground != nil && lay != .over && (erases || (tool as? PKInkingTool)?.inkType == .marker)
+        for canvas in both { canvas.tool = tool }
+        isRulerActive = ruler && !drawsUnder
+        ground?.isRulerActive = ruler && drawsUnder
+        guard lay != self.lay, ground != nil else { return }
+        let ink = ink
+        self.lay = lay
+        put(ink, handingOver: true)
+    }
+
+    var rulerIsOut: Bool { both.contains { $0.isRulerActive } }
+
+    /// Whether a stroke is being drawn or rubbed out.
+    var isInUse: Bool { both.contains { [.began, .changed].contains($0.drawingGestureRecognizer.state) } }
+
+    /// All the page's ink, from both canvases, in the order the page keeps it.
+    var ink: PKDrawing {
+        get {
+            guard let ground else { return drawing }
+            if let whole { return whole }
+            var merged = lay == .under ? ground.drawing : drawing
+            let under = lay == .apart ? ground.drawing.strokes : []
+            if !under.isEmpty {
+                let over = drawing.strokes
+                var strokes: [PKStroke] = []
+                var u = 0, o = 0
+                for mark in marks {
+                    if mark, u < under.count {
+                        strokes.append(under[u])
+                        u += 1
+                    } else if !mark, o < over.count {
+                        strokes.append(over[o])
+                        o += 1
+                    }
+                }
+                merged = over.isEmpty ? ground.drawing : PKDrawing(strokes: strokes + over[o...] + under[u...])
+            }
+            marks = merged.strokes.map { $0.ink.inkType == .marker }
+            whole = merged
+            return merged
+        }
+        set { put(newValue, handingOver: false) }
+    }
+
+    /// Ink a tool change moves from one canvas to the other is taken off the first only once the second has drawn
+    /// it, so it never blinks.
+    private func put(_ ink: PKDrawing, handingOver: Bool) {
+        guard let ground else { return drawing = ink }
+        let strokes = ink.strokes
+        marks = strokes.map { $0.ink.inkType == .marker }
+        var under = PKDrawing(), over = PKDrawing()
+        switch lay {
+        case .under: under = ink
+        case .over: over = ink
+        case .apart where !marks.contains(true): over = ink
+        case .apart where !marks.contains(false): under = ink
+        case .apart:
+            under = PKDrawing(strokes: zip(strokes, marks).filter { $0.1 }.map(\.0))
+            over = PKDrawing(strokes: zip(strokes, marks).filter { !$0.1 }.map(\.0))
+        }
+        awaited = nil
+        isLaying = true
+        for (canvas, laid) in [(ground, under), (self, over)] where canvas.drawing != laid {
+            if handingOver, laid.strokes.count < canvas.drawing.strokes.count { continue }
+            canvas.drawing = laid
+            if handingOver { awaited = canvas }
+        }
+        isLaying = false
+        whole = ink
+        guard handingOver else { return }
+        guard let awaited else { return settle() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self, weak awaited] in
+            if let awaited { self?.didFinishRendering(awaited) }
+        }
+    }
+
+    /// Takes off each canvas the ink that has been handed to the other.
+    private func settle() {
+        awaited = nil
+        guard let ground else { return }
+        isLaying = true
+        for canvas in both {
+            let strokes = canvas.drawing.strokes
+            let kept = strokes.filter { lay == .apart ? ($0.ink.inkType == .marker) == (canvas === ground) : (lay == .under) == (canvas === ground) }
+            if kept.count != strokes.count { canvas.drawing = PKDrawing(strokes: kept) }
+        }
+        isLaying = false
+    }
+
+    func didFinishRendering(_ canvas: PageCanvasView) {
+        if awaited === canvas { settle() }
+    }
+
+    /// The ink on one of the two canvases changed. Returns whether PencilKit changed it, and not this canvas laying it.
+    func inkDidChange() -> Bool {
+        guard !isLaying else { return false }
+        if awaited != nil { settle() }
+        whole = nil
+        return true
+    }
+
+    /// PencilKit draws its tiles again only when the strokes change, so the canvas is emptied and given them back.
+    func redrawTiles() {
+        let strokes = drawing.strokes
+        owner.isLaying = true
+        drawing = PKDrawing()
+        drawing = PKDrawing(strokes: strokes)
+        owner.isLaying = false
     }
 
     /// Whether a tile PencilKit has drawn is empty where a stroke runs through it. When memory runs short PencilKit
@@ -70,7 +260,7 @@ final class PageCanvasView: PKCanvasView {
 
     override var accessibilityValue: String? {
         get {
-            let count = strokeCount ?? drawing.strokes.count
+            let count = strokeCount ?? ink.strokes.count
             strokeCount = count
             return count == 0 ? String(localized: "canvas.empty", defaultValue: "Empty") : String(localized: "\(count) strokes")
         }
@@ -250,7 +440,7 @@ final class PageSlotView: UIView {
             if item.isOverInk {
                 continue
             } else if let canvas, canvas.superview === self {
-                insertSubview(view, belowSubview: canvas)
+                insertSubview(view, belowSubview: canvas.ground ?? canvas)
             } else {
                 addSubview(view)
             }

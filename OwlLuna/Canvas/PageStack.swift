@@ -970,21 +970,24 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     private func makeCanvas() -> PageCanvasView {
         let canvas = PageCanvasView()
-        canvas.undoProxy = undoProxy
-        canvas.delegate = self
-        canvas.isScrollEnabled = false
-        canvas.bounces = false
-        canvas.bouncesZoom = false
-        canvas.showsVerticalScrollIndicator = false
-        canvas.showsHorizontalScrollIndicator = false
-        canvas.contentInsetAdjustmentBehavior = .never
-        canvas.backgroundColor = .clear
-        canvas.isOpaque = false
-        canvas.clipsToBounds = true
-        canvas.scrollsToTop = false
+        canvas.layGround()
+        for canvas in canvas.both {
+            canvas.undoProxy = undoProxy
+            canvas.delegate = self
+            canvas.isScrollEnabled = false
+            canvas.bounces = false
+            canvas.bouncesZoom = false
+            canvas.showsVerticalScrollIndicator = false
+            canvas.showsHorizontalScrollIndicator = false
+            canvas.contentInsetAdjustmentBehavior = .never
+            canvas.backgroundColor = .clear
+            canvas.isOpaque = false
+            canvas.clipsToBounds = true
+            canvas.scrollsToTop = false
+            canvas.maximumSupportedContentVersion = .latest
+        }
         canvas.overrideUserInterfaceStyle = .light
         canvas.drawingPolicy = effectivePolicy
-        canvas.maximumSupportedContentVersion = .latest
         canvas.isAccessibilityElement = true
         canvas.accessibilityTraits = .allowsDirectInteraction
         canvas.pasteAction = { [weak self, weak canvas] in self?.pasteAction(on: canvas) }
@@ -993,8 +996,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     /// A new or reused canvas takes the tool in hand.
     private func syncTool(_ canvas: PageCanvasView) {
-        canvas.tool = toolbox.tool
-        canvas.isRulerActive = toolbox.isRulerActive
+        canvas.take(toolbox.tool, ruler: toolbox.isRulerActive, highlighterOnly: toolbox.eraser.highlighterOnly)
     }
 
     private func attachCanvas(_ page: NotebookPage, to slot: PageSlotView) {
@@ -1028,11 +1030,11 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     private func show(_ ink: PKDrawing, in canvas: PageCanvasView) {
         applyingDrawing {
-            canvas.drawing = replayed(withoutHeldInk(ink, on: canvas.pageID), on: canvas.pageID)
+            canvas.ink = replayed(withoutHeldInk(ink, on: canvas.pageID), on: canvas.pageID)
             canvas.strokeCount = nil
         }
         canvas.isLoaded = true
-        canvas.tileChecks = 2
+        for canvas in canvas.both { canvas.tileChecks = 2 }
         setDrawingEnabled(canDraw, canvas)
         if !firstInkReported, canvas.pageID == firstInkPage, ink.strokes.isEmpty {
             DispatchQueue.main.async { [weak self] in self?.reportFirstInk() }
@@ -1040,7 +1042,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     }
 
     private func setDrawingEnabled(_ enabled: Bool, _ canvas: PageCanvasView) {
-        canvas.drawingGestureRecognizer.isEnabled = enabled
+        for canvas in canvas.both { canvas.drawingGestureRecognizer.isEnabled = enabled }
     }
 
     /// Puts ink on a canvas without it being taken for writing.
@@ -1052,14 +1054,14 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     private func recycleCanvas(_ id: UUID) {
         guard let canvas = canvases.removeValue(forKey: id) else { return }
-        if canvas.isFirstResponder { anchor.becomeFirstResponder() }
+        if canvas.both.contains(where: \.isFirstResponder) { anchor.becomeFirstResponder() }
         canvas.removeFromSuperview()
         canvas.pageID = nil
         replayPages[id] = nil
         canvas.isLoaded = false
         canvas.overrideUserInterfaceStyle = .light
         slots[id]?.canvas = nil
-        applyingDrawing { canvas.drawing = PKDrawing() }
+        applyingDrawing { canvas.ink = PKDrawing() }
         if pool.count < 3 { pool.append(canvas) }
     }
 
@@ -1072,13 +1074,6 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     /// Canvases are a viewport-sized window onto their page: PencilKit only backs what can be seen, even at 5×.
     private func place(_ canvas: PageCanvasView, in slot: PageSlotView) {
         let s = bakedScale
-        if canvas.zoomScale != s || canvas.minimumZoomScale != s || canvas.maximumZoomScale != s {
-            canvas.minimumZoomScale = min(canvas.minimumZoomScale, s)
-            canvas.maximumZoomScale = max(canvas.maximumZoomScale, s)
-            canvas.zoomScale = s
-            canvas.minimumZoomScale = s
-            canvas.maximumZoomScale = s
-        }
         let full = slot.bounds
         let pixel = 1 / max(traitCollection.displayScale, 1)
         let viewport = slot.convert(scrollView.bounds, from: scrollView)
@@ -1087,10 +1082,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         let x = min(max((viewport.minX / pixel).rounded(.down) * pixel, 0), full.width - width)
         let y = min(max((viewport.minY / pixel).rounded(.down) * pixel, 0), full.height - height)
         let target = CGRect(x: x, y: y, width: width, height: height)
-        if canvas.frame != target { canvas.frame = target }
         let size = CGSize(width: slot.page.size.width * s, height: slot.page.size.height * s)
-        if canvas.contentSize != size { canvas.contentSize = size }
-        if canvas.contentOffset != target.origin { canvas.contentOffset = target.origin }
+        canvas.place(frame: target, content: size, offset: target.origin, scale: s)
     }
 
     // MARK: PKCanvasViewDelegate
@@ -1098,18 +1091,19 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     /// The stroke-end path. Ink past the page edge is kept but never shown: the slot clips it, and every
     /// renderer draws only the page rectangle.
     func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
-        guard !isApplyingDrawing, let canvas = canvasView as? PageCanvasView, canvas.isLoaded, let id = canvas.pageID else { return }
+        guard let canvas = (canvasView as? PageCanvasView)?.owner, canvas.inkDidChange(), !isApplyingDrawing, canvas.isLoaded,
+              let id = canvas.pageID else { return }
         canvas.strokeCount = nil
         // Ink written in the zoom window renumbers the strokes the lasso holds on that page.
         if inkSelection[id] != nil { setInkSelection([:]) }
         let before = document.loadedInk(id)
-        let rest = canvas === zoomCanvas ? nil : strokeHold.takeHold(for: canvas.drawing.strokes.last)
+        let rest = canvas === zoomCanvas ? nil : strokeHold.takeHold(for: canvasView.drawing.strokes.last)
         if pencilGesture(on: canvas, pageID: id, before: before, rest: rest) {
             // What a scribble left of handwriting that was waiting to be read still is.
             if !unreadWriting.isEmpty { readWritingAfterARest() }
             return
         }
-        document.canvasDidChangeInk(id, to: canvas.drawing)
+        document.canvasDidChangeInk(id, to: canvas.ink)
         mirrorInk(from: canvas, pageID: id)
         // Writing that is to become type isn't straightened into shapes on the way.
         let typing = noteWriting(on: canvas, pageID: id, before: before)
@@ -1126,7 +1120,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     /// With Handwriting to Text on, a stroke of a pen waits to be read once the pen has rested. Returns whether it does.
     private func noteWriting(on canvas: PageCanvasView, pageID: UUID, before: PKDrawing?) -> Bool {
-        guard toolbox.typesHandwriting, PencilGestures.writes(canvas.tool), !canvas.isRulerActive, !document.isReadOnly,
+        guard toolbox.typesHandwriting, PencilGestures.writes(canvas.tool), !canvas.rulerIsOut, !document.isReadOnly,
               let drawn = addedStroke(on: canvas, since: before) else { return false }
         unreadWriting[pageID, default: []].insert(drawn.path.creationDate)
         readWritingAfterARest()
@@ -1200,13 +1194,13 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     /// never reaches the document: the erasing is one undo step that brings the ink back without it.
     private func pencilGesture(on canvas: PageCanvasView, pageID: UUID, before: PKDrawing?, rest: TimeInterval?) -> Bool {
         guard let before, !before.strokes.isEmpty, let drawn = addedStroke(on: canvas, since: before),
-              PencilGestures.writes(canvas.tool), !canvas.isRulerActive, !document.isReadOnly else { return false }
+              PencilGestures.writes(canvas.tool), !canvas.rulerIsOut, !document.isReadOnly else { return false }
         if let rest, rest >= ShapeSnap.holdDuration, PencilGestures.circleSelects, let frame = stackFrames[pageID],
            let outline = PencilGestures.outline(of: drawn, roundInkIn: before) {
             let snapped = ShapeSnap.isEnabled ? ShapeSnap.snapped(drawn) : nil
             // Writing that is to become type isn't straightened, so then a box selects too.
             if !toolbox.typesHandwriting, PencilGestures.keepsFigure(snapped?.shape) { return false }
-            document.canvasDidChangeInk(pageID, to: canvas.drawing)
+            document.canvasDidChangeInk(pageID, to: canvas.ink)
             mirrorInk(from: canvas, pageID: pageID)
             let stack = outline.map { CGPoint(x: $0.x + frame.minX, y: $0.y + frame.minY) }
             replaceLastStroke(drawn, with: nil, on: canvas, pageID: pageID, actionName: String(localized: "Circle to Select")) { [weak self] in
@@ -1224,7 +1218,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         guard PencilGestures.scribbleErases, let erased = PencilGestures.erasing(drawn, from: before) else { return false }
         document.canvasDidChangeInk(pageID, to: erased.drawing)
         document.undoManager.setActionName(String(localized: "Scribble Erase"))
-        applyingDrawing { canvas.drawing = erased.drawing }
+        applyingDrawing { canvas.ink = erased.drawing }
         mirrorInk(from: canvas, pageID: pageID)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         AccessibilityNotification.Announcement(String(localized: "\(erased.count) strokes erased")).post()
@@ -1236,20 +1230,21 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         let other = canvas === zoomCanvas ? canvases[pageID] : zoomWindow?.pageID == pageID ? zoomCanvas : nil
         guard let other, other.isLoaded else { return }
         applyingDrawing {
-            other.drawing = canvas.drawing
+            other.ink = canvas.ink
             other.strokeCount = nil
         }
     }
 
     /// The stroke just drawn, when the canvas holds exactly one more than `before`.
     private func addedStroke(on canvas: PageCanvasView, since before: PKDrawing?) -> PKStroke? {
-        guard let before, canvas.drawing.strokes.count == before.strokes.count + 1 else { return nil }
-        return canvas.drawing.strokes.last
+        let strokes = canvas.ink.strokes
+        guard let before, strokes.count == before.strokes.count + 1 else { return nil }
+        return strokes.last
     }
 
     /// Draw and hold: a stroke that ended with the pen at rest is redrawn as the line, circle or figure it looks like.
     private func straightenLastStroke(on canvas: PageCanvasView, pageID: UUID, before: PKDrawing?, rest: TimeInterval?) {
-        guard let rest, rest >= ShapeSnap.holdDuration, ShapeSnap.isEnabled, canvas.tool is PKInkingTool, !canvas.isRulerActive,
+        guard let rest, rest >= ShapeSnap.holdDuration, ShapeSnap.isEnabled, canvas.tool is PKInkingTool, !canvas.rulerIsOut,
               let drawn = addedStroke(on: canvas, since: before), let snapped = ShapeSnap.snapped(drawn) else { return }
         replaceLastStroke(drawn, with: snapped.stroke, on: canvas, pageID: pageID, actionName: String(localized: "Straighten Shape"),
                           announcement: String(localized: "Straightened: \(snapped.shape.displayName)"))
@@ -1259,7 +1254,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     /// as the line. The text is read off the main thread. Returns whether it is being read; `otherwise` runs if there
     /// turns out to be no text under the stroke.
     private func snapHighlighter(on canvas: PageCanvasView, pageID: UUID, before: PKDrawing?, otherwise: @escaping () -> Void) -> Bool {
-        guard PDFText.snapsHighlighter, (canvas.tool as? PKInkingTool)?.inkType == .marker, !canvas.isRulerActive,
+        guard PDFText.snapsHighlighter, (canvas.tool as? PKInkingTool)?.inkType == .marker, !canvas.rulerIsOut,
               let index = index(of: pageID), case .pdf(let file, let pdfIndex) = pages[index].background,
               let drawn = addedStroke(on: canvas, since: before) else { return false }
         let points = PencilGestures.points(of: drawn)
@@ -1281,16 +1276,16 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     /// the step.
     private func replaceLastStroke(_ drawn: PKStroke, with tidied: PKStroke?, on canvas: PageCanvasView, pageID: UUID, actionName: String,
                                    announcement: String? = nil, then: (() -> Void)? = nil) {
-        let count = canvas.drawing.strokes.count, stamp = drawn.path.creationDate
+        let count = canvas.ink.strokes.count, stamp = drawn.path.creationDate
         func apply(tries: Int) {
-            guard canvas.pageID == pageID, canvas.drawing.strokes.count == count, canvas.drawing.strokes.last?.path.creationDate == stamp else { return }
+            var strokes = canvas.ink.strokes
+            guard canvas.pageID == pageID, strokes.count == count, strokes.last?.path.creationDate == stamp else { return }
             guard document.undoManager.groupingLevel == 0 || tries == 0 else {
                 return DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) { apply(tries: tries - 1) }
             }
-            var strokes = canvas.drawing.strokes
             if let tidied { strokes[count - 1] = tidied } else { strokes.removeLast() }
             let drawing = PKDrawing(strokes: strokes)
-            applyingDrawing { canvas.drawing = drawing }
+            applyingDrawing { canvas.ink = drawing }
             document.canvasDidChangeInk(pageID, to: drawing)
             mirrorInk(from: canvas, pageID: pageID)
             document.undoManager.setActionName(actionName)
@@ -1321,39 +1316,37 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         heldLoop = nil
         guard document.undoManager.undoActionName == String(localized: "Circle to Select") else { return }
         document.undoManager.undo()
-        guard let canvas = canvases[held.pageID], canvas.isLoaded, let loop = canvas.drawing.strokes.last, loop.path.creationDate == held.stamp else { return }
+        guard let canvas = canvases[held.pageID], canvas.isLoaded, let loop = canvas.ink.strokes.last, loop.path.creationDate == held.stamp else { return }
         replaceLastStroke(loop, with: held.circle, on: canvas, pageID: held.pageID, actionName: String(localized: "Straighten Shape"),
                           announcement: String(localized: "Straightened: \(held.name)"))
     }
 
     /// Writing anywhere puts a selected picture down.
     func canvasViewDidBeginUsingTool(_ canvasView: PKCanvasView) {
-        (canvasView as? PageCanvasView)?.tileChecks = 0
+        let canvas = (canvasView as? PageCanvasView)?.owner
+        for canvas in canvas?.both ?? [] { canvas.tileChecks = 0 }
         if session.selection != nil { select(nil) }
         if !unreadWriting.isEmpty { typingTimer?.cancel() }
-        guard canvasView === zoomCanvas else { return }
+        guard let canvas, canvas === zoomCanvas else { return }
         zoomAdvance?.cancel()
         session.onTouchDown?()
     }
 
     func canvasViewDidFinishRendering(_ canvasView: PKCanvasView) {
-        guard let canvas = canvasView as? PageCanvasView else { return }
-        if canvas.tileChecks > 0 {
-            canvas.tileChecks -= 1
-            if canvas.hasBlankInkTile { redrawTiles(of: canvas) } else { canvas.tileChecks = 0 }
+        guard let drawn = canvasView as? PageCanvasView else { return }
+        let canvas = drawn.owner
+        canvas.didFinishRendering(drawn)
+        if drawn.tileChecks > 0 {
+            drawn.tileChecks -= 1
+            if drawn.hasBlankInkTile { redrawTiles(of: drawn) } else { drawn.tileChecks = 0 }
         }
-        guard !firstInkReported, canvas.pageID == firstInkPage, canvas.isLoaded else { return }
+        guard !firstInkReported, canvas.pageID == firstInkPage, canvas.isLoaded, !drawn.drawing.strokes.isEmpty else { return }
         reportFirstInk()
     }
 
-    /// PencilKit draws its tiles again only when the strokes change, so the canvas is emptied and given them back.
     private func redrawTiles(of canvas: PageCanvasView) {
-        guard ![.began, .changed].contains(canvas.drawingGestureRecognizer.state) else { return }
-        let ink = canvas.drawing
-        applyingDrawing {
-            canvas.drawing = PKDrawing()
-            canvas.drawing = PKDrawing(strokes: ink.strokes)
-        }
+        guard !canvas.owner.isInUse else { return }
+        applyingDrawing { canvas.redrawTiles() }
     }
 
     private func reportFirstInk() {
@@ -1667,7 +1660,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     @objc private func heldPage(_ gesture: UILongPressGestureRecognizer) {
         guard gesture.state == .began, !isLocked, !document.isReadOnly, !isOnSelection(gesture), !isOnCaughtInk(gesture), cropView == nil,
               let hit = item(at: gesture.location(in: scrollView)) else { return }
-        if let canvas = canvases[hit.pageID], canvas.drawingGestureRecognizer.isEnabled {
+        for canvas in canvases[hit.pageID]?.both ?? [] where canvas.drawingGestureRecognizer.isEnabled {
             canvas.drawingGestureRecognizer.isEnabled = false
             canvas.drawingGestureRecognizer.isEnabled = true
         }
@@ -2682,7 +2675,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             }
             if let image { images.append((image, bounds.offsetBy(dx: frame.minX, dy: frame.minY))) }
             if let canvas = canvases[id] {
-                applyingDrawing { canvas.drawing = ink.removingStrokes(at: Set(indices)) }
+                applyingDrawing { canvas.ink = ink.removingStrokes(at: Set(indices)) }
             }
         }
         overlay.lift(images)
@@ -3038,6 +3031,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         view.insertSubview(panel, belowSubview: laser)
         zoomPanel = panel
         let canvas = makeCanvas()
+        canvas.lassoesItself = true
         syncTool(canvas)
         canvas.accessibilityIdentifier = "zoom.canvas"
         panel.host(canvas)
@@ -3059,8 +3053,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         guard zoomPanel != nil else { return }
         zoomAdvance?.cancel()
         if let canvas = zoomCanvas {
-            if canvas.isFirstResponder { anchor.becomeFirstResponder() }
-            canvas.delegate = nil
+            if canvas.both.contains(where: \.isFirstResponder) { anchor.becomeFirstResponder() }
+            for canvas in canvas.both { canvas.delegate = nil }
         }
         zoomPanel?.removeFromSuperview()
         zoomTarget?.removeFromSuperview()
@@ -3134,18 +3128,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         let page = pages[index], area = panel.canvasArea.bounds
         guard area.width > 0, window.rect.width > 0 else { return }
         let scale = area.width / window.rect.width
-        if canvas.zoomScale != scale || canvas.minimumZoomScale != scale || canvas.maximumZoomScale != scale {
-            canvas.minimumZoomScale = min(canvas.minimumZoomScale, scale)
-            canvas.maximumZoomScale = max(canvas.maximumZoomScale, scale)
-            canvas.zoomScale = scale
-            canvas.minimumZoomScale = scale
-            canvas.maximumZoomScale = scale
-        }
-        if canvas.frame != area { canvas.frame = area }
         let size = CGSize(width: page.size.width * scale, height: page.size.height * scale)
-        if canvas.contentSize != size { canvas.contentSize = size }
-        let offset = CGPoint(x: window.rect.minX * scale, y: window.rect.minY * scale)
-        if canvas.contentOffset != offset { canvas.contentOffset = offset }
+        canvas.place(frame: area, content: size, offset: CGPoint(x: window.rect.minX * scale, y: window.rect.minY * scale), scale: scale)
         canvas.overrideUserInterfaceStyle = page.inkAppearance(night: night)
         canvas.accessibilityLabel = String(localized: "Zoom window, page \(index + 1)")
         if canvas.pageID != page.id { loadZoomInk(page.id, into: canvas) }
@@ -3199,11 +3183,11 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     private func showZoomInk(_ ink: PKDrawing, in canvas: PageCanvasView) {
         applyingDrawing {
-            canvas.drawing = ink
+            canvas.ink = ink
             canvas.strokeCount = nil
         }
         canvas.isLoaded = true
-        canvas.tileChecks = 2
+        for canvas in canvas.both { canvas.tileChecks = 2 }
         setDrawingEnabled(canDraw, canvas)
     }
 
@@ -3304,7 +3288,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         for (id, canvas) in canvases where canvas.isLoaded {
             let written = replay.flatMap { $0.timeline.hasInk(onPage: id) ? $0.timeline.written(onPage: id, by: time) : nil }
             guard written != replayPages[id]?.written, let ink = document.loadedInk(id) else { continue }
-            applyingDrawing { canvas.drawing = replayed(ink, on: id) }
+            applyingDrawing { canvas.ink = replayed(ink, on: id) }
         }
         if replay == nil { replayPages = [:] }
     }

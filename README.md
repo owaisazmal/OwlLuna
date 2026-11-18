@@ -20,7 +20,7 @@ The App Store version comes later. To build it yourself, see [Getting started](#
 ### Writing
 
 - Apple Pencil writing with palm rejection, pressure and tilt.
-- A tool tray of up to eight pens (pen, fineliner, fountain, calligraphy, pencil, highlighter, crayon, watercolour), an eraser for whole or partial strokes, a lasso, and the shortcuts you pick: Picture, Text Box, Sticker, Link, Study Tape, Ruler, Zoom Window, Handwriting to Text and Shapes.
+- A tool tray of up to eight pens (pen, fineliner, fountain, calligraphy, pencil, highlighter, crayon, watercolour), an eraser for whole or partial strokes that can be kept to the highlighter, a lasso, and the shortcuts you pick: Picture, Text Box, Sticker, Link, Study Tape, Ruler, Zoom Window, Handwriting to Text and Shapes.
 - Draw and hold: rest the pen at the end of a line, circle, rectangle or other straight-sided shape and it straightens. A hooked or barbed line becomes an arrow.
 - Shapes: drag out a line, arrow, circle, rectangle or triangle in the current pen's ink.
 - Pencil gestures: scribble over ink to erase it, loop round ink to select it, and choose what double-tap and squeeze do. A squeeze can bring an ink dish of your pens to the Pencil's tip.

@@ -28,6 +28,93 @@ final class PDFTextUITests: XCTestCase {
         CGVector(dx: x / 612, dy: (136.5 + CGFloat(number - 1) * 20) / 792)
     }
 
+    /// The darkest of the screen's pixels in a part of the canvas, from 0 for black to 1, and how many of them are the highlighter's yellow.
+    private func tones(on canvas: XCUIElement, from start: CGVector, to end: CGVector, in app: XCUIApplication) throws -> (darkest: CGFloat, yellow: Int) {
+        let image = try XCTUnwrap(XCUIScreen.main.screenshot().image.cgImage), frame = canvas.frame
+        let scale = CGFloat(image.width) / app.frame.width
+        let rect = CGRect(x: (frame.minX + start.dx * frame.width) * scale, y: (frame.minY + start.dy * frame.height) * scale,
+                          width: (end.dx - start.dx) * frame.width * scale, height: (end.dy - start.dy) * frame.height * scale).integral
+        let width = Int(rect.width), height = Int(rect.height)
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        let context = try XCTUnwrap(CGContext(data: &pixels, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+                                              space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        context.draw(try XCTUnwrap(image.cropping(to: rect)), in: CGRect(x: 0, y: 0, width: width, height: height))
+        var darkest: CGFloat = 1, yellow = 0
+        for index in stride(from: 0, to: pixels.count, by: 4) {
+            let red = CGFloat(pixels[index]) / 255, green = CGFloat(pixels[index + 1]) / 255, blue = CGFloat(pixels[index + 2]) / 255
+            darkest = min(darkest, 0.2126 * red + 0.7152 * green + 0.0722 * blue)
+            if red > 0.8, green > 0.6, blue < 0.7 { yellow += 1 }
+        }
+        return (darkest, yellow)
+    }
+
+    /// Issue #38: the highlighter is multiplied into the page, so print under it stays as dark as it was, and the
+    /// eraser can be kept to the highlighter, so a pen's line through a highlight stays.
+    func testPrintStaysDarkUnderTheHighlighterAndTheEraserCanKeepToIt() throws {
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication()
+        app.launchArguments = ["-storageRoot", "pdfmarker", "-resetStorage", "-seedLongPDF", "-drawingInput", "anyInput", "-freshToolPresets", "-appearance", "light"]
+        app.launch()
+        let notebook = app.buttons["notebook.Textbook"]
+        XCTAssertTrue(notebook.waitForExistence(timeout: 60))
+        notebook.tap()
+        let canvas = app.element("page.canvas.1")
+        XCTAssertTrue(canvas.waitForExistence(timeout: 20))
+        let eraser = app.buttons["editor.tools.eraser"], only = app.switches["editor.tools.eraser.highlighter"]
+        let words = (from: CGVector(dx: 76.0 / 612, dy: 211.0 / 792), to: CGVector(dx: 180.0 / 612, dy: 222.0 / 792))
+        var bare = try tones(on: canvas, from: words.from, to: words.to, in: app)
+        for _ in 0..<30 where bare.darkest > 0.1 {
+            usleep(500_000)
+            bare = try tones(on: canvas, from: words.from, to: words.to, in: app)
+        }
+        XCTAssertLessThan(bare.darkest, 0.1, "the print is black")
+        XCTAssertEqual(bare.yellow, 0)
+
+        // A pen's line down through the fifth line of print, then the highlighter along that line.
+        drag(on: canvas, from: line(4, x: 200), to: line(6, x: 200))
+        wait(for: [expectation(for: NSPredicate(format: "value == '1 stroke'"), evaluatedWith: canvas)], timeout: 5)
+        app.buttons["editor.tools.4"].tap()
+        drag(on: canvas, from: line(5, x: 74), to: line(5, x: 260))
+        wait(for: [expectation(for: NSPredicate(format: "value == '2 strokes'"), evaluatedWith: canvas)], timeout: 5)
+        sleep(2)
+        attach(app, "highlighted-print")
+        let marked = try tones(on: canvas, from: words.from, to: words.to, in: app)
+        XCTAssertGreaterThan(marked.yellow, 200, "the highlight is over the words")
+        XCTAssertLessThan(marked.darkest, 0.1, "and the print under it is as black as it was")
+
+        // Kept to the highlighter, the eraser takes the highlight and leaves the pen's line that crosses it.
+        eraser.tap()
+        wait(for: [expectation(for: NSPredicate(format: "isSelected == true"), evaluatedWith: eraser)], timeout: 5)
+        XCTAssertLessThan(try tones(on: canvas, from: words.from, to: words.to, in: app).darkest, 0.1, "with the eraser in hand too")
+        eraser.tap()
+        XCTAssertTrue(only.waitForExistence(timeout: 5))
+        XCTAssertEqual(only.value as? String, "0")
+        only.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        attach(app, "eraser-highlighter-only")
+        try audit(app, screen: "eraser highlighter only", popover: true)
+        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.2)).tap()
+        XCTAssertTrue(only.waitForNonExistence(timeout: 5))
+        XCTAssertEqual(eraser.value as? String, "Whole Strokes, Highlighter Only")
+        drag(on: canvas, from: line(5, x: 150), to: line(5, x: 250))
+        wait(for: [expectation(for: NSPredicate(format: "value == '1 stroke'"), evaluatedWith: canvas)], timeout: 5)
+        XCTAssertEqual(try tones(on: canvas, from: words.from, to: words.to, in: app).yellow, 0, "the highlight is gone")
+        let crossing = (from: CGVector(dx: 190.0 / 612, dy: 221.0 / 792), to: CGVector(dx: 210.0 / 612, dy: 228.0 / 792))
+        XCTAssertLessThan(try tones(on: canvas, from: crossing.from, to: crossing.to, in: app).darkest, 0.3, "the pen's line is still there")
+
+        // Undo brings the highlight back, and with the switch off the eraser takes both.
+        app.buttons["editor.undo"].tap()
+        wait(for: [expectation(for: NSPredicate(format: "value == '2 strokes'"), evaluatedWith: canvas)], timeout: 5)
+        eraser.tap()
+        XCTAssertTrue(only.waitForExistence(timeout: 5))
+        XCTAssertEqual(only.value as? String, "1")
+        only.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.2)).tap()
+        XCTAssertTrue(only.waitForNonExistence(timeout: 5))
+        XCTAssertEqual(eraser.value as? String, "Whole Strokes")
+        drag(on: canvas, from: line(5, x: 150), to: line(5, x: 250))
+        wait(for: [expectation(for: NSPredicate(format: "value == 'Empty'"), evaluatedWith: canvas)], timeout: 5)
+    }
+
     func testTextIsSelectedCopiedAndHighlightedAndAHighlighterSnapsToItsLine() throws {
         XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()

@@ -220,7 +220,7 @@ struct ToolTray: View {
             ScrollView { EraserOptions(toolbox: toolbox) }
                 .scrollBounceBehavior(.basedOnSize)
         }
-        .accessibilityValue(Text(toolbox.eraser.kind.displayName))
+        .accessibilityValue(toolbox.eraser.highlighterOnly ? Text("\(toolbox.eraser.kind.displayName), Highlighter Only") : Text(toolbox.eraser.kind.displayName))
         .accessibilityAddTraits(inHand ? .isSelected : [])
         .accessibilityIdentifier("editor.tools.eraser")
     }

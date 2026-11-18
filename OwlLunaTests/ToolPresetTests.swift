@@ -196,6 +196,23 @@ final class ToolPresetTests: XCTestCase {
         XCTAssertFalse(again.isRulerActive, "the ruler is put away between launches")
     }
 
+    func testTheEraserCanBeKeptToTheHighlighterAndAnOlderBuildsEraserIsStillRead() throws {
+        let defaults = try freshDefaults()
+        defaults.set(Data(#"{"choice":{"eraser":{}},"eraser":{"kind":"part","width":30}}"#.utf8), forKey: SettingsKey.toolbox)
+        let toolbox = Toolbox(defaults: defaults)
+        XCTAssertEqual(toolbox.choice, .eraser, "what an older build saved is all still there")
+        XCTAssertEqual(toolbox.eraser, Eraser(kind: .part, width: 30))
+        XCTAssertFalse(toolbox.eraser.highlighterOnly)
+
+        var eraser = toolbox.eraser
+        eraser.highlighterOnly = true
+        toolbox.setEraser(eraser)
+        let again = Toolbox(defaults: defaults)
+        XCTAssertTrue(again.eraser.highlighterOnly)
+        XCTAssertEqual(again.eraser.kind, .part)
+        XCTAssertEqual((again.tool as? PKEraserTool)?.eraserType, .fixedWidthBitmap, "it is the same eraser, kept to one ink")
+    }
+
     func testAPenIsChangedAddedAndRemovedWhereItStands() throws {
         let toolbox = Toolbox(defaults: try freshDefaults())
         let first = toolbox.shelf.usable[0]

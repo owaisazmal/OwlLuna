@@ -13,6 +13,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - OwlLuna runs on the Mac, on macOS 26 or later. The app's bar is the top of the window, beside the traffic lights, and a right-click opens the menus a held tap opens on the iPad. The pointer draws from the start and the Apple Pencil's settings are left out. Messages and notes say Mac and point to System Settings, in English, French, German and Spanish.
 - Ink the lasso has caught can be resized, stretched and turned. Its box has a tab on each corner that resizes it in proportion, a bar on each side that stretches it one way, and a knob that turns it, settling on the quarter turns. Lines grow and shrink with a resize and keep their thickness in a stretch. The Pencil and a finger both work the handles, each drag is one undo step, and VoiceOver steps them.
 - A PDF that came with a table of contents has a Contents tab in the page navigator. Chapters fold, the one you are in is open and marked, and a tap goes to its page. Before, the contents were a flat list at the foot of the Outline tab.
+- The eraser has a Highlighter Only switch. With it on, the eraser takes highlighter, whole strokes or part of one, and leaves the writing under it.
 - Tap the page with two fingers to undo and with three to redo. Settings › Finger Gestures gives each another action, such as the eraser or the tool palette, or turns it off, and adds a one-finger double-tap on bare paper for when only the Pencil draws. A tap while the Pencil writes, or just after it lifts, is left alone. Pencil double-tap and squeeze can redo too.
 
 ### Changed
@@ -27,6 +28,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Highlighter no longer hazes what is under it on light paper. The print of a PDF, a picture or typed text stays as dark under a highlight as it was, on the page as in an exported PDF, and the highlight lies under the pens' ink while it is drawn.
 - Two folders with the same name, such as ones made on two iPads, no longer swap places in the sidebar each time it redraws.
 - Where only the Apple Pencil draws, one finger still scrolls the pages after the lasso has moved some writing. Before, it stopped until the notebook was closed and opened again.
 

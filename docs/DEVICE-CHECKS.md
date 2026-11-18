@@ -170,8 +170,9 @@ To finish, compare the two libraries notebook by notebook.
 2. For each kind (Pen, Fineliner, Fountain Pen, Calligraphy Pen, Pencil, Highlighter, Crayon, Watercolour): write lightly and hard, tilt to shade, write at both ends of Width, and write over ink at low Opacity.
 3. Hover the tip over the page, and write at 5×. Repeat step 2 on Chalkboard paper, and with Settings › Appearance › Dark.
 4. With pen and highlighter on the page, rub with Eraser › Whole Strokes, then Part of a Stroke at a narrow and a wide width, undoing each rub.
+5. Highlight over a PDF's print, a picture and your own writing, with the ruler too. Switch between a pen, the highlighter and the eraser. Turn on Eraser › Highlighter Only and rub across a highlight with writing under it, in both eraser kinds.
 
-Expect: each kind looks like its picture in the roll and marks even at the thinnest Width. Low opacity is fainter, never darker. Ink keeps up with the tip, doesn't change on lift, and is sharp at 5×. Swatches match the ink in light, dark and on Chalkboard. The calligraphy pen only appears on iPadOS 26. Whole Strokes takes exactly the strokes touched, Part of a Stroke cuts only under the width shown, one Undo restores one rub, and erasing never scrolls.
+Expect: each kind looks like its picture in the roll and marks even at the thinnest Width. Low opacity is fainter, never darker. Ink keeps up with the tip, doesn't change on lift, and is sharp at 5×. Swatches match the ink in light, dark and on Chalkboard. The calligraphy pen only appears on iPadOS 26. Whole Strokes takes exactly the strokes touched, Part of a Stroke cuts only under the width shown, one Undo restores one rub, and erasing never scrolls. Print under a highlight stays as dark as beside it, also while the stroke is drawn, and a highlight is always under the pens' ink. Nothing blinks or changes shade when the tool changes. Highlighter Only takes highlighter and leaves the writing.
 
 ## Lasso
 

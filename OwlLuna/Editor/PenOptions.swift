@@ -206,7 +206,7 @@ struct StripKnob: View {
     }
 }
 
-/// What the eraser takes, and how wide it is when it takes part of a stroke.
+/// What the eraser takes, how wide it is when it takes part of a stroke, and whether it keeps to the highlighter.
 struct EraserOptions: View {
     let toolbox: Toolbox
     @Environment(\.colorScheme) private var scheme
@@ -229,6 +229,21 @@ struct EraserOptions: View {
                 }), ink: night ? Color.textSecondary : Color.labelInkSecondary, paper: ToolSwatch.paper(onDark: false, night: night), night: night,
                          value: width, identifier: "editor.tools.eraser.width")
             }
+            Toggle(isOn: Binding(get: { eraser.highlighterOnly }, set: { only in
+                var changed = eraser
+                changed.highlighterOnly = only
+                toolbox.setEraser(changed)
+            })) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Highlighter Only").foregroundStyle(Color.ink)
+                    Text("Writing under a highlight is left as it is.")
+                        .font(.footnote)
+                        .foregroundStyle(Color.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .toggleStyle(.owlLuna)
+            .accessibilityIdentifier("editor.tools.eraser.highlighter")
         }
         .padding(Space.x4)
         .frame(width: 344)

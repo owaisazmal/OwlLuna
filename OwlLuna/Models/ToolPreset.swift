@@ -319,7 +319,8 @@ enum ToolChoice: Codable, Hashable, Sendable {
     case pen(UUID), eraser, lasso
 }
 
-/// The eraser takes whole strokes at a touch, or only the ink it passes over, as wide as it is set.
+/// The eraser takes whole strokes at a touch, or only the ink it passes over, as wide as it is set. It can be kept
+/// to the highlighter's ink, so what is written under a highlight stays.
 struct Eraser: Codable, Hashable, Sendable {
     enum Kind: String, Codable, CaseIterable, Identifiable, Sendable {
         case strokes, part
@@ -335,6 +336,7 @@ struct Eraser: Codable, Hashable, Sendable {
 
     var kind = Kind.strokes
     var width = Double(PKEraserTool.EraserType.fixedWidthBitmap.defaultWidth)
+    var highlighterOnly = false
 
     static var widths: ClosedRange<Double> {
         let range = PKEraserTool.EraserType.fixedWidthBitmap.validWidthRange
@@ -346,6 +348,17 @@ struct Eraser: Codable, Hashable, Sendable {
         case .strokes: PKEraserTool(.vector)
         case .part: PKEraserTool(.fixedWidthBitmap, width: min(max(width, Self.widths.lowerBound), Self.widths.upperBound))
         }
+    }
+}
+
+extension Eraser {
+    /// An eraser saved by an older build says less about itself.
+    init(from decoder: any Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        self.init()
+        if let kind = try values.decodeIfPresent(Kind.self, forKey: .kind) { self.kind = kind }
+        if let width = try values.decodeIfPresent(Double.self, forKey: .width) { self.width = width }
+        if let only = try values.decodeIfPresent(Bool.self, forKey: .highlighterOnly) { highlighterOnly = only }
     }
 }
 

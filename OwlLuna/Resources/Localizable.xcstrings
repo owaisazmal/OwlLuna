@@ -1227,6 +1227,28 @@
         }
       }
     },
+    "%@, Highlighter Only" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, nur Textmarker"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, solo resaltador"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, surligneur uniquement"
+          }
+        }
+      }
+    },
     "%@, notebook options" : {
       "localizations" : {
         "de" : {
@@ -15188,6 +15210,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trait de surligneur"
+          }
+        }
+      }
+    },
+    "Highlighter Only" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Textmarker"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo resaltador"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surligneur uniquement"
           }
         }
       }
@@ -38748,6 +38792,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rédaction de questions à partir de vos notes…"
+          }
+        }
+      }
+    },
+    "Writing under a highlight is left as it is." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was unter einer Markierung geschrieben steht, bleibt, wie es ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo escrito bajo un resaltado se queda como está."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui est écrit sous un surlignage reste tel quel."
           }
         }
       }
