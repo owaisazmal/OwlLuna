@@ -54,7 +54,7 @@ Each slot clips its canvas, so ink past the page edge is kept but never shown. M
 
 At stroke end the main thread copies the page's drawing into the document, bumps the page's version, registers undo and schedules a save. The modification date is applied at save time, so a stroke never touches the observed manifest.
 
-SwiftUI builds a body on the main thread's stack (1 MB on an iPad, 8 MB in the simulator), and a debug build copies a view's whole value at every chained modifier. The editor's page, bar and fifty-odd sheets took 1,051 KB of stack, so it crashed on an iPad as soon as a notebook opened. `EditorContent` puts that layout and each bar menu behind `AnyView`, so only a pointer is copied (about 325 KB to open a notebook now). New sheets and menus go behind the same wrappers.
+SwiftUI builds a body on the main thread's stack (1 MB on an iPad, 8 MB in the simulator), and a debug build copies a view's whole value at every chained modifier. The editor's page, bar and fifty-odd sheets took 1,051 KB of stack, so it crashed on an iPad as soon as a notebook opened. `EditorContent` puts that layout and each bar menu behind `AnyView`, so only a pointer is copied (about 325 KB to open a notebook now). New sheets and menus go behind the same wrappers. The library's shelf is built the same way: one chain of 36 modifiers in `ShelfView` took 311 KB at launch, so they are in three parts (`shelf`, `bars`, `dialogs`), each handed the one before behind `AnyView`.
 
 ## Draw and hold
 

@@ -160,8 +160,14 @@ struct ShelfView: View {
     }
 
     var body: some View {
+        // One chain of these modifiers took 311 KB of the main thread's stack, so each part is handed the one before as a pointer.
         let visible = visible
-        Group {
+        dialogs(AnyView(bars(AnyView(shelf(visible)), visible)), visible)
+    }
+
+    /// The notebooks in the chosen layout, with what lies over them and the search field above.
+    private func shelf(_ visible: [NotebookRecord]) -> some View {
+        AnyView(Group {
             if layout == .list {
                 list(visible)
             } else if dynamicTypeSize.isAccessibilitySize {
@@ -169,7 +175,7 @@ struct ShelfView: View {
             } else {
                 shelves(visible)
             }
-        }
+        })
         .background(Color.paper)
         .overlay { if visible.isEmpty, !showsTagPages, !searchPending { emptyState } }
         .overlay { if let dropping { dropHint(dropping) } }
@@ -198,6 +204,11 @@ struct ShelfView: View {
             let frame = proxy.frame(in: .global)
             return frame.width - (frame.minX > 1 ? 0 : 130)
         } action: { barRoom = $0 }
+    }
+
+    /// The bar over the shelf, and the two ways of bringing pages in that it starts.
+    private func bars<Content: View>(_ content: Content, _ visible: [NotebookRecord]) -> some View {
+        content
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarTitleDisplayMode(.inline)
@@ -217,6 +228,11 @@ struct ShelfView: View {
             .ignoresSafeArea()
             .appModels()
         }
+    }
+
+    /// The shelf's notices and sheets, and what it does when the library changes under it.
+    private func dialogs<Content: View>(_ content: Content, _ visible: [NotebookRecord]) -> some View {
+        content
         .notice("Rename Notebook", isPresented: Binding(isPresent: $renaming)) {
             TextField("Title", text: $renameText)
         } actions: {
