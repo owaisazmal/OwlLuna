@@ -12,7 +12,7 @@ Thanks for helping. Everyone taking part follows the [Code of Conduct](CODE_OF_C
 
 ## Checks
 
-Every pull request runs [CI](.github/workflows/ci.yml): a Debug build, the unit tests and one UI test on an iPad, an iPhone Duo and an iPhone simulator, and Release builds for iPad and iPhone and for the Mac. Warnings fail the builds. A test that fails is run once more on a rebooted simulator and fails the check only if it fails again. Each night with a new commit on `main`, the whole UI suite and the accessibility audits run, and so do the unit tests on an iPadOS 18 simulator, the oldest iPadOS the app supports. A change to `website/` alone runs the [website checks](website/README.md#checks) instead, and a change under `.github/` also runs [actionlint](.github/workflows/lint.yml) on the workflows.
+Every pull request runs [CI](.github/workflows/ci.yml): a Debug build, the unit tests and one UI test on an iPad, an iPhone Duo and an iPhone simulator, and Release builds for iPad and iPhone and for the Mac. Warnings fail the builds. A test that fails is run once more on a rebooted simulator and fails the check only if it fails again. Each night with a new commit on `main`, the whole UI suite and the accessibility audits run. CI has no iPadOS 18 simulator, since Xcode 27.2 doesn't offer that runtime for download, so the oldest iPadOS the app supports is checked by hand. A change to `website/` alone runs the [website checks](website/README.md#checks) instead, and a change under `.github/` also runs [actionlint](.github/workflows/lint.yml) on the workflows.
 
 CI builds with Xcode 27.2. When the app moves to a newer Xcode, change `DEVELOPER_DIR` in `ci.yml` and `release.yml` too.
 

@@ -6,7 +6,7 @@ You need:
 
 - Two iPads on one test Apple Account with iCloud Drive on (the sync checks delete notebooks for good), ideally one with Face ID and one with Touch ID.
 - An Apple Pencil Pro for squeeze and hover. Double-tap also works with an Apple Pencil (2nd generation).
-- iPadOS 18 or later, and iPadOS 26 for the calligraphy pen and the study guide. CI runs only the unit tests on iPadOS 18, so try the main paths on iPadOS 18 too.
+- iPadOS 18 or later, and iPadOS 26 for the calligraphy pen and the study guide. CI doesn't run on iPadOS 18, so try the main paths on iPadOS 18 too.
 - A keyboard with a trackpad, a display with a USB-C to HDMI adapter or an Apple TV, a Mac with Xcode 27, and an iPhone that films at 240 fps.
 - For the iPhone checks, an iPhone on iOS 18 or later, ideally an iPhone Duo.
 - For the Mac checks, a Mac on macOS 26 or later with a trackpad and a camera, signed in to the same test Apple Account.

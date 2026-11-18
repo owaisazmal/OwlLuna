@@ -173,70 +173,6 @@ jobs:
             ${{ runner.temp }}/*.log
             ${{ runner.temp }}/*.xcresult
 
-  ipados-18:
-    name: Tests (iPadOS 18)
-    # Nightly and by hand only: downloading the runtime makes it too slow for every push.
-    needs: build
-    if: ${{ !cancelled() && needs.build.result == 'success' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
-    runs-on: xcode-27
-    timeout-minutes: 90
-    env:
-      NSUnbufferedIO: 'YES'
-      # The newest iOS 18 runtime Apple offers (22G86). It has no arm64-only build.
-      IOS_VERSION: '18.6'
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: products
-          path: ${{ runner.temp }}
-
-      # The image keeps only the three newest iOS runtimes, so this one, about 9 GB, comes from Apple each night.
-      # No -architectureVariant: Apple lists iOS 18 without one, and asking for "universal" finds nothing.
-      - name: Install the iOS runtime
-        timeout-minutes: 30
-        run: |
-          df -h /System/Volumes/Data
-          for attempt in 1 2 3; do
-            xcodebuild -downloadPlatform iOS -buildVersion "$IOS_VERSION" && break
-            [ "$attempt" = 3 ] && exit 1
-            sleep 60
-          done
-          xcrun simctl list runtimes
-
-      - name: Boot the simulator
-        run: python3 .github/scripts/boot-simulator.py ipad "$IOS_VERSION"
-
-      - name: Unpack the products
-        run: |
-          tar -xf "$RUNNER_TEMP/products.tar" -C "$RUNNER_TEMP"
-          echo "XCTESTRUN=$(ls "$RUNNER_TEMP"/Products/*.xctestrun)" >> "$GITHUB_ENV"
-
-      - name: Wait for the simulator
-        id: ready
-        run: xcrun simctl bootstatus "$SIMULATOR_UDID"
-
-      - name: Unit tests
-        timeout-minutes: 50
-        run: |
-          python3 .github/scripts/run-tests.py Unit --select "-only-testing:OwlLunaTests" -- \
-            -test-timeouts-enabled YES -default-test-execution-time-allowance 600
-
-      - name: Report
-        if: always() && steps.ready.outcome == 'success'
-        continue-on-error: true
-        run: python3 .github/scripts/test-report.py "$RUNNER_TEMP"
-
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: failure()
-        with:
-          name: test-results-ipados-18
-          retention-days: 14
-          path: |
-            ${{ runner.temp }}/*.log
-            ${{ runner.temp }}/*.xcresult
-
   release:
     name: Release builds
     # A nightly's commit was already built in Release when it was pushed.
@@ -308,7 +244,7 @@ jobs:
               | jq -r --arg since "$since" '.workflow_runs[] | select(.created_at >= $since) | .id') || ids=
             for id in $ids; do
               nightly=$(get "runs/$id/jobs?filter=latest&per_page=100" | jq -r '
-                [.jobs[] | select((.name | startswith("UI suite")) or .name == "Tests (iPadOS 18)") | .conclusion]
+                [.jobs[] | select(.name | startswith("UI suite")) | .conclusion]
                 | if all(. == "skipped") then "skipped" elif all(. == "success") then "passed" else "failed" end') || break
               [ "$nightly" = skipped ] && continue
               if [ "$nightly" = passed ]; then
