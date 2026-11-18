@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.0.0-build.7] - 2026-11-17
+
 ### Added
 
 - Text boxes set formulas written in LaTeX: `$…$` or `\(…\)` within a line, and `$$…$$` or `\[…\]` set larger, with fractions, roots, sums, integrals, matrices and cases. The box shows the source while you type in it. A formula it can't read stays as typed, prices such as "$5 or $10" are left alone, and `\$` writes a dollar sign. VoiceOver reads a formula as it is said, such as "x squared" or "1 over 2", not as its source.
@@ -249,7 +251,8 @@ The first build for TestFlight testers. No accounts, no ads and no tracking.
 
 - The app is now called OwlLuna. Notebooks and backups from before the rename still open.
 
-[Unreleased]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.6...HEAD
+[Unreleased]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.7...HEAD
+[1.0.0-build.7]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.6...v1.0.0-build.7
 [1.0.0-build.6]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.5...v1.0.0-build.6
 [1.0.0-build.5]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.4...v1.0.0-build.5
 [1.0.0-build.4]: https://github.com/owaisazmal/OwlLuna/compare/v1.0.0-build.3...v1.0.0-build.4

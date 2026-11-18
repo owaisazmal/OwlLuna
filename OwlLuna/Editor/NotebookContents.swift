@@ -54,7 +54,7 @@ struct NotebookContents: View {
             }
             .buttonStyle(ContentsRowStyle(leading: folding ? 0 : Space.x3))
             .accessibilityLabel(Text("\(entry.title), page \(page + 1)"))
-            .accessibilityValue(isHere ? Text("Current") : Text(""))
+            .accessibilityValue(isHere ? Text("Current") : Text(verbatim: ""))
             .accessibilityHint(Text("Opens this page"))
         }
         .padding(.leading, CGFloat(entry.level) * Space.x5)

@@ -95,182 +95,6 @@
         }
       }
     },
-    "Finger Gestures" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fingergesten"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gestos con los dedos"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gestes avec les doigts"
-          }
-        }
-      }
-    },
-    "Off" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aus"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Desactivado"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Désactivé"
-          }
-        }
-      }
-    },
-    "Tap Status Bar to Scroll to Top" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Statusleiste antippen zum Hochscrollen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tocar la barra de estado para volver arriba"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toucher la barre d’état pour revenir en haut"
-          }
-        }
-      }
-    },
-    "Tap with two or three fingers anywhere on the pages. With Tap Status Bar to Scroll to Top on, a tap on the strip with the clock scrolls the pages back to the top." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tippe mit zwei oder drei Fingern irgendwo auf die Seiten. Ist „Statusleiste antippen zum Hochscrollen“ an, scrollt ein Tippen auf die Leiste mit der Uhrzeit die Seiten zurück nach oben."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toca con dos o tres dedos en cualquier parte de las páginas. Con «Tocar la barra de estado para volver arriba» activado, un toque en la franja de la hora lleva las páginas de vuelta al principio."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Touchez les pages avec deux ou trois doigts, n’importe où. Avec « Toucher la barre d’état pour revenir en haut » activé, un toucher sur la bande de l’heure fait remonter les pages tout en haut."
-          }
-        }
-      }
-    },
-    "Tap with two or three fingers anywhere on the pages. Double-Tap works with one finger on bare paper, while only Apple Pencil draws. With Tap Status Bar to Scroll to Top on, a tap on the strip with the clock scrolls the pages back to the top." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tippe mit zwei oder drei Fingern irgendwo auf die Seiten. Doppeltippen funktioniert mit einem Finger auf leerem Papier, solange nur der Apple Pencil zeichnet. Ist „Statusleiste antippen zum Hochscrollen“ an, scrollt ein Tippen auf die Leiste mit der Uhrzeit die Seiten zurück nach oben."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toca con dos o tres dedos en cualquier parte de las páginas. Doble toque funciona con un dedo sobre el papel en blanco, mientras solo dibuje el Apple Pencil. Con «Tocar la barra de estado para volver arriba» activado, un toque en la franja de la hora lleva las páginas de vuelta al principio."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Touchez les pages avec deux ou trois doigts, n’importe où. Toucher deux fois se fait avec un doigt sur le papier vierge, tant que seul l’Apple Pencil dessine. Avec « Toucher la barre d’état pour revenir en haut » activé, un toucher sur la bande de l’heure fait remonter les pages tout en haut."
-          }
-        }
-      }
-    },
-    "Three-Finger Tap" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mit drei Fingern tippen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toque con tres dedos"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toucher avec trois doigts"
-          }
-        }
-      }
-    },
-    "Tool Palette Where Tapped" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Werkzeugpalette an der getippten Stelle"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Paleta de herramientas donde se toca"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Palette d’outils à l’endroit touché"
-          }
-        }
-      }
-    },
-    "Two-Finger Tap" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mit zwei Fingern tippen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toque con dos dedos"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toucher avec deux doigts"
-          }
-        }
-      }
-    },
     "“System Setting” follows Settings › Apple Pencil › Only Draw with Apple Pencil. With Left-Handed on, the page ribbon, the zoom window's buttons and the panels beside the page are on the left." : {
       "localizations" : {
         "de" : {
@@ -729,6 +553,52 @@
         }
       }
     },
+    "%@ bar" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ quer"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ barra"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ barre"
+          }
+        }
+      }
+    },
+    "%@ choose %@" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ über %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sobre %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@ parmi %1$@"
+          }
+        }
+      }
+    },
     "%@ cloth" : {
       "localizations" : {
         "de" : {
@@ -769,6 +639,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ copie"
+          }
+        }
+      }
+    },
+    "%@ cubed" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hoch drei"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ al cubo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ au cube"
           }
         }
       }
@@ -817,6 +710,52 @@
         }
       }
     },
+    "%@ dot" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Punkt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ punto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ point"
+          }
+        }
+      }
+    },
+    "%@ double dot" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ zwei Punkte"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ dos puntos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ deux points"
+          }
+        }
+      }
+    },
     "%@ drawn" : {
       "localizations" : {
         "de" : {
@@ -835,6 +774,52 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dessiné : %@"
+          }
+        }
+      }
+    },
+    "%@ from %@ to %@" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ von %2$@ bis %3$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ desde %2$@ hasta %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ de %2$@ à %3$@"
+          }
+        }
+      }
+    },
+    "%@ hat" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Dach"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sombrero"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ chapeau"
           }
         }
       }
@@ -983,6 +968,52 @@
         }
       }
     },
+    "%@ over %@" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ durch %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ entre %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sur %2$@"
+          }
+        }
+      }
+    },
+    "%@ over all %@" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ über alle %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sobre todos los %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sur tous les %2$@"
+          }
+        }
+      }
+    },
     "%@ removed from the tools" : {
       "localizations" : {
         "de" : {
@@ -1027,6 +1058,29 @@
         }
       }
     },
+    "%@ squared" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Quadrat"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ al cuadrado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ au carré"
+          }
+        }
+      }
+    },
     "%@ starter: %@ paper, %@" : {
       "localizations" : {
         "de" : {
@@ -1051,6 +1105,75 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Point de départ %1$@ : papier %2$@, %3$@"
+          }
+        }
+      }
+    },
+    "%@ sub %@" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ Index %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ subíndice %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ indice %2$@"
+          }
+        }
+      }
+    },
+    "%@ tilde" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Tilde"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tilde"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tilde"
+          }
+        }
+      }
+    },
+    "%@ to the power %@" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ hoch %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ elevado a %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ puissance %2$@"
           }
         }
       }
@@ -6937,6 +7060,28 @@
         }
       }
     },
+    "Add Notebooks…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notizbücher hinzufügen …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir cuadernos…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter des carnets…"
+          }
+        }
+      }
+    },
     "Add Page" : {
       "localizations" : {
         "de" : {
@@ -7065,6 +7210,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajouter une zone de texte"
+          }
+        }
+      }
+    },
+    "Add to %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zu %@ hinzufügen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir a %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter à %@"
           }
         }
       }
@@ -10793,6 +10960,29 @@
         }
       }
     },
+    "cube root of %@" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dritte Wurzel aus %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "raíz cúbica de %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "racine cubique de %@"
+          }
+        }
+      }
+    },
     "Current" : {
       "localizations" : {
         "de" : {
@@ -12153,72 +12343,6 @@
         }
       }
     },
-    "Drop to import" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zum Importieren ablegen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Suelta para importar"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Déposez pour importer"
-          }
-        }
-      }
-    },
-    "Drop to import into %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zum Importieren in %@ ablegen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Suelta para importar en %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Déposez pour importer dans %@"
-          }
-        }
-      }
-    },
-    "Drop to put on %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zum Einstellen in %@ ablegen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Suelta para ponerlo en %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Déposez pour le ranger dans %@"
-          }
-        }
-      }
-    },
     "Drag to choose the part of the page the zoom window shows. Swipe up or down to move it along the line." : {
       "localizations" : {
         "de" : {
@@ -12413,6 +12537,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dessin"
+          }
+        }
+      }
+    },
+    "Drop to import" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zum Importieren ablegen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suelta para importar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déposez pour importer"
+          }
+        }
+      }
+    },
+    "Drop to import into %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zum Importieren in %@ ablegen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suelta para importar en %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déposez pour importer dans %@"
+          }
+        }
+      }
+    },
+    "Drop to put on %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zum Einstellen in %@ ablegen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suelta para ponerlo en %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déposez pour le ranger dans %@"
           }
         }
       }
@@ -12897,6 +13087,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tous les carnets et toutes les pages qui la portent prennent le nouveau nom."
+          }
+        }
+      }
+    },
+    "Every notebook is on %@ already." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Notizbücher stehen schon in %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos los cuadernos ya están en %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les carnets sont déjà dans %@."
           }
         }
       }
@@ -13742,6 +13954,28 @@
         }
       }
     },
+    "Finger Gestures" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fingergesten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestos con los dedos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestes avec les doigts"
+          }
+        }
+      }
+    },
     "First page" : {
       "localizations" : {
         "de" : {
@@ -14276,6 +14510,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stylo-plume"
+          }
+        }
+      }
+    },
+    "fraction, %@, over, %@, end fraction" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bruch, %1$@, durch, %2$@, Ende des Bruchs"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "fracción, %1$@, entre, %2$@, fin de la fracción"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "fraction, %1$@, sur, %2$@, fin de la fraction"
           }
         }
       }
@@ -16196,6 +16453,29 @@
         }
       }
     },
+    "integral" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integral"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "integral"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "intégrale"
+          }
+        }
+      }
+    },
     "Isometric" : {
       "localizations" : {
         "de" : {
@@ -17724,6 +18004,29 @@
         }
       }
     },
+    "limit as %@" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grenzwert für %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "límite cuando %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "limite quand %@"
+          }
+        }
+      }
+    },
     "line" : {
       "localizations" : {
         "de" : {
@@ -18652,6 +18955,28 @@
         }
       }
     },
+    "Move %lld Here" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld hierher bewegen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover %lld aquí"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer %lld ici"
+          }
+        }
+      }
+    },
     "Move Along the Line" : {
       "localizations" : {
         "de" : {
@@ -18758,6 +19083,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déplacer avant"
+          }
+        }
+      }
+    },
+    "Move Here" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hierher bewegen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover aquí"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer ici"
           }
         }
       }
@@ -19126,28 +19473,6 @@
         }
       }
     },
-    "Moved to %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In %@ bewegt"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Movido a %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Déplacé vers %@"
-          }
-        }
-      }
-    },
     "Moved %lld notebooks to Recently Deleted" : {
       "localizations" : {
         "de" : {
@@ -19220,6 +19545,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Moved to %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In %@ bewegt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Movido a %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacé vers %@"
           }
         }
       }
@@ -20170,6 +20517,28 @@
         }
       }
     },
+    "No notebooks match “%@”." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Notizbücher passen zu „%@“."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ningún cuaderno coincide con “%@”."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun carnet ne correspond à « %@ »."
+          }
+        }
+      }
+    },
     "No notes for this page." : {
       "localizations" : {
         "de" : {
@@ -20435,6 +20804,28 @@
       }
     },
     "Not on a shelf" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In keinem Regal"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin estante"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur aucune étagère"
+          }
+        }
+      }
+    },
+    "Not on a Shelf" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -21488,6 +21879,28 @@
         }
       }
     },
+    "Off" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé"
+          }
+        }
+      }
+    },
     "OK" : {
       "localizations" : {
         "de" : {
@@ -21550,6 +21963,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plus anciens en premier"
+          }
+        }
+      }
+    },
+    "On Other Shelves" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In anderen Regalen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En otros estantes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur d’autres étagères"
           }
         }
       }
@@ -25094,6 +25529,29 @@
         }
       }
     },
+    "product" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Produkt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "producto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "produit"
+          }
+        }
+      }
+    },
     "Purple" : {
       "localizations" : {
         "de" : {
@@ -27542,6 +28000,29 @@
         }
       }
     },
+    "root %@ of %@" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@-te Wurzel aus %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "raíz %1$@-ésima de %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "racine %1$@-ième de %2$@"
+          }
+        }
+      }
+    },
     "Rose" : {
       "localizations" : {
         "de" : {
@@ -29934,6 +30415,29 @@
         }
       }
     },
+    "square root of %@" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wurzel aus %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "raíz cuadrada de %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "racine carrée de %@"
+          }
+        }
+      }
+    },
     "Squeeze" : {
       "localizations" : {
         "de" : {
@@ -31214,6 +31718,29 @@
         }
       }
     },
+    "sum" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Summe"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "suma"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "somme"
+          }
+        }
+      }
+    },
     "Summary" : {
       "localizations" : {
         "de" : {
@@ -31764,6 +32291,28 @@
         }
       }
     },
+    "Taken off its shelf" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus dem Regal genommen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirado de su estante"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retiré de son étagère"
+          }
+        }
+      }
+    },
     "Takes back the last thing you did, or does it again." : {
       "localizations" : {
         "de" : {
@@ -31852,6 +32401,28 @@
         }
       }
     },
+    "Tap Status Bar to Scroll to Top" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statusleiste antippen zum Hochscrollen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tocar la barra de estado para volver arriba"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toucher la barre d’état pour revenir en haut"
+          }
+        }
+      }
+    },
     "Tap the microphone to record a lecture or meeting alongside your notes." : {
       "localizations" : {
         "de" : {
@@ -31892,6 +32463,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touchez le petit ruban à côté du numéro de page pour ajouter un signet à une page. Les signets et les pages étiquetées sont répertoriés ici."
+          }
+        }
+      }
+    },
+    "Tap with two or three fingers anywhere on the pages. Double-Tap works with one finger on bare paper, while only Apple Pencil draws. With Tap Status Bar to Scroll to Top on, a tap on the strip with the clock scrolls the pages back to the top." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe mit zwei oder drei Fingern irgendwo auf die Seiten. Doppeltippen funktioniert mit einem Finger auf leerem Papier, solange nur der Apple Pencil zeichnet. Ist „Statusleiste antippen zum Hochscrollen“ an, scrollt ein Tippen auf die Leiste mit der Uhrzeit die Seiten zurück nach oben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca con dos o tres dedos en cualquier parte de las páginas. Doble toque funciona con un dedo sobre el papel en blanco, mientras solo dibuje el Apple Pencil. Con «Tocar la barra de estado para volver arriba» activado, un toque en la franja de la hora lleva las páginas de vuelta al principio."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touchez les pages avec deux ou trois doigts, n’importe où. Toucher deux fois se fait avec un doigt sur le papier vierge, tant que seul l’Apple Pencil dessine. Avec « Toucher la barre d’état pour revenir en haut » activé, un toucher sur la bande de l’heure fait remonter les pages tout en haut."
+          }
+        }
+      }
+    },
+    "Tap with two or three fingers anywhere on the pages. With Tap Status Bar to Scroll to Top on, a tap on the strip with the clock scrolls the pages back to the top." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe mit zwei oder drei Fingern irgendwo auf die Seiten. Ist „Statusleiste antippen zum Hochscrollen“ an, scrollt ein Tippen auf die Leiste mit der Uhrzeit die Seiten zurück nach oben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca con dos o tres dedos en cualquier parte de las páginas. Con «Tocar la barra de estado para volver arriba» activado, un toque en la franja de la hora lleva las páginas de vuelta al principio."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touchez les pages avec deux ou trois doigts, n’importe où. Avec « Toucher la barre d’état pour revenir en haut » activé, un toucher sur la bande de l’heure fait remonter les pages tout en haut."
           }
         }
       }
@@ -35680,6 +36295,28 @@
         }
       }
     },
+    "Three-Finger Tap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit drei Fingern tippen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toque con tres dedos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toucher avec trois doigts"
+          }
+        }
+      }
+    },
     "Tick" : {
       "localizations" : {
         "de" : {
@@ -36170,28 +36807,6 @@
         }
       }
     },
-    "Taken off its shelf" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aus dem Regal genommen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Retirado de su estante"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Retiré de son étagère"
-          }
-        }
-      }
-    },
     "Took %lld notebooks off their shelves" : {
       "localizations" : {
         "de" : {
@@ -36308,6 +36923,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Palette d’outils près du Pencil"
+          }
+        }
+      }
+    },
+    "Tool Palette Where Tapped" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Werkzeugpalette an der getippten Stelle"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paleta de herramientas donde se toca"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palette d’outils à l’endroit touché"
           }
         }
       }
@@ -37460,6 +38097,28 @@
         }
       }
     },
+    "Two-Finger Tap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit zwei Fingern tippen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toque con dos dedos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toucher avec deux doigts"
+          }
+        }
+      }
+    },
     "Type its password to import it." : {
       "localizations" : {
         "de" : {
@@ -38044,6 +38703,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Utiliser la photo entière"
+          }
+        }
+      }
+    },
+    "vector %@" : {
+      "comment" : "VoiceOver reading a formula in a text box.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vektor %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vector %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vecteur %@"
           }
         }
       }
@@ -39922,688 +40604,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fenêtre de zoom, page %lld"
-          }
-        }
-      }
-    },
-    "Add Notebooks…" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Notizbücher hinzufügen …"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Añadir cuadernos…"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ajouter des carnets…"
-          }
-        }
-      }
-    },
-    "Add to %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zu %@ hinzufügen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Añadir a %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ajouter à %@"
-          }
-        }
-      }
-    },
-    "Every notebook is on %@ already." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Alle Notizbücher stehen schon in %@."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todos los cuadernos ya están en %@."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tous les carnets sont déjà dans %@."
-          }
-        }
-      }
-    },
-    "Move Here" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hierher bewegen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mover aquí"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Déplacer ici"
-          }
-        }
-      }
-    },
-    "Move %lld Here" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld hierher bewegen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mover %lld aquí"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Déplacer %lld ici"
-          }
-        }
-      }
-    },
-    "Not on a Shelf" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In keinem Regal"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sin estante"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sur aucune étagère"
-          }
-        }
-      }
-    },
-    "On Other Shelves" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In anderen Regalen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "En otros estantes"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sur d’autres étagères"
-          }
-        }
-      }
-    },
-    "No notebooks match “%@”." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keine Notizbücher passen zu „%@“."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ningún cuaderno coincide con “%@”."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aucun carnet ne correspond à « %@ »."
-          }
-        }
-      }
-    },
-    "sum" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Summe"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "suma"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "somme"
-          }
-        }
-      }
-    },
-    "product" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Produkt"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "producto"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "produit"
-          }
-        }
-      }
-    },
-    "integral" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Integral"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "integral"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "intégrale"
-          }
-        }
-      }
-    },
-    "%@ choose %@" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ über %2$@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ sobre %2$@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%2$@ parmi %1$@"
-          }
-        }
-      }
-    },
-    "%@ over %@" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ durch %2$@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ entre %2$@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ sur %2$@"
-          }
-        }
-      }
-    },
-    "fraction, %@, over, %@, end fraction" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bruch, %1$@, durch, %2$@, Ende des Bruchs"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "fracción, %1$@, entre, %2$@, fin de la fracción"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "fraction, %1$@, sur, %2$@, fin de la fraction"
-          }
-        }
-      }
-    },
-    "square root of %@" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wurzel aus %@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "raíz cuadrada de %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "racine carrée de %@"
-          }
-        }
-      }
-    },
-    "cube root of %@" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "dritte Wurzel aus %@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "raíz cúbica de %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "racine cubique de %@"
-          }
-        }
-      }
-    },
-    "root %@ of %@" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@-te Wurzel aus %2$@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "raíz %1$@-ésima de %2$@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "racine %1$@-ième de %2$@"
-          }
-        }
-      }
-    },
-    "%@ hat" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ Dach"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ sombrero"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ chapeau"
-          }
-        }
-      }
-    },
-    "%@ bar" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ quer"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ barra"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ barre"
-          }
-        }
-      }
-    },
-    "vector %@" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vektor %@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "vector %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "vecteur %@"
-          }
-        }
-      }
-    },
-    "%@ dot" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ Punkt"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ punto"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ point"
-          }
-        }
-      }
-    },
-    "%@ double dot" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ zwei Punkte"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ dos puntos"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ deux points"
-          }
-        }
-      }
-    },
-    "%@ tilde" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ Tilde"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ tilde"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ tilde"
-          }
-        }
-      }
-    },
-    "limit as %@" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Grenzwert für %@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "límite cuando %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "limite quand %@"
-          }
-        }
-      }
-    },
-    "%@ from %@ to %@" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ von %2$@ bis %3$@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ desde %2$@ hasta %3$@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ de %2$@ à %3$@"
-          }
-        }
-      }
-    },
-    "%@ over all %@" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ über alle %2$@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ sobre todos los %2$@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ sur tous les %2$@"
-          }
-        }
-      }
-    },
-    "%@ sub %@" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ Index %2$@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ subíndice %2$@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ indice %2$@"
-          }
-        }
-      }
-    },
-    "%@ squared" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ Quadrat"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ al cuadrado"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ au carré"
-          }
-        }
-      }
-    },
-    "%@ cubed" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ hoch drei"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ al cubo"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ au cube"
-          }
-        }
-      }
-    },
-    "%@ to the power %@" : {
-      "comment" : "VoiceOver reading a formula in a text box.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ hoch %2$@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ elevado a %2$@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ puissance %2$@"
           }
         }
       }
