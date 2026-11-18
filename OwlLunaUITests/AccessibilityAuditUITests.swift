@@ -51,8 +51,51 @@ final class AccessibilityAuditUITests: XCTestCase {
         let probe = FileManager.default.temporaryDirectory.appendingPathComponent("animations-\(mode).txt").path
         app.launchArguments = ["-animationProbe", probe, "-storageRoot", "audit", "-resetStorage", "-keepUndoVisible", "-seedLibrary", "6", "-seedLongPDF", "-seedJournal", "-indexSeed", "-seedActivity", "-seedReplay", "-seedHandwriting", "-fakeTranscript", "-fakeTranslate", "-fakeCalendar", "-fakeScan", "-fakeUnlockOnce", "-drawingInput", "anyInput"] + extra
         app.launch()
+
+        // Audits can scroll the library, and a large-text row may only be partly visible, or not made yet.
+        func scrollToNotebook(_ notebook: XCUIElement) -> Bool {
+            let library = app.scrollViews["library.scroll"]
+            for _ in 0..<15 {
+                let visible = library.frame.intersection(app.windows.firstMatch.frame).insetBy(dx: 0, dy: 30)
+                if notebook.exists, notebook.isHittable, visible.contains(notebook.frame) { return true }
+                if notebook.exists, notebook.frame.minY < visible.minY { library.swipeDown() }
+                else { library.swipeUp() }
+            }
+            return false
+        }
+
+        /// Waits for a notebook to be in the library. At AX-L few rows fit above the fold and the rest aren't made yet,
+        /// so the list is scrolled to find it and left at its top.
+        func waitForNotebook(_ notebook: XCUIElement, timeout: TimeInterval) -> Bool {
+            guard mode == "AX-L" else { return notebook.waitForExistence(timeout: timeout) }
+            let library = app.scrollViews["library.scroll"]
+            guard library.waitForExistence(timeout: timeout) else { return false }
+            let deadline = Date.now.addingTimeInterval(timeout)
+            var found = scrollToNotebook(notebook)
+            while !found, Date.now < deadline {
+                for _ in 0..<3 { library.swipeDown(velocity: .fast) }
+                found = scrollToNotebook(notebook)
+            }
+            for _ in 0..<3 { library.swipeDown(velocity: .fast) }
+            return found
+        }
+
+        /// Opens a notebook from the library. At AX-L the list is looked through from its top for the notebook's row.
+        func openNotebook(_ notebook: XCUIElement, timeout: TimeInterval = 20) {
+            if mode == "AX-L" {
+                let library = app.scrollViews["library.scroll"]
+                XCTAssertTrue(library.waitForExistence(timeout: timeout))
+                if !notebook.exists { for _ in 0..<3 { library.swipeDown(velocity: .fast) } }
+                XCTAssertTrue(scrollToNotebook(notebook), "Notebook is not visible: \(notebook.identifier)")
+                notebook.waitUntilStill()
+            } else {
+                XCTAssertTrue(notebook.waitForExistence(timeout: timeout))
+            }
+            notebook.tap()
+        }
+
         let textbook = app.buttons["notebook.Textbook"]
-        XCTAssertTrue(textbook.waitForExistence(timeout: 90))
+        XCTAssertTrue(waitForNotebook(textbook, timeout: 90))
         sleep(1)
 
         var pageText: [String] = []
@@ -112,23 +155,11 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.terminate()
         app.launchArguments.removeAll { $0 == "-resetStorage" }
         app.launch()
-        XCTAssertTrue(textbook.waitForExistence(timeout: 30))
+        XCTAssertTrue(waitForNotebook(textbook, timeout: 30))
         sleep(3)
 
         func sidebar(_ title: String) -> XCUIElement {
             app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch
-        }
-
-        // Audits can scroll the library, and a large-text row may only be partly visible, or not made yet.
-        func scrollToNotebook(_ notebook: XCUIElement) -> Bool {
-            let library = app.scrollViews["library.scroll"]
-            for _ in 0..<15 {
-                let visible = library.frame.intersection(app.windows.firstMatch.frame).insetBy(dx: 0, dy: 30)
-                if notebook.exists, notebook.isHittable, visible.contains(notebook.frame) { return true }
-                if notebook.exists, notebook.frame.minY < visible.minY { library.swipeDown() }
-                else { library.swipeUp() }
-            }
-            return false
         }
 
         func openNotebookMenu(_ notebook: XCUIElement, item: String) -> Bool {
@@ -215,8 +246,9 @@ final class AccessibilityAuditUITests: XCTestCase {
         sleep(1)
         try checkSheet("change cover", scrolling: app.scrollViews.firstMatch)
         app.buttons["Cancel"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["Change Cover"].waitForNonExistence(timeout: 10))
 
-        textbook.tap()
+        openNotebook(textbook)
         XCTAssertTrue(app.buttons["editor.ribbon"].waitForExistence(timeout: 20))
         sleep(1)
         try check("editor")
@@ -376,9 +408,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.buttons["editor.back"].firstMatch.tap()
 
         // Study tape, handwriting as text and the film of a page.
-        let study = app.buttons["notebook.Study Notes"]
-        XCTAssertTrue(study.waitForExistence(timeout: 20))
-        study.tap()
+        openNotebook(app.buttons["notebook.Study Notes"])
         let canvas = app.descendants(matching: .any)["page.canvas.1"]
         XCTAssertTrue(canvas.waitForExistence(timeout: 20))
         app.buttons["Add"].firstMatch.tap()
@@ -461,9 +491,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.buttons["editor.back"].firstMatch.tap()
 
         // A transcript, and the replay it leads.
-        let lecture = app.buttons["notebook.Lecture Replay"]
-        XCTAssertTrue(lecture.waitForExistence(timeout: 20))
-        lecture.tap()
+        openNotebook(app.buttons["notebook.Lecture Replay"])
         XCTAssertTrue(app.buttons["editor.ribbon"].waitForExistence(timeout: 20))
         if app.buttons["Recordings"].firstMatch.exists {
             app.buttons["Recordings"].firstMatch.tap()

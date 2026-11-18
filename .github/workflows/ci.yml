@@ -193,12 +193,13 @@ jobs:
           path: ${{ runner.temp }}
 
       # The image keeps only the three newest iOS runtimes, so this one, about 9 GB, comes from Apple each night.
+      # No -architectureVariant: Apple lists iOS 18 without one, and asking for "universal" finds nothing.
       - name: Install the iOS runtime
         timeout-minutes: 30
         run: |
           df -h /System/Volumes/Data
           for attempt in 1 2 3; do
-            xcodebuild -downloadPlatform iOS -buildVersion "$IOS_VERSION" -architectureVariant universal && break
+            xcodebuild -downloadPlatform iOS -buildVersion "$IOS_VERSION" && break
             [ "$attempt" = 3 ] && exit 1
             sleep 60
           done
