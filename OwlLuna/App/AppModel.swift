@@ -95,6 +95,7 @@ final class AppModel {
         }
         if LaunchOptions.arguments.contains("-seedActivity") { await WritingActivity.seedForTests(root: root) }
         if LaunchOptions.arguments.contains("-seedPaper") { PaperSeed.write(root: root) }
+        if LaunchOptions.arguments.contains("-copyPicture") { UIPasteboard.general.image = DocumentScan.samples()[0] }
         if LaunchOptions.arguments.contains("-increaseContrast") {
             for case let scene as UIWindowScene in UIApplication.shared.connectedScenes { scene.traitOverrides.accessibilityContrast = .high }
         }

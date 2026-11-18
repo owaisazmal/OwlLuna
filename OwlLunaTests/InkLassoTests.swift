@@ -246,6 +246,64 @@ final class InkLassoTests: XCTestCase {
         XCTAssertFalse(controller.pasteInk())
     }
 
+    /// Issue 41: a picture copied elsewhere goes where the paper was held, or becomes a page before or after that one.
+    func testACopiedPictureIsPastedOnThePageOrAsAPageBesideIt() async throws {
+        let board = UIPasteboard.withUniqueName()
+        InkClipboard.pasteboard = board
+        addTeardownBlock { @MainActor in
+            InkClipboard.pasteboard = .general
+            UIPasteboard.remove(withName: board.name)
+        }
+        let (session, controller) = try await openEditor(pages: 2, ink: PKDrawing(), toolbox: Toolbox(defaults: nil))
+        let document = session.document, first = document.pages[0].id, second = document.pages[1].id
+        let held = CGPoint(x: 16 + 300, y: 16 + 400)
+        func pasteAction() -> UIAccessibilityCustomAction? {
+            controller.canvas(forPage: 0)?.accessibilityCustomActions?.first { $0.name == "Paste Picture" }
+        }
+        XCTAssertFalse(controller.pastePicture(at: held), "nothing is on the clipboard yet")
+        XCTAssertNil(pasteAction())
+
+        board.image = UIGraphicsImageRenderer(size: CGSize(width: 400, height: 200)).image { context in
+            UIColor.systemTeal.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 400, height: 200))
+        }
+        XCTAssertTrue(controller.pastePicture(at: held))
+        await document.finishPendingWork()
+        let placed = try XCTUnwrap(document.pages[0].items.first)
+        XCTAssertNotNil(placed.assetFile)
+        XCTAssertEqual(placed.center.x, 300, accuracy: 1, "it lands where the paper was held")
+        XCTAssertEqual(placed.center.y, 400, accuracy: 1)
+        XCTAssertEqual(placed.size.width / placed.size.height, 2, accuracy: 0.05)
+        XCTAssertEqual(session.selection, ItemSelection(pageID: first, itemID: placed.id), "picked up, ready to move")
+
+        XCTAssertTrue(controller.pastePicture(at: held, placing: .pageAfter))
+        await document.finishPendingWork()
+        XCTAssertEqual(document.pages.map(\.id).filter { $0 == first || $0 == second }, [first, second])
+        XCTAssertEqual(document.pages.count, 3)
+        XCTAssertEqual(document.pages[2].id, second, "the new page stands between the two")
+        guard case .image = document.pages[1].background else { return XCTFail("the picture is the new page's paper") }
+        XCTAssertEqual(document.pages[1].size, CGSize(width: 612, height: 306), "as wide as a letter page, in the picture's shape")
+        XCTAssertEqual(document.undoManager.undoActionName, "Paste Picture")
+        XCTAssertEqual(session.currentPage, 1)
+
+        XCTAssertTrue(controller.pastePicture(at: held, placing: .pageBefore))
+        await document.finishPendingWork()
+        XCTAssertEqual(document.pages.count, 4)
+        XCTAssertEqual(document.pages[1].id, first, "pasted before the page that was held")
+        document.undoManager.undo()
+        XCTAssertEqual(document.pages.count, 3, "one Undo takes the page away")
+
+        session.go(to: 0, animated: false)
+        let action = try XCTUnwrap(pasteAction(), "VoiceOver pastes from the page itself")
+        XCTAssertTrue(action.actionHandler?(action) ?? false)
+        await document.finishPendingWork()
+        XCTAssertEqual(document.pages[0].items.count, 2)
+
+        session.enter(.presenting)
+        XCTAssertFalse(controller.pastePicture(at: held), "nothing is pasted while the pages are locked")
+        XCTAssertNil(pasteAction())
+    }
+
     func testPastedInkIsKeptOnThePage() {
         let size = CGSize(width: 612, height: 792), ink = PKDrawing(strokes: [line(y: 100), line(y: 140)])
         let corner = PKDrawing(strokes: InkClipboard.placed(ink, at: CGPoint(x: 5, y: 790), onPageOf: size))

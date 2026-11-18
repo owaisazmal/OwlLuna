@@ -233,6 +233,15 @@ final class LoneFingerHoldGuard: UIGestureRecognizer {
         return view.subviews.reduce(found) { $0 + guardHolds(in: $1) }
     }
 
+    /// Stops every hold in `view` that is waiting or under way, so its menu can't open over another.
+    static func cancelHolds(in view: UIView) {
+        for recognizer in view.gestureRecognizers ?? [] where recognizer.isEnabled && recognizer.name.map(guardedNames.contains) == true {
+            recognizer.isEnabled = false
+            recognizer.isEnabled = true
+        }
+        view.subviews.forEach(cancelHolds)
+    }
+
     private func judge() {
         guard state == .possible else { return }
         state = hold.isLoneFinger ? .failed : .began

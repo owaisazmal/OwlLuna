@@ -188,6 +188,16 @@ The simulator has no Pencil, so only fingers have tried the lasso.
 
 Expect: the line stays caught through every scroll and zoom, and the bar keeps its count. Held ink stays under the tip while the pages move and lands on the page it is dropped on, and one Undo puts it back. A finger on the caught line moves it, and anywhere else it scrolls. Scrolling works the moment a drag ends. The resting hand never draws a lasso, moves the line or scrolls, and no keyboard comes up. Pasted ink lands where the Pencil tapped, already caught. A drawing from Notes comes in as ink after iPadOS asks to allow the paste, and ink copied here is a drawing in Notes. A tab resizes the line in proportion and its strokes grow with it, a bar stretches it and its strokes stay as thick, and the knob turns it, settling on the quarter turns. The box stays turned with the ink, each drag is one Undo, the short word can still be moved from inside its box, and the resting hand works no handle.
 
+## Pasting a picture
+
+The simulator's test puts its own picture on the clipboard, so iPadOS's question about another app's picture has only been seen on a device.
+
+1. Take a screenshot, tap its thumbnail, and choose Done › Copy and Delete. In a notebook, hold a finger on bare paper and tap Paste Here.
+2. Hold again and tap Paste as Page Before, then Paste as Page After. Undo each.
+3. With Pencil and Finger, hold a finger on bare paper. Then rest the Pencil's tip on the page for a second, and hold a finger on a picture.
+
+Expect: the card opens under the finger only while a picture or ink is copied. iPadOS asks to allow the paste, once for each picture copied. The picture lands where the finger was, picked up and ready to move. As a page it fills a page of its own shape before or after the page held, and one Undo takes it away. The held finger leaves no dot. The Pencil opens no card, and a hold on a picture picks it up as before. On a Mac the pointer opens none either, and ⌘V pastes.
+
 ## Palm rejection and latency
 
 Palm rejection:

@@ -247,7 +247,7 @@ final class PageCanvasView: PKCanvasView {
 
     /// The page's own actions for assistive technologies, such as turning it in single flow.
     var pageActions: [UIAccessibilityCustomAction]?
-    /// Asked each time the actions are read: pasting the clipboard's ink, while there is some.
+    /// Asked each time the actions are read: pasting the clipboard's ink or picture, while there is one.
     var pasteAction: (() -> UIAccessibilityCustomAction?)?
 
     override var accessibilityCustomActions: [UIAccessibilityCustomAction]? {

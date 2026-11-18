@@ -155,6 +155,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     let strokeHold = StrokeHoldRecognizer()
     private lazy var itemTap = UITapGestureRecognizer(target: self, action: #selector(tappedPage))
     private lazy var itemHold = UILongPressGestureRecognizer(target: self, action: #selector(heldPage))
+    private var itemHoldIsFinger = false
     private lazy var tapeTap = UITapGestureRecognizer(target: self, action: #selector(tappedTape))
     private lazy var fingerTaps: [(tap: FingerTap, recognizer: UITapGestureRecognizer)] = FingerTap.allCases.map { tap in
         let recognizer = UITapGestureRecognizer(target: self, action: #selector(fingersTapped))
@@ -1658,13 +1659,34 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     /// Touch and hold picks one up with a finger or the Pencil, and drops the dot the hold would have drawn.
     @objc private func heldPage(_ gesture: UILongPressGestureRecognizer) {
-        guard gesture.state == .began, !isLocked, !document.isReadOnly, !isOnSelection(gesture), !isOnCaughtInk(gesture), cropView == nil,
-              let hit = item(at: gesture.location(in: scrollView)) else { return }
-        for canvas in canvases[hit.pageID]?.both ?? [] where canvas.drawingGestureRecognizer.isEnabled {
+        guard gesture.state == .began, !isLocked, !document.isReadOnly, !isOnSelection(gesture), !isOnCaughtInk(gesture), cropView == nil else { return }
+        guard let hit = item(at: gesture.location(in: scrollView)) else { return offerPaste(gesture) }
+        dropDot(onPage: hit.pageID)
+        select(hit)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    private func dropDot(onPage id: UUID) {
+        for canvas in canvases[id]?.both ?? [] where canvas.drawingGestureRecognizer.isEnabled {
             canvas.drawingGestureRecognizer.isEnabled = false
             canvas.drawingGestureRecognizer.isEnabled = true
         }
-        select(hit)
+    }
+
+    /// A finger held on bare paper opens the card that pastes the clipboard's ink or picture there. The Pencil and a pointer, which write, don't.
+    private func offerPaste(_ gesture: UILongPressGestureRecognizer) {
+        guard itemHoldIsFinger, textView == nil, bakedScale > 0 else { return }
+        let point = stackPoint(gesture)
+        guard let id = stackFrames.first(where: { $0.value.contains(point) })?.key else { return }
+        let ink = InkClipboard.hasInk
+        guard ink ? pasteTarget(at: point)?.pageID == id : InkClipboard.pasteboard.hasImages else { return }
+        dropDot(onPage: id)
+        for canvas in canvases[id]?.both ?? [] { LoneFingerHoldGuard.cancelHolds(in: canvas) }
+        if lassoTap.isEnabled {
+            lassoTap.isEnabled = false
+            lassoTap.isEnabled = true
+        }
+        session.inkMenu = InkMenu(rect: CGRect(origin: gesture.location(in: view), size: .zero), pastePoint: point, picture: !ink)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
@@ -1808,6 +1830,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             if onHandle != (gestureRecognizer === inkGrip) { return false }
         }
         if gestureRecognizer === lassoTap { lassoTapDraws = touch.type == .pencil || fingersDraw }
+        if gestureRecognizer === itemHold { itemHoldIsFinger = touch.type == .direct }
         // Only fingers that land while ink is held, and only once the scroll view can no longer scroll for them.
         if gestureRecognizer === heldScroll { return lassoMoveOrigin != nil && scrollView.panGestureRecognizer.state == .failed }
         return gestureRecognizer !== checkTap || typedCheckbox(at: touch.location(in: textView)) != nil
@@ -2770,13 +2793,33 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     var canPasteInk: Bool { pasteTarget(at: nil) != nil && InkClipboard.hasInk }
 
-    /// VoiceOver's Paste on a page, in place of a tap on its bare paper: the ink goes in the middle of what shows of it.
+    /// VoiceOver's Paste on a page, in place of a touch on its bare paper: the ink or the picture goes in the middle of what shows of it.
     private func pasteAction(on canvas: PageCanvasView?) -> UIAccessibilityCustomAction? {
-        guard let id = canvas?.pageID, canvas !== zoomCanvas, let index = index(of: id), InkClipboard.hasInk,
-              let middle = visibleCenter(ofPage: index) else { return nil }
+        guard let id = canvas?.pageID, canvas !== zoomCanvas, let index = index(of: id), let middle = visibleCenter(ofPage: index) else { return nil }
         let frame = layout.frames[index], point = CGPoint(x: frame.minX + middle.x, y: frame.minY + middle.y)
-        guard pasteTarget(at: point)?.pageID == id else { return nil }
-        return UIAccessibilityCustomAction(name: String(localized: "Paste")) { [weak self] _ in self?.pasteInk(at: point) ?? false }
+        if InkClipboard.hasInk {
+            guard pasteTarget(at: point)?.pageID == id else { return nil }
+            return UIAccessibilityCustomAction(name: String(localized: "Paste")) { [weak self] _ in self?.pasteInk(at: point) ?? false }
+        }
+        guard canDraw, InkClipboard.pasteboard.hasImages else { return nil }
+        return UIAccessibilityCustomAction(name: String(localized: "Paste Picture")) { [weak self] _ in self?.pastePicture(at: point) ?? false }
+    }
+
+    /// Puts the clipboard's pictures on the page under `point` in the stack, about that point, or makes each a page
+    /// of its own before or after that one.
+    @discardableResult
+    func pastePicture(at point: CGPoint, placing: PicturePlacing = .here) -> Bool {
+        guard canDraw, let index = InkLasso.page(at: point, frames: stackFrames).flatMap(index(of:)),
+              let images = InkClipboard.pasteboard.images, !images.isEmpty else { return false }
+        switch placing {
+        case .here:
+            let frame = layout.frames[index]
+            place(images, onPage: index, at: CGPoint(x: min(max(point.x - frame.minX, 0), frame.width), y: min(max(point.y - frame.minY, 0), frame.height)))
+        case .pageBefore, .pageAfter:
+            let editor = session, position = placing == .pageBefore ? index : index + 1
+            document.perform { try? await editor.addPicturePages(images, at: position) }
+        }
+        return true
     }
 
     /// Puts the clipboard's ink on the page, about `point` in the stack or the middle of what shows, as one undo

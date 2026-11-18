@@ -33,6 +33,7 @@ protocol EditorCanvasControlling: AnyObject {
     func cutInkSelection()
     var canPasteInk: Bool { get }
     @discardableResult func pasteInk(at point: CGPoint?) -> Bool
+    @discardableResult func pastePicture(at point: CGPoint, placing: PicturePlacing) -> Bool
     func selectedInk() -> [PKDrawing]
     func selectedInkByPage() -> [(pageID: UUID, ink: PKDrawing)]
     func replaceInkSelection(with text: String) -> ItemSelection?
@@ -507,6 +508,18 @@ final class EditorSession {
         let fit = min(page.width * 0.55 / picture.size.width, page.height * 0.4 / picture.size.height)
         addItem(.image(file: file), size: CGSize(width: (picture.size.width * fit).rounded(), height: (picture.size.height * fit).rounded()),
                 onPage: index, at: point)
+    }
+
+    /// Stores each picture in the notebook and makes it a page of its own at `position`, as one undo step.
+    func addPicturePages(_ images: [UIImage], at position: Int) async throws {
+        var pages: [NotebookPage] = []
+        for image in images {
+            let picture = try await Task.detached(priority: .userInitiated) { try PhotoImport.picture(image, longSide: 2400) }.value
+            let file = try await document.package.writeAsset(picture.data, ext: picture.ext)
+            pages.append(DocumentScan.page(file: file, pictureSize: picture.size))
+        }
+        guard !pages.isEmpty, !document.isReadOnly else { return }
+        insert(pages, at: position, actionName: String(localized: "Paste Picture"))
     }
 
     /// Places one of the user's own stickers. The notebook keeps its own copy, and one copy serves every placement.

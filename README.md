@@ -54,6 +54,7 @@ The App Store version comes later. To build it yourself, see [Getting started](#
 - A PDF's own table of contents in the page navigator, with chapters that fold and a tap to jump to one.
 - Insert photos as pages, or scan paper with the camera. Printed words are read for search.
 - Pictures you can move, resize, rotate, crop and layer.
+- Paste a copied picture or screenshot where you hold a finger on the page, or as a page of its own.
 - Forty vector stickers, plus stickers cut out of your own photos.
 - Study tape that hides what is under it until you tap it.
 - Typed text boxes with fonts, styles, lists, checklists and LaTeX formulas, and today's calendar events.

@@ -118,6 +118,8 @@ The box round caught ink (`InkBox`) has a tab on each corner, a bar on each side
 
 A tap on caught ink opens `InkCard` with Cut, Copy, Duplicate and Delete, and a tap of whatever draws on bare paper offers Paste there. `InkClipboard` puts the ink on the pasteboard as PencilKit's own drawing type, with a PNG beside it for other apps, so it pastes into Notes and a drawing copied there pastes here. Pasted ink becomes new strokes, kept on the page, and is caught at once, with the lasso taken up if a pen was in hand.
 
+A finger held on bare paper opens the same card, whatever tool is in hand, when the clipboard has ink or a picture. For a picture it offers Paste Here, or the picture as a page before or after the one held (`pastePicture(at:placing:)`). Ink wins when the clipboard has both, since copied ink carries a picture of itself. The Pencil and a pointer open nothing, so a tip resting on the page never brings up a card, and a Mac pastes with ⌘V. The card opens at 0.45 s and stops PencilKit's own hold on that page, which would open its menu at 0.5 s.
+
 ## Handwriting to text
 
 `InkText` renders selected strokes as dark ink on white at up to 3× and reads them off the main thread with the Vision request search uses. Replacing the handwriting removes the strokes and adds a text box (`InkText.box`) in one run-loop pass, so it is one undo step. `InkTranslation` sends the text to the system translator line by line and puts each line back where it stood. `-fakeTranslate` stands in for the translator, which the simulator lacks.
@@ -386,4 +388,5 @@ Every string goes through `String(localized:)`, a SwiftUI text literal or a `Loc
 - ⌘F is claimed by a first-responder view in the library, since the toolbar search swallows it otherwise. In the iPadOS 27 simulator under XCUITest ⌘F never reaches the app while ⌘G does, so it needs a device check.
 - iCloud sync has run on real iCloud along its main paths only. Evicted files, a notebook open on the other iPad, mass deletes and an account change have only run against the stand-in folder.
 - Transcription (`-fakeTranscript`), the second screen (`-secondScreenInset`), scanning (`-fakeScan`), Face ID (`-fakeUnlock`), translation (`-fakeTranslate`) and the calendar (`-fakeCalendar`) have only run through stand-ins. The tool tray, the zoom window and PDF text have only had synthesised touches, and two windows (`-windowButtons`) have only been tried one at a time.
+- Pasting a picture has only run with one the app copied itself (`-copyPicture`). iPadOS's question about a picture copied in another app needs a device check.
 - Every figure here is from the simulator. [DEVICE-CHECKS.md](DEVICE-CHECKS.md) covers Pencil latency, hitches, memory at 5× with the heavy fixture, palm rejection and every other limit above that needs a device.
