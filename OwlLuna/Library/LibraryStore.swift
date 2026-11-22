@@ -17,6 +17,17 @@ enum ImportError: LocalizedError {
     }
 }
 
+/// Why a notebook can't take pages added to it from the library.
+enum AddPagesError: LocalizedError {
+    case notebookGone
+
+    var errorDescription: String? {
+        switch self {
+        case .notebookGone: String(localized: "This notebook is no longer in your library.")
+        }
+    }
+}
+
 /// Library-level changes. Every change is written to the notebook's manifest (through its open document
 /// if it's being edited, so the two never race) and mirrored in the SwiftData index, which is saved explicitly.
 @MainActor
@@ -176,6 +187,101 @@ final class LibraryStore {
         index(manifest)
         indexHandwriting(package: NotebookPackage(root: root, id: id), pages: manifest.pages)
         return id
+    }
+
+    /// Adds a PDF's pages after the last page of a notebook in the library, through its document when it is open, and returns them.
+    @discardableResult
+    func addPDF(from url: URL, to id: UUID, password: PDFImport.Password? = nil, progress: PDFImport.Progress? = nil) async throws -> [UUID] {
+        try checkTakesPages(id)
+        // Read and unlocked beside the library first, so a PDF that fails or is skipped never touches the notebook.
+        let staging = StorageRoot(url: root.staging(id))
+        defer { try? FileManager.default.removeItem(at: staging.url) }
+        let arrived = NotebookPackage(root: staging, id: id)
+        let file = try await arrived.importAsset(from: url, ext: "pdf")
+        let pages = try await PDFImport.pages(in: arrived, file: file, password: password, progress: progress)
+        let document = try await append(pages, standingOn: arrived.assetURL(file), to: id)
+        if let document {
+            // A save that fails is the document's to retry, and the record follows it then.
+            guard await document.flush(attempts: 1) else { return pages.map(\.id) }
+            index(document.manifest)
+        } else {
+            // A change queued behind this one is the write that indexes.
+            await manifestWrites[id]?.value
+        }
+        indexHandwriting(package: document?.package ?? NotebookPackage(root: root, id: id), pages: pages)
+        return pages.map(\.id)
+    }
+
+    /// Whether `addPDF` takes a notebook: not one in Recently Deleted, or saved by a newer version. A locked one does.
+    func takesPages(_ record: NotebookRecord) -> Bool { !record.isTrashed && !record.isReadOnly }
+
+    private func checkTakesPages(_ id: UUID) throws {
+        guard let record = record(id), !record.isTrashed else { throw AddPagesError.notebookGone }
+        guard !record.isReadOnly else { throw PackageError.readOnly }
+    }
+
+    /// Appends pages standing on the PDF at `arrived`, in turn with the notebook's other writes. Returns its document when that took them.
+    private func append(_ pages: [NotebookPage], standingOn arrived: URL, to id: UUID) async throws -> NotebookDocument? {
+        let package = NotebookPackage(root: root, id: id), registry = DocumentRegistry.shared
+        let previous = manifestWrites[id], token = UUID()
+        lastUpdate[id] = token
+        registry.willChange(id)
+        let write = Task { () throws -> NotebookDocument? in
+            await previous?.value
+            await registry.whenReleased(id)
+            var document: NotebookDocument?
+            while document == nil, !registry.startWriting(id) { document = await registry.opened(id) }
+            var written: NotebookManifest?
+            defer {
+                if document == nil { registry.doneWriting(id) }
+                registry.didChange(id)
+                if lastUpdate[id] == token {
+                    lastUpdate[id] = nil
+                    manifestWrites[id] = nil
+                    if let written, record(id) != nil, registry.document(for: id) == nil, !registry.isOpening(id) { index(written) }
+                }
+            }
+            try checkTakesPages(id)
+            if let document {
+                try add(pages, standingOn: arrived, to: document)
+            } else {
+                do {
+                    written = try await add(pages, standingOn: arrived, to: package)
+                } catch {
+                    written = try? await package.readManifest().manifest
+                    throw error
+                }
+            }
+            return document
+        }
+        manifestWrites[id] = Task { _ = await write.result }
+        return try await write.value
+    }
+
+    /// Through the open document, as one undo step, so its editor shows the pages and saves them.
+    private func add(_ pages: [NotebookPage], standingOn arrived: URL, to document: NotebookDocument) throws {
+        guard !document.isReadOnly, !document.isSetAside else { throw PackageError.readOnly }
+        try moveAsset(arrived, into: document.package)
+        document.insertPages(pages, at: document.pages.count, actionName: String(localized: "Insert PDF"))
+    }
+
+    /// Into a closed notebook's package and manifest. The PDF doesn't stay if the manifest can't be written.
+    private func add(_ pages: [NotebookPage], standingOn arrived: URL, to package: NotebookPackage) async throws -> NotebookManifest {
+        try moveAsset(arrived, into: package)
+        do {
+            return try await package.updateManifest { $0.pages.append(contentsOf: pages); $0.modifiedAt = .now }
+        } catch {
+            try? FileManager.default.removeItem(at: package.assetURL(arrived.lastPathComponent))
+            throw error
+        }
+    }
+
+    /// Moves a file made ready in `Arriving/` into a package's assets under its own name. A package that has gone isn't brought back.
+    private func moveAsset(_ arrived: URL, into package: NotebookPackage) throws {
+        let fileManager = FileManager.default
+        guard fileManager.fileExists(atPath: package.url.path(percentEncoded: false)) else { throw PackageError.missing }
+        try fileManager.createDirectory(at: package.assetsDirectory, withIntermediateDirectories: true)
+        try fileManager.moveItem(at: arrived, to: package.assetURL(arrived.lastPathComponent))
     }
 
     @discardableResult

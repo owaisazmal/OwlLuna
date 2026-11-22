@@ -15,7 +15,8 @@ final class PDFImportRun {
         var wasSkipped: Bool { (error as? ImportError) == .locked }
 
         var reason: String {
-            switch error as? ImportError {
+            if error is AddPagesError || error as? PackageError == .readOnly { return String(localized: "The notebook can't take it") }
+            return switch error as? ImportError {
             case .locked: String(localized: "Skipped, it's locked")
             case .unreadable, .invalidPDF: String(localized: "Can't be read")
             case .empty: String(localized: "Has no pages")

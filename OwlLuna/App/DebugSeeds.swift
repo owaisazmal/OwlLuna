@@ -228,4 +228,24 @@ enum PaperSeed {
         _ = try? PaperShelf.add(file: source, to: root)
     }
 }
+
+/// `-sharePDF <name>`: a PDF of three numbered pages in the app's inbox, where a share from Files leaves its copy.
+enum SharedPDFSeed {
+    static func write(named name: String, pages: Int = 3) -> URL? {
+        guard let inbox = IncomingPDFs.inboxes.last else { return nil }
+        let url = inbox.appending(path: "\(name).pdf")
+        do {
+            try FileManager.default.createDirectory(at: inbox, withIntermediateDirectories: true)
+            try UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: PageSize.letter.points)).writePDF(to: url) { context in
+                for index in 0..<pages {
+                    context.beginPage()
+                    ("\(name), page \(index + 1)" as NSString).draw(at: CGPoint(x: 72, y: 72), withAttributes: [.font: UIFont.systemFont(ofSize: 28)])
+                }
+            }
+            return url
+        } catch {
+            return nil
+        }
+    }
+}
 #endif

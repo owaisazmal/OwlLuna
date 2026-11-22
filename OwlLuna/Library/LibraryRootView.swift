@@ -33,8 +33,9 @@ struct LibraryRootView: View {
     @State private var performingAction = false
     /// A link that came before the app was ready or while the launch splash was up, carried out once it can be.
     @State private var heldAction: AppAction?
-    /// PDFs the app was opened with, waiting for the shelf to be there to take them.
+    /// PDFs the app was opened with, waiting for the app to be ready to ask where they go.
     @State private var heldPDFs: [URL] = []
+    @State private var incoming = IncomingPDFDesk()
     /// What sync is waiting to be told, shown once the library is in front.
     @State private var syncQuestion: SyncCenter.Question?
     @State private var window = EditorWindow()
@@ -132,6 +133,8 @@ struct LibraryRootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.18), value: open)
+        .incomingPDFs(incoming, active: !usesZoom || open == nil, leading: sidebarWidth, clearsSearch: open == nil,
+                      edge: open == nil ? .bottom : .top)
         .fullScreenCover(item: Binding(get: { usesZoom ? open : nil }, set: { open = $0 })) { item in
             EditorPanes(primary: item, sceneID: sceneID) { open = nil }
                 .environment(window)
@@ -141,6 +144,7 @@ struct LibraryRootView: View {
                 .navigationTransition(.zoom(sourceID: item.zoomSource, in: zoom))
                 // A sideways finger drag on the page would otherwise pull the editor shut without its save-and-close.
                 .interactiveDismissDisabled()
+                .incomingPDFs(incoming, active: true, edge: .top)
         }
         .sheet(isPresented: $creating) {
             NewNotebookView(folder: folder) { id in
@@ -202,7 +206,13 @@ struct LibraryRootView: View {
             rememberWindow()
         }
         .onChange(of: sceneID) { Task { await restoreOpenNotebook() } }
-        .onAppear { window.openNotebook = { id, page in Task { await perform(.open(id, page: page)) } } }
+        .onAppear {
+            window.openNotebook = { id, page in Task { await perform(.open(id, page: page)) } }
+            incoming.toShelf = { shelfRequests.incomingPDFs += $0 }
+            incoming.open = { id, page in window.openNotebook?(id, page) }
+            incoming.isOnShow = { id in shownID == id || window.beside?.id == id }
+        }
+        .task { await shareLaunchPDFs() }
         .task(id: app.phase) { await openWhatWaits() }
         .onChange(of: app.pendingAction) { takePendingAction() }
         .onChange(of: curtain?.isUp) { Task { await openWhatWaits() } }
@@ -220,8 +230,11 @@ struct LibraryRootView: View {
     /// The sidebar stands beside the shelves only when they are narrower than the window.
     private var sidebarBeside: Bool { rootWidth - detailWidth > 1 }
 
+    /// How much of the window the sidebar takes beside the shelves, which a card with no button of its own centres beside.
+    private var sidebarWidth: CGFloat { open == nil && railBar == nil && sizeClass == .regular && sidebarBeside ? rootWidth - detailWidth : 0 }
+
     /// A link is carried out at once, unless the app is still starting or the launch splash is up. A PDF, shared from
-    /// Files or dropped on the app's icon, goes to the shelf on show the same way.
+    /// Files or dropped on the app's icon, waits the same way to be asked where it goes.
     private func follow(_ url: URL) {
         if IncomingPDFs.isPDF(url) {
             heldPDFs.append(url)
@@ -252,15 +265,26 @@ struct LibraryRootView: View {
         await perform(action)
     }
 
-    /// Hands the PDFs waiting to the shelf, which imports them into the folder on show; not before the app is ready
-    /// and the launch splash has gone, so the import shows.
+    /// Asks where the PDFs waiting go, a new notebook or one there is; not before the app is ready and the launch
+    /// splash has gone, so the question shows.
     @discardableResult
     private func deliverPDFs() -> Bool {
         guard app.phase == .ready, curtain?.holds() != true else { return false }
         guard !heldPDFs.isEmpty else { return true }
-        shelfRequests.incomingPDFs += heldPDFs
+        incoming.receive(heldPDFs, store: store)
         heldPDFs = []
         return true
+    }
+
+    /// `-sharePDF <name,name>` hands the app PDFs as a share from Files does, `-sharePDFAfter <seconds>` a while after launch.
+    private func shareLaunchPDFs() async {
+        #if DEBUG
+        guard LaunchOptions.usesTestStorage, let names = LaunchOptions.value("-sharePDF") else { return }
+        if let delay = LaunchOptions.value("-sharePDFAfter").flatMap(Double.init) { try? await Task.sleep(for: .seconds(delay)) }
+        for name in names.split(separator: ",") {
+            if let url = SharedPDFSeed.write(named: String(name)) { follow(url) }
+        }
+        #endif
     }
 
     private func takePendingAction() {

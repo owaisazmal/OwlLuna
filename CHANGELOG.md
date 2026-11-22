@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- A PDF shared to OwlLuna, opened from Files or dropped on its icon can go into a notebook you already have. A card asks where it goes: New Notebook comes first and does what it always did, then the four notebooks you opened last, and Another Notebook… lists the rest with a search. The pages go after the notebook's last page, several PDFs in the order they came, and Open on the slip goes to the first of them. Tap away from the card and nothing is imported. With no notebook yet the PDF becomes one without asking. A PDF dropped on a shelf, and Import PDF, are as before.
+
 ## [1.0.0-build.7] - 2026-11-17
 
 ### Added

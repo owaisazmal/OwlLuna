@@ -312,16 +312,17 @@ Expect: the prompt reads "OwlLuna uses the camera to scan paper into your notebo
 
 Use a readable PDF, a locked one and a broken one (a text file renamed `.pdf`), in On My iPad, iCloud Drive and a third-party provider if one is installed.
 
-1. In Files, share the readable PDF, then choose OwlLuna. Repeat from Safari's share sheet on a PDF it is showing, and from Mail.
-2. In Split View with Files, drag a PDF onto the shelf of a folder, then two at once onto All notebooks, then one into Recently deleted. Do the same from the Files sidebar's Recents.
-3. Drag a PDF from Files onto OwlLuna's icon in the Dock, with the app closed, then with it open on a notebook.
-4. Share the locked PDF, type a wrong password, then the right one. Share the broken one.
-5. After each, look at the file in Files and at Xcode's Download Container: `Documents/Inbox` and `tmp/com.owais.OwlLuna-Inbox` must be empty.
-6. Import a textbook that has a table of contents. Tap the page ribbon, then Contents. Fold and unfold chapters, tap one, and open Contents again from a page deep in a chapter. Try it on an iPhone too.
+1. In Files, share the readable PDF, then choose OwlLuna, and choose New Notebook on the card. Repeat from Safari's share sheet on a PDF it is showing and choose a notebook, then from Mail and choose Another Notebook… and one found by search.
+2. Share two PDFs at once into a notebook. Share one with a notebook open in the editor and choose that notebook, then with another open and choose a different one. Share one more and tap away from the card. Try the card in a narrow Split View window and on a folded iPhone Duo.
+3. In Split View with Files, drag a PDF onto the shelf of a folder, then two at once onto All notebooks, then one into Recently deleted. Do the same from the Files sidebar's Recents.
+4. Drag a PDF from Files onto OwlLuna's icon in the Dock, with the app closed, then with it open on a notebook.
+5. Share the locked PDF, type a wrong password, then the right one. Share the broken one.
+6. After each, look at the file in Files and at Xcode's Download Container: `Documents/Inbox` and `tmp/com.owais.OwlLuna-Inbox` must be empty.
+7. Import a textbook that has a table of contents. Tap the page ribbon, then Contents. Fold and unfold chapters, tap one, and open Contents again from a page deep in a chapter. Try it on an iPhone too.
 
-Expect: OwlLuna is offered where PDFs are shared, and takes the drop everywhere but Recently deleted, saying where it is going. Each PDF becomes a notebook named after the file, in the folder on show, with the same progress and notices as Import PDF. Dropped on the icon with the app closed, the splash goes at once and the import shows on the shelf. The original is never changed or moved, and nothing stays in either inbox. Contents is a tab only for a PDF that came with some. It opens with the chapter you are in unfolded and marked, a tap goes to that page, and on an iPhone the tabs sit under the bar.
+Expect: OwlLuna is offered where PDFs are shared. A shared PDF, or one dropped on the icon, brings a card under the bar naming the file: New Notebook first and checked, then the four notebooks opened last with their covers and page counts, and Another Notebook… when there are more. New Notebook makes a notebook named after the file, in the folder on show. A notebook chosen gets the pages after its last page, in the order the PDFs came, and the slip's Open goes to the first new page; the notebook on show in the editor goes straight there. Tapping away imports nothing. With no notebooks there is no card. A drop on a shelf takes it everywhere but Recently deleted, saying where it is going, and makes notebooks as before. Every way in has the same progress and notices as Import PDF. Dropped on the icon with the app closed, the splash goes at once and the card shows. The original is never changed or moved, and nothing stays in either inbox. Contents is a tab only for a PDF that came with some. It opens with the chapter you are in unfolded and marked, a tap goes to that page, and on an iPhone the tabs sit under the bar.
 
-Sharing from Files to OwlLuna on the iPad Pro 11-inch simulator (iOS 27.0) made the notebook, emptied the inbox and left the file in Files. The drops haven't been tried outside unit tests.
+Sharing from Files to OwlLuna on the iPad Pro 11-inch simulator (iOS 27.0) made the notebook, emptied the inbox and left the file in Files. The card has only had a stand-in share (`-sharePDF`) on the simulator. The drops haven't been tried outside unit tests.
 
 For [issue 26](https://github.com/owaisazmal/OwlLuna/issues/26), also run the checks in [PDF-IMPORT-26.md](PDF-IMPORT-26.md#device-checks-still-needed): an iCloud PDF whose download was removed, the same offline, and a retry once it can be reached.
 

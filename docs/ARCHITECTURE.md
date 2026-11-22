@@ -182,6 +182,10 @@ A sheet that large can't stand in a stack fitted to the widest page, so `PageSta
 
 `DocumentScanner` wraps `VNDocumentCameraViewController`, and each scan becomes a page background, a JPEG of at most 2,400 px, read for search with Vision (stamp suffix `+img`). A PDF page with fewer than 40 letters and digits (`PDFText.isPicture`) is read the same way (`+pdf`). `-fakeScan` stands in for the camera.
 
+## PDFs from other apps
+
+A PDF shared to the app, opened from Files or dropped on its icon arrives through `onOpenURL` as a copy in an inbox (`IncomingPDFs`). `LibraryRootView` holds it until the app is ready and the splash has gone, then `IncomingPDFDesk` asks where it goes on a card. `IncomingPDFOffer` picks the notebooks offered, those `LibraryStore.takesPages` allows, opened last first. New Notebook hands the PDFs to the shelf's import as before; a notebook takes them through `LibraryStore.addPDF`. The card has no button to hang from, so it hangs from the foot of the bar, centred on what is on show, and waits for anything already presented over the screen to go. The editor's full-screen cover carries the same stage as the library. `-sharePDF <name>` (with `-sharePDFAfter <seconds>`) stands in for a share.
+
 ## Locked notebooks
 
 The lock is a flag, not encryption: `library.locked` in the manifest and `isLocked` in the index. Locking stamps `library.changedAt.locked` instead of dating the notebook, so sync settles it as library state. `NotebookLock` asks with `LAContext` and keeps unlocked notebooks in memory only. The library asks before opening one, and `EditorScreen` lays `LockedNotebookView` over every other way in and whenever the scene isn't active, so pages never show in the app switcher. `-fakeUnlock` and its variants stand in for Face ID.
