@@ -18,25 +18,87 @@ extension EnvironmentValues {
 
 // MARK: Opening
 
-/// Where a control stands in its window.
-@MainActor
-private final class PanelSpot {
-    weak var view: UIView?
+/// The view behind a control that says where it stands. It holds what to do when it has moved, so that goes when the control does.
+final class PanelMarker: UIView {
+    var moved: (() -> Void)?
+}
 
-    var frame: CGRect { view.map { $0.convert($0.bounds, to: nil) } ?? .zero }
+/// Where a control stands in its window. A bar making its buttons again has two markers for a moment, so the one on show is asked.
+@MainActor
+final class PanelSpot {
+    private struct Kept { weak var marker: PanelMarker? }
+    private var markers: [Kept] = []
+    private var observer: CFRunLoopObserver?
+    private var seen: CGRect?
+
+    func keep(_ marker: PanelMarker) {
+        markers.removeAll { $0.marker == nil }
+        if !markers.contains(where: { $0.marker === marker }) { markers.append(Kept(marker: marker)) }
+    }
+
+    var isInWindow: Bool { markers.contains { $0.marker?.window != nil } }
+
+    /// The control's frame in its window, from the newest marker that is in one and laid out; nil while none is.
+    var frame: CGRect? {
+        let marker = markers.last { $0.marker?.window != nil && $0.marker?.bounds.isEmpty == false }?.marker
+        return marker.map { $0.convert($0.bounds, to: nil) }
+    }
+
+    /// While `on`, tells the newest marker when the frame has changed by the time the main thread rests, which is after layout.
+    func watch(_ on: Bool) {
+        guard on != (observer != nil) else { return }
+        if let observer {
+            CFRunLoopObserverInvalidate(observer)
+            self.observer = nil
+            return
+        }
+        seen = frame
+        observer = CFRunLoopObserverCreateWithHandler(nil, CFRunLoopActivity.beforeWaiting.rawValue, true, .max) { [weak self] observer, _ in
+            MainActor.assumeIsolated {
+                if let self { self.look() } else { CFRunLoopObserverInvalidate(observer) }
+            }
+        }
+        CFRunLoopAddObserver(CFRunLoopGetMain(), observer, .commonModes)
+    }
+
+    private func look() {
+        let now = frame
+        guard now != seen else { return }
+        seen = now
+        // The run loop is about to rest, so what this sets off starts a turn of its own.
+        Task { markers.last { $0.marker != nil }?.marker?.moved?() }
+    }
+
+    /// What a card hangs from: `within` its control when given, taken as at least `least` tall. Nil while the control is not on show.
+    static func anchor(for frame: CGRect?, within: CGRect?, least: CGFloat) -> CGRect? {
+        guard let frame else { return nil }
+        let place = within.map { $0.offsetBy(dx: frame.minX, dy: frame.minY) } ?? frame
+        return place.insetBy(dx: 0, dy: min(0, (place.height - least) / 2))
+    }
 }
 
 private struct PanelProbe: UIViewRepresentable {
     let spot: PanelSpot
+    let moved: () -> Void
 
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        view.isUserInteractionEnabled = false
-        spot.view = view
-        return view
+    func makeUIView(context: Context) -> PanelMarker {
+        let marker = PanelMarker()
+        marker.isUserInteractionEnabled = false
+        spot.keep(marker)
+        return marker
     }
 
-    func updateUIView(_ view: UIView, context: Context) { spot.view = view }
+    func updateUIView(_ marker: PanelMarker, context: Context) {
+        marker.moved = moved
+        spot.keep(marker)
+    }
+}
+
+/// What a card is asked for: whether it is wanted, and what of its control it hangs from.
+private struct PanelAsk: Equatable {
+    let shown: Bool
+    let within: CGRect?
+    let least: CGFloat
 }
 
 /// Covers the window with a clear layer and stands the panel on it, with no animation of the system's.
@@ -60,7 +122,7 @@ struct PanelPresenter<Panel: View>: ViewModifier {
 
     func body(content: Content) -> some View {
         content.background {
-            PanelProbe(spot: spot)
+            PanelProbe(spot: spot, moved: settle)
                 .fullScreenCover(isPresented: Binding(get: { covering }, set: { if !$0 { covering = false; if !notice { isPresented = false } } }),
                                  onDismiss: finish) {
                     stage
@@ -69,18 +131,25 @@ struct PanelPresenter<Panel: View>: ViewModifier {
                         .presentationBackground(.clear)
                 }
                 .transaction { $0.disablesAnimations = true }
-                .onChange(of: isPresented, initial: true) { _, shown in
-                    if shown, spot.view?.window == nil { Task { cover(isPresented) } } else { cover(shown) }
-                }
+                .onChange(of: PanelAsk(shown: isPresented, within: within, least: least), initial: true) { settle() }
         }
+    }
+
+    /// Opens the card under its control, keeps it there as the control moves, and closes it. With no control on show it waits.
+    private func settle() {
+        if notice {
+            if isPresented, !spot.isInWindow { Task { cover(isPresented) } } else { cover(isPresented) }
+            return
+        }
+        spot.watch(isPresented)
+        guard isPresented else { return cover(false) }
+        guard let place = PanelSpot.anchor(for: spot.frame, within: within, least: least) else { return }
+        if place != anchor { anchor = place }
+        cover(true)
     }
 
     private func cover(_ shown: Bool) {
         guard shown != covering else { return }
-        if shown {
-            let frame = spot.frame, place = within.map { $0.offsetBy(dx: frame.minX, dy: frame.minY) } ?? frame
-            anchor = place.insetBy(dx: 0, dy: min(0, (place.height - least) / 2))
-        }
         var transaction = Transaction()
         transaction.disablesAnimations = true
         withTransaction(transaction) { covering = shown }

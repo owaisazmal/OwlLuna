@@ -18,6 +18,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - A text box of one line keeps its size and its type when it is moved, turned or pinched, and its corner handle makes it smaller as well as larger. Before, any touch set small type back to about 19 pt and widened the box, which undid a size chosen in Text Style, and the box could not be made smaller. A drag past the smallest or largest type now stops there with the box's shape kept.
 - The handles of a picture, a sticker, a text box, a link and a strip of tape stay on the page. One whose place is past the page's edge slides along its side of the box to the edge, and a text box's knob stands under the box where the bar over the first page would cover it. Before, a handle past the edge was cut off and could not be touched, so a text box grown as wide as the page could not be resized again.
+- The New menu opens under New after the iPad is turned, or the sidebar is hidden or shown. Before, its card could open in the top-left corner of the screen, over the sidebar, and kept opening there. A menu or panel that is open when its button moves, as when the iPad is turned, now goes with the button.
 
 ## [1.0.0-build.7] - 2026-11-17
 
