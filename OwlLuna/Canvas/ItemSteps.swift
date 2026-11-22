@@ -62,17 +62,8 @@ extension PageItem {
         var factor = larger ? ItemStep.growth : 1 / ItemStep.growth
         if larger { factor = max(min(factor, page.width / max(box.width, 1), page.height / max(box.height, 1)), 1) }
         guard factor != 1 else { return self }
-        var copy: PageItem
-        if larger, case .text(var box) = content, size.height < Self.minimumSide {
-            copy = self
-            box.fontSize = min(box.fontSize * factor, TextBox.fontSizes.upperBound)
-            copy.content = .text(box)
-            copy.size.width *= factor
-            copy.size.height = box.height(width: copy.size.width)
-        } else {
-            copy = scaled(by: factor, limit: .greatestFiniteMagnitude)
-        }
-        // A box already under a fingertip's size is only ever scaled up, so a step down leaves it.
+        var copy = scaled(by: factor, limit: .greatestFiniteMagnitude)
+        // Anything but text that is already under a fingertip's size is only ever scaled up, so a step down leaves it.
         guard larger == (copy.size.width > size.width) else { return self }
         let room = CGRect(origin: .zero, size: page).union(box), grown = copy.boundingBox
         copy.center.x += max(room.minX - grown.minX, 0) + min(room.maxX - grown.maxX, 0)
@@ -85,6 +76,9 @@ extension PageItem {
         let degrees = Int((rotation * 180 / .pi).rounded()) % 360
         return degrees > 180 ? degrees - 360 : degrees <= -180 ? degrees + 360 : degrees
     }
+
+    /// What VoiceOver says of its size alone, on a handle that only resizes.
+    var spokenSides: String { String(localized: "\(Int(size.width.rounded())) by \(Int(size.height.rounded())) pt") }
 
     /// What VoiceOver says of its size and turn.
     var spokenSize: String {

@@ -218,17 +218,17 @@ final class InkGrip: UIView {
         self.handle = handle
         super.init(frame: CGRect(x: 0, y: 0, width: InkBoxLayout.reach * 2, height: InkBoxLayout.reach * 2))
         let size = switch handle {
-        case .knob: CGSize(width: 28, height: 28)
+        case .knob: CGSize(width: Grip.knob, height: Grip.knob)
         case .top, .bottom: CGSize(width: 28, height: 10)
         case .left, .right: CGSize(width: 10, height: 28)
-        default: CGSize(width: 14, height: 14)
+        default: CGSize(width: Grip.tab, height: Grip.tab)
         }
         shape.frame = CGRect(x: bounds.midX - size.width / 2, y: bounds.midY - size.height / 2, width: size.width, height: size.height)
         shape.backgroundColor = Grip.fill
         shape.layer.cornerRadius = handle == .knob ? size.width / 2 : 2
         shape.layer.borderWidth = 1
         if handle == .knob {
-            shape.image = UIImage(systemName: "arrow.clockwise", withConfiguration: UIImage.SymbolConfiguration(pointSize: 11, weight: .bold))
+            shape.image = UIImage(systemName: "arrow.clockwise", withConfiguration: Grip.symbol)
             shape.tintColor = Grip.ink
             shape.contentMode = .center
         }

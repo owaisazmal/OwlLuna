@@ -258,6 +258,8 @@ struct PageItem: Sendable, Hashable, Identifiable {
     }
 
     static let minimumSide: CGFloat = 24
+    /// The narrowest a text box or a strip of tape is made by hand.
+    static let minimumWidth: CGFloat = 40
 
     var sticker: Sticker? {
         if case .sticker(let name) = content { return Sticker(rawValue: name) }
@@ -334,10 +336,9 @@ struct PageItem: Sendable, Hashable, Identifiable {
         return abs(x) <= size.width / 2 + slop && abs(y) <= size.height / 2 + slop
     }
 
-    /// Scaled about its centre, never smaller than a fingertip can grab or larger than `limit` on its long side.
+    /// Scaled about its centre, a text box with its type, as far as `scales(limit:)` allows.
     func scaled(by factor: CGFloat, limit: CGFloat) -> PageItem {
-        let long = max(size.width, size.height), short = max(min(size.width, size.height), 1)
-        let clamped = min(max(factor, Self.minimumSide / short), max(limit / long, Self.minimumSide / short))
+        let scales = scales(limit: limit), clamped = min(max(factor, scales.lowerBound), scales.upperBound)
         var copy = self
         copy.size = CGSize(width: size.width * clamped, height: size.height * clamped)
         if case .text(var box) = content {
@@ -346,6 +347,16 @@ struct PageItem: Sendable, Hashable, Identifiable {
             copy.size = CGSize(width: copy.size.width, height: box.height(width: copy.size.width))
         }
         return copy
+    }
+
+    /// No smaller than a fingertip can grab or larger than `limit` on its long side. A text box is held by its type size and width instead.
+    private func scales(limit: CGFloat) -> ClosedRange<CGFloat> {
+        guard let text else {
+            let long = max(size.width, size.height), short = max(min(size.width, size.height), 1)
+            return Self.minimumSide / short...max(limit / long, Self.minimumSide / short)
+        }
+        let sizes = TextBox.fontSizes, type = max(text.fontSize, 1), width = max(size.width, 1)
+        return min(max(sizes.lowerBound / type, Self.minimumWidth / width), 1)...max(min(sizes.upperBound / type, limit / width), 1)
     }
 
     /// A new size with one point of the box held still: (0, 0) is its top leading corner, (0.5, 0.5) its centre.

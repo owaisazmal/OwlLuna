@@ -10,6 +10,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - A PDF shared to OwlLuna, opened from Files or dropped on its icon can go into a notebook you already have. A card asks where it goes: New Notebook comes first and does what it always did, then the four notebooks you opened last, and Another Notebook… lists the rest with a search. The pages go after the notebook's last page, several PDFs in the order they came, and Open on the slip goes to the first of them. Tap away from the card and nothing is imported. With no notebook yet the PDF becomes one without asking. A PDF dropped on a shelf, and Import PDF, are as before.
 
+### Changed
+
+- A text box has two handles in place of its one knob: a square tab on its corner that resizes the box and its type, and a round knob on a stalk that turns it, like the handles on the lasso's box. A drag down on the tab no longer tilts the box. The bar on its right side still changes the width, the knob still settles on the quarter turns, and VoiceOver steps each handle on its own. Pictures, stickers and tape keep their one knob.
+
+### Fixed
+
+- A text box of one line keeps its size and its type when it is moved, turned or pinched, and its corner handle makes it smaller as well as larger. Before, any touch set small type back to about 19 pt and widened the box, which undid a size chosen in Text Style, and the box could not be made smaller. A drag past the smallest or largest type now stops there with the box's shape kept.
+- The handles of a picture, a sticker, a text box, a link and a strip of tape stay on the page. One whose place is past the page's edge slides along its side of the box to the edge, and a text box's knob stands under the box where the bar over the first page would cover it. Before, a handle past the edge was cut off and could not be touched, so a text box grown as wide as the page could not be resized again.
+
 ## [1.0.0-build.7] - 2026-11-17
 
 ### Added

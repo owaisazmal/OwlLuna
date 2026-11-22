@@ -738,6 +738,9 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         return area
     }
 
+    /// How far below the app's bar the bar for a selected item and the page ribbons reach over the pages.
+    private static let barsDepth: CGFloat = 62
+
     /// What the tool tray takes of the foot of the view while it shows: itself, the gap under it and what it stands on,
     /// the home indicator's margin or the zoom window.
     private var toolsObscured: CGFloat {
@@ -1482,6 +1485,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         slot.bringSubviewToFront(view)
         view.pageSize = slot.page.size
         view.scale = bakedScale
+        view.covered = max(0, self.view.safeAreaInsets.top + Self.barsDepth - scrollView.contentInset.top - slot.frame.minY)
         view.naturalAspect = { [weak slot, id = item.id] in slot?.itemViews[id]?.naturalAspect }
         if !view.isChanging { view.show(item) }
         view.onChange = { [weak self] item, final in self?.selectedItemChanged(item, final: final) }
@@ -1909,6 +1913,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         pendingEdit = nil
         typedTicks = []
         selectionView?.isEditing = false
+        // The outline was round the box as the editor held it, and a formula is typed taller or shorter than it is set.
+        if let item = selectedItem()?.item { selectionView?.show(item) }
         if session.isEditingText { session.isEditingText = false }
         updateInsets()
     }

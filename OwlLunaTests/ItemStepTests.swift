@@ -58,7 +58,8 @@ final class ItemStepTests: XCTestCase {
         let line = TextBox(string: "Eggs")
         let short = PageItem(content: .text(line), center: CGPoint(x: 300, y: 200), size: CGSize(width: 200, height: line.height(width: 200)))
         XCTAssertLessThan(short.size.height, PageItem.minimumSide)
-        XCTAssertEqual(short.stepped(larger: false, page: page), short, "a step down never makes it larger")
+        XCTAssertEqual(try XCTUnwrap(short.stepped(larger: false, page: page).text?.fontSize), line.fontSize / 1.1, accuracy: 0.001,
+                       "a step down makes it smaller, though it is already shorter than a fingertip")
         let enlarged = short.stepped(larger: true, page: page)
         XCTAssertEqual(enlarged.size.width, 220, accuracy: 0.001)
         XCTAssertEqual(try XCTUnwrap(enlarged.text?.fontSize), line.fontSize * 1.1, accuracy: 0.001)
