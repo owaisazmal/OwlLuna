@@ -30,6 +30,10 @@ final class PanelSpot {
     private var markers: [Kept] = []
     private var observer: CFRunLoopObserver?
     private var seen: CGRect?
+    /// A pointer, or a Pencil held over the screen, is on the control.
+    var pointerOn = false
+    /// How long the control is given to drop its highlight, and then the system to take it down.
+    static let beat = Duration.milliseconds(50)
 
     func keep(_ marker: PanelMarker) {
         markers.removeAll { $0.marker == nil }
@@ -37,6 +41,16 @@ final class PanelSpot {
     }
 
     var isInWindow: Bool { markers.contains { $0.marker?.window != nil } }
+
+    /// Has the system ask the window's controls again for the highlights they want under the pointer.
+    func askPointerAgain() {
+        guard let window = markers.last(where: { $0.marker?.window != nil })?.marker?.window else { return }
+        func ask(_ view: UIView) {
+            for case let pointer as UIPointerInteraction in view.interactions { pointer.invalidate() }
+            view.subviews.forEach(ask)
+        }
+        ask(window)
+    }
 
     /// The control's frame in its window, from the newest marker that is in one and laid out; nil while none is.
     var frame: CGRect? {
@@ -116,12 +130,17 @@ struct PanelPresenter<Panel: View>: ViewModifier {
     @State private var covering = false
     @State private var anchor = CGRect.zero
     @State private var pending: (() -> Void)?
+    @State private var lowered = false
+    @State private var lowering: Task<Void, Never>?
     @Environment(\.panelClose) private var outer
     @Environment(\.panelAnchorHeight) private var least
     @Environment(\.panelsOpenBeside) private var opensBeside
 
     func body(content: Content) -> some View {
-        content.background {
+        content.hoverEffectDisabled(lowered).onContinuousHover { phase in
+            if case .active = phase { spot.pointerOn = true } else { spot.pointerOn = false }
+        }
+        .background {
             PanelProbe(spot: spot, moved: settle)
                 .fullScreenCover(isPresented: Binding(get: { covering }, set: { if !$0 { covering = false; if !notice { isPresented = false } } }),
                                  onDismiss: finish) {
@@ -137,6 +156,13 @@ struct PanelPresenter<Panel: View>: ViewModifier {
 
     /// Opens the card under its control, keeps it there as the control moves, and closes it. With no control on show it waits.
     private func settle() {
+        if isPresented, !covering {
+            if lowering != nil { return }
+            // The Mac draws no highlight under its pointer, so its cards don't wait.
+            if !lowered, spot.pointerOn, !Device.isMac { return lower() }
+        } else if !isPresented, !covering, lowering == nil, lowered {
+            lowered = false
+        }
         if notice {
             if isPresented, !spot.isInWindow { Task { cover(isPresented) } } else { cover(isPresented) }
             return
@@ -146,6 +172,18 @@ struct PanelPresenter<Panel: View>: ViewModifier {
         guard let place = PanelSpot.anchor(for: spot.frame, within: within, least: least) else { return }
         if place != anchor { anchor = place }
         cover(true)
+    }
+
+    /// Takes the pointer's highlight off the control before its card covers it: one left up under a card is never taken down.
+    private func lower() {
+        lowered = true
+        lowering = Task {
+            try? await Task.sleep(for: PanelSpot.beat)
+            spot.askPointerAgain()
+            try? await Task.sleep(for: PanelSpot.beat)
+            lowering = nil
+            settle()
+        }
     }
 
     private func cover(_ shown: Bool) {
@@ -168,6 +206,9 @@ struct PanelPresenter<Panel: View>: ViewModifier {
     private func finish() {
         let action = pending
         pending = nil
+        lowered = false
+        // Under the card the control may never have heard the pointer leave.
+        spot.pointerOn = false
         if chained, let outer { outer(then: action) } else { action?() }
         if notice { isPresented = false }
     }
