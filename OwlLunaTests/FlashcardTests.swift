@@ -417,8 +417,9 @@ final class FlashcardTests: XCTestCase {
         XCTAssertEqual(session.tapesWithoutCards(in: library).map(\.tape.id), [other.id])
         XCTAssertEqual(library.card(for: tape.id, in: manifest.id)?.id, made.id)
 
-        let region = CardClipping.region(around: tape, on: page)
-        XCTAssertTrue(region.contains(CGRect(x: 180, y: 180, width: 240, height: 40)), "the clipping holds the tape and some of what is round it")
+        let region = try XCTUnwrap(made.clip).region
+        XCTAssertEqual(made.clip, CardClip(region: region, tape: tape), "it says what it was cut from and where the tape lay")
+        XCTAssertTrue(region.contains(CardClipping.region(around: tape, on: page)), "the clipping holds the tape and what is round it, never less than the fixed area")
         let front = try XCTUnwrap(UIImage(contentsOfFile: library.imageURL(try XCTUnwrap(made.front.image), in: manifest.id).path(percentEncoded: false)))
         let back = try XCTUnwrap(UIImage(contentsOfFile: library.imageURL(try XCTUnwrap(made.back.image), in: manifest.id).path(percentEncoded: false)))
         XCTAssertEqual(front.size.width * front.scale, region.width * CardClipping.scale, accuracy: 1)

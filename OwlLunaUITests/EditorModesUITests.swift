@@ -107,6 +107,99 @@ final class EditorModesUITests: XCTestCase {
         XCTAssertTrue(first.exists)
     }
 
+    /// Opens More › View, and says whether its Appearance rows are there.
+    private func openViewCard(_ app: XCUIApplication) -> Bool {
+        if app.buttons["Keep Paper Light"].exists { return true }
+        app.buttons["More"].firstMatch.tap()
+        let view = app.buttons["View"].firstMatch
+        guard view.waitForExistence(timeout: 5) else { return false }
+        view.tap()
+        return app.buttons["Keep Paper Light"].waitForExistence(timeout: 5)
+    }
+
+    /// Puts Appearance back to System and Keep Paper Light to off, so a run that stops half way leaves the simulator as it found it.
+    private func restoreAppearance(_ app: XCUIApplication) {
+        guard app.state == .runningForeground, openViewCard(app) else { return }
+        let keep = app.buttons["Keep Paper Light"].firstMatch
+        if keep.isSelected {
+            // The row is dimmed in a light appearance, so Dark comes first.
+            if !keep.isEnabled {
+                app.buttons["Dark"].firstMatch.tap()
+                guard openViewCard(app) else { return }
+            }
+            keep.tap()
+            guard openViewCard(app) else { return }
+        }
+        app.buttons["System"].firstMatch.tap()
+    }
+
+    /// The average brightness of the middle of the page on screen, from 0 for black to 1 for white.
+    private func brightness(of canvas: XCUIElement, in app: XCUIApplication) throws -> CGFloat {
+        let image = try XCTUnwrap(XCUIScreen.main.screenshot().image.cgImage)
+        let visible = canvas.frame.intersection(app.frame), scale = CGFloat(image.width) / app.frame.width
+        let rect = CGRect(x: visible.minX + visible.width * 0.3, y: visible.minY + visible.height * 0.3,
+                          width: visible.width * 0.4, height: visible.height * 0.4).applying(CGAffineTransform(scaleX: scale, y: scale)).integral
+        let width = Int(rect.width), height = Int(rect.height)
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        let context = try XCTUnwrap(CGContext(data: &pixels, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+                                              space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        context.draw(try XCTUnwrap(image.cropping(to: rect)), in: CGRect(x: 0, y: 0, width: width, height: height))
+        var total: CGFloat = 0
+        for index in stride(from: 0, to: pixels.count, by: 4) {
+            total += 0.2126 * CGFloat(pixels[index]) + 0.7152 * CGFloat(pixels[index + 1]) + 0.0722 * CGFloat(pixels[index + 2])
+        }
+        return total / 255 / CGFloat(width * height)
+    }
+
+    /// Whether the page turns light, or dark, within a few seconds.
+    private func pageBecomes(light: Bool, _ canvas: XCUIElement, in app: XCUIApplication) throws -> Bool {
+        let deadline = Date().addingTimeInterval(8)
+        repeat {
+            let level = try brightness(of: canvas, in: app)
+            if light ? level > 0.75 : level < 0.45 { return true }
+            usleep(400_000)
+        } while Date() < deadline
+        return false
+    }
+
+    /// Issue 50: More › View sets Appearance and Keep Paper Light, and the page that is open follows at once.
+    func testTheViewCardSetsAppearanceAndKeepsPaperLight() throws {
+        let app = XCUIApplication()
+        let canvas = openNotebook(app, input: "anyInput")
+        canvas.waitUntilStill()
+        addTeardownBlock { @MainActor in self.restoreAppearance(app) }
+        XCTAssertTrue(try pageBecomes(light: true, canvas, in: app), "paper is light before anything is chosen")
+
+        XCTAssertTrue(openViewCard(app))
+        XCTAssertTrue(app.buttons["System"].isSelected, "the card marks the appearance in force")
+        XCTAssertFalse(app.buttons["Keep Paper Light"].isSelected)
+        app.buttons["Dark"].firstMatch.tap()
+        XCTAssertTrue(try pageBecomes(light: false, canvas, in: app), "paper turns dark with the app")
+        attach(app, "appearance-dark")
+
+        XCTAssertTrue(openViewCard(app))
+        XCTAssertTrue(app.buttons["Dark"].isSelected)
+        XCTAssertTrue(app.buttons["Keep Paper Light"].isEnabled, "in Dark the row can be used")
+        XCTAssertFalse(app.buttons["Keep Paper Light"].isSelected)
+        app.buttons["Keep Paper Light"].firstMatch.tap()
+        XCTAssertTrue(try pageBecomes(light: true, canvas, in: app), "the open page is light again, still in Dark")
+
+        XCTAssertTrue(openViewCard(app))
+        XCTAssertTrue(app.buttons["Dark"].isSelected, "the app is still dark")
+        XCTAssertTrue(app.buttons["Keep Paper Light"].isSelected, "and paper is marked as kept light")
+        attach(app, "appearance-keep-paper-light")
+        app.buttons["Keep Paper Light"].firstMatch.tap()
+        XCTAssertTrue(try pageBecomes(light: false, canvas, in: app), "turned off, the page goes dark again")
+
+        XCTAssertTrue(openViewCard(app))
+        XCTAssertFalse(app.buttons["Keep Paper Light"].isSelected)
+        app.buttons["Light"].firstMatch.tap()
+        XCTAssertTrue(try pageBecomes(light: true, canvas, in: app), "a light appearance gives light paper")
+        XCTAssertTrue(openViewCard(app))
+        XCTAssertFalse(app.buttons["Keep Paper Light"].isEnabled, "where paper is light already the row changes nothing")
+        app.buttons["System"].firstMatch.tap()
+    }
+
     /// Issue 35: a tap that misses the bar and lands on the status bar leaves the pages alone, unless Settings asks for the first page.
     func testATapOnTheStatusBarKeepsThePageUnlessSettingsAsks() throws {
         let app = XCUIApplication()

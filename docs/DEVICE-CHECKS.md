@@ -400,6 +400,20 @@ On iPadOS 26 with Apple Intelligence, use a page of handwritten lecture notes an
 
 Expect: the points match the notes, the answers are in them (write down anything made up), and the long notebook finishes. Without Apple Intelligence it explains why. Look out for "These notes are too long…" and "…wouldn't write about these notes." Notes go in pieces of 3,200 characters (`StudyGuide.chunkLimit`). If the output is nonsense, check library search finds the page's words.
 
+## Flashcards
+
+Use a notebook with study tape over a word of handwriting and over a line of a PDF, on an iPad and an iPhone.
+
+1. ⋯ › Study › Flashcards…, Make Cards from Study Tape. Open a card, Change Area, drag an edge and a corner, Done, Save.
+2. Study. Tap the tape on a tape card, tap again, then Show Answer. Answer one card Again and the rest Good.
+3. Read the slip at the end. Turn Settings › Writing History › Keep Writing History off and study again.
+4. Study a tape card made by an older build, and one whose question and answer were swapped.
+5. With VoiceOver on, Show Answer on a tape card and on a written one.
+
+Expect: a new card shows the whole line the tape is on and the lines that run on from it. The frame can't leave the tape out, and the card changes only on Save. The tape peels off in place and goes back, and other cards turn over. Print on a PDF card can still be read on the iPhone (write down the size if not). The slip counts each card once, and today's square is ticked and underlined. With the history off the slip has no week. An older card peels the same way, and a swapped one fades. VoiceOver reads the answer once.
+
+Only tried in the simulator. VoiceOver's focus after the answer was read in code, not heard.
+
 ## Control Center
 
 Add OwlLuna's Quick Note and Today's Page controls (Control Center › + › Add a Control). Tap Quick Note with OwlLuna closed, and again just after writing in a notebook. Tap Today's Page from the library, and with two windows open. Set the Action button, if any, to a control and press it.

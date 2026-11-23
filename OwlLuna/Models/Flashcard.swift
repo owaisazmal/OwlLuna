@@ -33,6 +33,34 @@ struct CardSide: Codable, Equatable, Sendable {
     }
 }
 
+/// The part of its page a tape card's clippings show, and where the tape lay when they were cut. In page points.
+struct CardClip: Codable, Equatable, Sendable {
+    var region: CGRect
+    var tapeCenter: CGPoint
+    var tapeSize: CGSize
+    /// In radians, as on the page.
+    var tapeRotation: CGFloat
+    var tapeColor: String
+
+    init(region: CGRect, tapeCenter: CGPoint, tapeSize: CGSize, tapeRotation: CGFloat, color: TapeColor) {
+        self.region = region
+        self.tapeCenter = tapeCenter
+        self.tapeSize = tapeSize
+        self.tapeRotation = tapeRotation
+        tapeColor = color.rawValue
+    }
+
+    init?(region: CGRect, tape: PageItem) {
+        guard let color = tape.tape else { return nil }
+        self.init(region: region, tapeCenter: tape.center, tapeSize: tape.size, tapeRotation: tape.rotation, color: color)
+    }
+
+    var color: TapeColor { TapeColor(rawValue: tapeColor) ?? .mustard }
+
+    /// The tape's centre measured from the clipping's corner.
+    var tapeCenterInClipping: CGPoint { CGPoint(x: tapeCenter.x - region.minX, y: tapeCenter.y - region.minY) }
+}
+
 /// How well a card was remembered.
 enum CardGrade: Int, CaseIterable, Sendable {
     case again, good, easy
@@ -57,6 +85,8 @@ struct Flashcard: Codable, Identifiable, Equatable, Sendable {
     var lastReviewed: Date?
     /// When it was last answered or rewritten. Older builds leave it out.
     var changedAt: Date?
+    /// What a tape card's clippings were cut from. Older cards have none, and an older build drops it.
+    var clip: CardClip?
 
     init(front: CardSide, back: CardSide, pageID: UUID? = nil, tapeID: UUID? = nil, now: Date = .now, calendar: Calendar = .current) {
         self.front = front
@@ -82,6 +112,7 @@ struct Flashcard: Codable, Identifiable, Equatable, Sendable {
         lapses = try values.decodeIfPresent(Int.self, forKey: .lapses) ?? 0
         lastReviewed = try values.decodeIfPresent(Date.self, forKey: .lastReviewed)
         changedAt = try values.decodeIfPresent(Date.self, forKey: .changedAt)
+        clip = (try? values.decodeIfPresent(CardClip.self, forKey: .clip)) ?? nil
     }
 
     func isDue(on day: String) -> Bool { due <= day }

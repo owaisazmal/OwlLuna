@@ -16,6 +16,8 @@ final class ItemCropView: UIView, UIGestureRecognizerDelegate {
     }
     /// Reports the crop, in the picture's unit square, as each drag ends.
     var onChange: ((CGRect) -> Void)?
+    /// A part of the picture, in its unit square, that no edge is let past. Nil for a picture on a page.
+    var holds: CGRect?
 
     private let picture = CALayer()
     private let shade = CAShapeLayer()
@@ -72,6 +74,21 @@ final class ItemCropView: UIView, UIGestureRecognizerDelegate {
         onChange?(crop)
     }
 
+    /// Puts the crop where it is told to be.
+    func show(_ crop: CGRect) {
+        self.crop = kept(crop)
+        showCrop()
+        onChange?(self.crop)
+    }
+
+    /// The crop still round what it `holds`: an edge moved past it stops there, and a crop slid off it is slid back.
+    private func kept(_ crop: CGRect, slid: Bool = false) -> CGRect {
+        guard let holds, !crop.contains(holds) else { return crop }
+        guard slid else { return crop.union(holds) }
+        return crop.offsetBy(dx: max(holds.maxX - crop.maxX, 0) + min(holds.minX - crop.minX, 0),
+                             dy: max(holds.maxY - crop.maxY, 0) + min(holds.minY - crop.minY, 0))
+    }
+
     /// How much of the picture is cut off past an edge, from 0 to 1.
     func cutOff(_ edge: Edge) -> CGFloat {
         switch edge {
@@ -90,7 +107,7 @@ final class ItemCropView: UIView, UIGestureRecognizerDelegate {
         case .bottom: CGPoint(x: 0, y: -amount)
         case .right: CGPoint(x: -amount, y: 0)
         }
-        crop = Self.moved(crop, edges: [edge], by: delta, least: least)
+        crop = kept(Self.moved(crop, edges: [edge], by: delta, least: least))
         showCrop()
         onChange?(crop)
     }
@@ -195,8 +212,8 @@ final class ItemCropView: UIView, UIGestureRecognizerDelegate {
         case .changed:
             let delta = CGPoint(x: moved.x / frame.width, y: moved.y / frame.height)
             switch grab {
-            case .edges(let edges): crop = Self.moved(start, edges: edges, by: delta, least: least)
-            case .slide: crop = Self.slid(start, by: delta)
+            case .edges(let edges): crop = kept(Self.moved(start, edges: edges, by: delta, least: least))
+            case .slide: crop = kept(Self.slid(start, by: delta), slid: true)
             case nil: return
             }
             showCrop()

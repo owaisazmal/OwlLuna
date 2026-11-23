@@ -9,9 +9,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 
 - A PDF shared to OwlLuna, opened from Files or dropped on its icon can go into a notebook you already have. A card asks where it goes: New Notebook comes first and does what it always did, then the four notebooks you opened last, and Another Notebook… lists the rest with a search. The pages go after the notebook's last page, several PDFs in the order they came, and Open on the slip goes to the first of them. Tap away from the card and nothing is imported. With no notebook yet the PDF becomes one without asking. A PDF dropped on a shelf, and Import PDF, are as before.
+- The editor's ⋯ › View card has System, Light and Dark and a Keep Paper Light row, the same choices as Settings › Appearance, so the look can be changed without leaving a notebook. The pages that are open change at once, paper and ink together. Keep Paper Light is dimmed while the app is light, where paper is light anyway.
+- Change Area in the editor of a flashcard made from study tape opens its page under the crop frame, to choose how much of the page the card shows. Both sides are cut again when you save. It works on cards you already have, while the page and its tape are still there.
+- Finishing a flashcard sitting shows a slip with the cards you studied, how many you knew the first time, and the days of this week you studied. The study days are kept with the writing history, which Settings › Writing History turns off or clears.
 
 ### Changed
 
+- A flashcard made from study tape starts with the whole line the tape is on and the lines that run on from it, so a question of several lines is no longer cut off.
+- Studying a card made from study tape, tap the tape and it peels off the clipping, as on the page, instead of the card turning over. Show Answer and Space lift it too, and a second tap puts it back. When an answer shows, VoiceOver goes to the card.
 - A text box has two handles in place of its one knob: a square tab on its corner that resizes the box and its type, and a round knob on a stalk that turns it, like the handles on the lasso's box. A drag down on the tab no longer tilts the box. The bar on its right side still changes the width, the knob still settles on the quarter turns, and VoiceOver steps each handle on its own. Pictures, stickers and tape keep their one knob.
 
 ### Fixed

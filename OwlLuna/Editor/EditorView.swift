@@ -1499,6 +1499,7 @@ fileprivate struct EditorContent: View {
                 ForEach(PageFlow.allCases) { Text($0.displayName).tag($0) }
             }
         }
+        AppearanceRows()
     }
 
     /// Two ways to select share a card. One alone stays a row of More.

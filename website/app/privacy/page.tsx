@@ -177,8 +177,9 @@ export default function PrivacyPolicy() {
                 <strong>Your settings</strong>, pens, folders, smart shelves and the stickers you made.
               </li>
               <li>
-                <strong>Your writing history.</strong> For each day, which pages you wrote on. It holds no text and no
-                times of day. Settings › Writing History in the app turns it off or clears it.
+                <strong>Your writing history.</strong> For each day, which pages you wrote on and how many flashcards
+                you answered. It holds no text and no times of day. Settings › Writing History in the app turns it off
+                or clears it.
               </li>
             </ul>
             <p>Some of this is handed to the system, on the same device, so that system features work:</p>

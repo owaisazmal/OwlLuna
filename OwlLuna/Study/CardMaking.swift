@@ -9,6 +9,8 @@ struct CardDraft: Identifiable {
         var newImage: UIImage?
         /// What the clipping reads as, kept with it.
         var imageText: String?
+        /// On a tape card, whether this is the clipping with the tape lifted. It goes with the side when they are swapped.
+        var isLifted = false
 
         var isEmpty: Bool { text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && imageName == nil && newImage == nil }
     }
@@ -19,6 +21,8 @@ struct CardDraft: Identifiable {
     var front = Side()
     var back = Side()
     var pageID: UUID?
+    /// What a tape card's clippings were cut from.
+    var clip: CardClip?
 
     var isComplete: Bool { !front.isEmpty && !back.isEmpty }
 
@@ -32,7 +36,22 @@ struct CardDraft: Identifiable {
         self.card = card
         front = Side(text: card.front.text, imageName: card.front.image, imageText: card.front.imageText)
         back = Side(text: card.back.text, imageName: card.back.image, imageText: card.back.imageText)
+        back.isLifted = card.tapeID != nil
         pageID = card.pageID
+        clip = card.clip
+    }
+
+    /// Takes a tape card's clippings as they were cut again. A side that has lost its clipping stays without one.
+    mutating func recut(_ cut: CardClipping.TapeCut) {
+        func take(_ side: inout Side) {
+            guard side.imageName != nil || side.newImage != nil else { return }
+            side.newImage = side.isLifted ? cut.back : cut.front
+            side.imageName = nil
+            side.imageText = side.isLifted ? cut.backText : cut.frontText
+        }
+        take(&front)
+        take(&back)
+        clip = cut.clip
     }
 
     mutating func swapSides() {
@@ -53,6 +72,7 @@ extension FlashcardLibrary {
         if var card = draft.card {
             card.front = front
             card.back = back
+            card.clip = front.image == nil && back.image == nil ? nil : draft.clip
             update(card, in: notebook)
             return card
         }
@@ -71,18 +91,20 @@ extension EditorSession {
         }
     }
 
-    /// A card whose question is the page with the tape on and whose answer is the page with it lifted.
+    /// A card whose question is the page with the tape on and whose answer is the page with it lifted. It keeps a record
+    /// of the part of the page it was cut from.
     @discardableResult
     func makeCard(from tape: PageItem, on page: NotebookPage, in library: FlashcardLibrary) async throws -> Flashcard {
         let ink = await document.ink(page.id), assets = document.package.assetsDirectory
-        let (sides, words) = await Task.detached(priority: .userInitiated) {
-            let sides = CardClipping.tapeSides(tape, on: page, ink: ink, assets: assets)
-            return (sides, await CardClipping.tapeText(tape, on: page, answer: sides.back))
+        let cut = await Task.detached(priority: .userInitiated) {
+            await CardClipping.cut(tape, on: page, ink: ink, assets: assets,
+                                   region: CardClipping.startingRegion(around: tape, on: page, ink: ink, assets: assets))
         }.value
-        let front = try await library.saveClipping(sides.front, in: document.id)
-        let back = try await library.saveClipping(sides.back, in: document.id)
-        let card = Flashcard(front: CardSide(image: front, imageText: words.front), back: CardSide(image: back, imageText: words.back),
+        let front = try await library.saveClipping(cut.front, in: document.id)
+        let back = try await library.saveClipping(cut.back, in: document.id)
+        var card = Flashcard(front: CardSide(image: front, imageText: cut.frontText), back: CardSide(image: back, imageText: cut.backText),
                              pageID: page.id, tapeID: tape.id)
+        card.clip = cut.clip
         guard library.add([card], to: document.id) else { throw PackageError.readOnly }
         return card
     }

@@ -1,47 +1,5 @@
 import SwiftUI
 
-/// One sitting with the cards: each is shown, turned over and answered, and one that was forgotten comes round again.
-@MainActor
-@Observable
-final class ReviewSession {
-    private(set) var queue: [DeckCard]
-    private(set) var position = 0
-    /// Cards that have been remembered in this sitting.
-    private(set) var finished = 0
-    private(set) var total: Int
-    var isRevealed = false
-
-    init(cards: [DeckCard]) {
-        queue = cards
-        total = cards.count
-    }
-
-    var current: DeckCard? { queue.indices.contains(position) ? queue[position] : nil }
-    var remaining: Int { queue.count - position }
-
-    func answer(_ grade: CardGrade, in library: FlashcardLibrary, now: Date = .now) {
-        guard let current else { return }
-        let updated = library.grade(current.id, in: current.notebook, grade, now: now) ?? current.card
-        if grade == .again {
-            queue.append(DeckCard(notebook: current.notebook, card: updated))
-        } else {
-            finished += 1
-        }
-        position += 1
-        isRevealed = false
-    }
-
-    /// The card in hand was deleted: it leaves the sitting, along with any later turn it had.
-    func dropCurrent() {
-        guard let current else { return }
-        let earlier = queue[..<position].filter { $0.id == current.id }.count
-        queue.removeAll { $0.id == current.id }
-        total = max(total - 1, finished)
-        position = min(position - earlier, queue.count)
-        isRevealed = false
-    }
-}
-
 /// Studying flashcards: the desk, one index card on a small pile, and the answer buttons under it.
 struct CardReview: View {
     /// What is due, and everything there is for when nothing is due.
@@ -59,6 +17,7 @@ struct CardReview: View {
     @State private var session: ReviewSession
     @State private var front: UIImage?
     @State private var back: UIImage?
+    @State private var strip: LiftStrip?
     @State private var confirmingDelete = false
     @State private var tilt = 0.0
     @State private var titles: [UUID: String] = [:]
@@ -86,7 +45,9 @@ struct CardReview: View {
                     .padding(.horizontal, Space.x6)
                     .padding(.bottom, Space.x6)
             } else {
-                finishedView
+                ReviewFinished(session: session, all: all) { cards in
+                    withAnimation(motion) { session = ReviewSession(cards: cards) }
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -94,6 +55,7 @@ struct CardReview: View {
         .background { shortcuts }
         .task(id: session.current?.id) { await loadImages() }
         .onChange(of: session.current?.id) { focusOnCard = true }
+        .onChange(of: session.isRevealed) { _, revealed in if revealed { showAnswerToVoiceOver() } }
         .notice("Delete this flashcard?", isPresented: $confirmingDelete, message: Text("The page it was made from stays as it is.")) {
             Button("Cancel", role: .cancel) {}
             Button("Delete Flashcard", role: .destructive, action: deleteCurrent)
@@ -156,22 +118,11 @@ struct CardReview: View {
         return ZStack {
             if under >= 2 { CardPaper().rotationEffect(.degrees(reduceMotion ? 0 : 2.4)).offset(y: 10).opacity(0.9) }
             if under >= 1 { CardPaper().rotationEffect(.degrees(reduceMotion ? 0 : -1.6)).offset(y: 5) }
-            Button(action: turnOver) {
-                ZStack {
-                    if session.isRevealed {
-                        CardFace(side: current.card.back, image: back, isAnswer: true, source: titles[current.notebook])
-                            .transition(reduceMotion ? .opacity : .identity)
-                    } else {
-                        CardFace(side: current.card.front, image: front, isAnswer: false, source: titles[current.notebook])
-                            .transition(reduceMotion ? .opacity : .identity)
-                    }
-                }
-                .rotation3DEffect(.degrees(tilt), axis: (x: 0, y: 1, z: 0), perspective: 0.12)
-            }
+            Button(action: turnOver) { face(current) }
             .buttonStyle(.plain)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text(spoken(current.card)))
-            .accessibilityHint(Text(session.isRevealed ? "Turns back to the question" : "Turns the card over"))
+            .accessibilityHint(Text(hint(current.card)))
             .accessibilityFocused($focusOnCard)
             .accessibilityIdentifier("review.card")
             .id("\(current.id)-\(session.position)")
@@ -184,10 +135,36 @@ struct CardReview: View {
         .shadow(color: Elevation.shade(scheme == .dark).opacity(scheme == .dark ? 0.4 : 0.10), radius: 1, y: 1)
     }
 
-    /// The card swings edge-on, changes side, and swings back. With Reduce Motion the sides cross-fade.
+    @ViewBuilder
+    private func face(_ current: DeckCard) -> some View {
+        let source = titles[current.notebook]
+        if LiftStrip.lifts(current.card), let front, let back {
+            CardFace(side: session.isRevealed ? current.card.back : current.card.front, isAnswer: session.isRevealed, source: source, hasClipping: true) {
+                TapeLiftClipping(question: front, answer: back, strip: strip, lifted: session.isRevealed)
+            }
+        } else {
+            ZStack {
+                if session.isRevealed {
+                    CardFace(side: current.card.back, image: back, isAnswer: true, source: source)
+                        .transition(reduceMotion ? .opacity : .identity)
+                } else {
+                    CardFace(side: current.card.front, image: front, isAnswer: false, source: source)
+                        .transition(reduceMotion ? .opacity : .identity)
+                }
+            }
+            .rotation3DEffect(.degrees(tilt), axis: (x: 0, y: 1, z: 0), perspective: 0.12)
+        }
+    }
+
+    /// The card swings edge-on, changes side, and swings back. With Reduce Motion the sides cross-fade. A tape card's
+    /// tape lifts off instead, and its words change where they are.
     private func turnOver() {
-        guard session.current != nil, tilt == 0 else { return }
+        guard let current = session.current, tilt == 0 else { return }
         let revealed = !session.isRevealed
+        if LiftStrip.lifts(current.card) {
+            session.isRevealed = revealed
+            return
+        }
         guard !reduceMotion else {
             withAnimation(.easeInOut(duration: 0.18)) { session.isRevealed = revealed }
             return
@@ -198,6 +175,25 @@ struct CardReview: View {
             session.isRevealed = revealed
             tilt = revealed ? -90 : 90
             withAnimation(.spring(response: 0.34, dampingFraction: 0.74)) { tilt = 0 }
+        }
+    }
+
+    private func hint(_ card: Flashcard) -> String {
+        switch (LiftStrip.lifts(card), session.isRevealed) {
+        case (true, false): String(localized: "Lifts the tape")
+        case (true, true): String(localized: "Puts the tape back")
+        case (false, false): String(localized: "Turns the card over")
+        case (false, true): String(localized: "Turns back to the question")
+        }
+    }
+
+    /// Show Answer goes once it is used, so VoiceOver is taken to the card, or told the answer if it is there already.
+    private func showAnswerToVoiceOver() {
+        guard let current = session.current else { return }
+        if focusOnCard {
+            AccessibilityNotification.Announcement(spoken(current.card)).post()
+        } else {
+            focusOnCard = true
         }
     }
 
@@ -269,62 +265,10 @@ struct CardReview: View {
         .accessibilityHidden(true)
     }
 
-    // MARK: Nothing left
-
-    private var finishedView: some View {
-        let studied = session.total > 0
-        let visible = Set(all.map(\.notebook))
-        let next = library.nextDue(in: visible).flatMap { ActivityFile.date(forKey: $0, calendar: .current) }
-        return ScrollView {
-            VStack(spacing: Space.x4) {
-                CardStackIllustration(isDone: true, width: 132)
-                    .padding(.bottom, Space.x2)
-                Text(studied ? "All caught up." : "Nothing is due.")
-                    .displayFont(34)
-                    .foregroundStyle(Color.ink)
-                    .multilineTextAlignment(.center)
-                    .accessibilityAddTraits(.isHeader)
-                    .accessibilityIdentifier("review.done.title")
-                Group {
-                    if let next {
-                        Text("The next cards come back on \(next.formatted(.dayName)).")
-                    } else if studied {
-                        Text("Every card has been through your hands today.")
-                    } else {
-                        Text("Cards come back here when it is time to see them again.")
-                    }
-                }
-                .font(.body)
-                .foregroundStyle(Color.textSecondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                VStack(spacing: Space.x3) {
-                    Button { dismiss() } label: { Text("Done").frame(maxWidth: 240) }
-                        .buttonStyle(.owlLuna(.primary))
-                        .accessibilityIdentifier("review.done")
-                    if !library.refreshed(all).isEmpty {
-                        Button {
-                            withAnimation(motion) { session = ReviewSession(cards: library.refreshed(all)) }
-                        } label: {
-                            Text(studied ? "Go Through Them All Again" : "Study Them Anyway").frame(maxWidth: 240)
-                        }
-                        .buttonStyle(.owlLuna)
-                        .accessibilityIdentifier("review.all")
-                    }
-                }
-                .padding(.top, Space.x3)
-            }
-            .padding(Space.x8)
-            .frame(maxWidth: 480)
-            .frame(maxWidth: .infinity)
-        }
-        .scrollBounceBehavior(.basedOnSize)
-        .frame(maxHeight: .infinity)
-    }
-
     private func loadImages() async {
         front = nil
         back = nil
+        strip = nil
         guard let current = session.current else { return }
         if titles[current.notebook] == nil {
             let title = store.record(current.notebook)?.title ?? ""
@@ -333,9 +277,11 @@ struct CardReview: View {
         async let first = library.image(current.card.front.image, in: current.notebook)
         async let second = library.image(current.card.back.image, in: current.notebook)
         let loaded = await (first, second)
+        let found = await TapeFinder.strip(for: current.card, question: loaded.0, answer: loaded.1)
         guard !Task.isCancelled, session.current?.id == current.id else { return }
         front = loaded.0
         back = loaded.1
+        strip = found
     }
 }
 

@@ -56,7 +56,11 @@ export default function Support() {
                   Posting needs a free GitHub account; reading does not.
                 </p>
                 <p>
-                  <strong>Issues are public.</strong> Anyone can read what you post there, so leave out anything
+                  A question about how something works, or an idea to talk over, can go in{' '}
+                  <a href={site.discussions}>GitHub Discussions</a> instead.
+                </p>
+                <p>
+                  <strong>Both are public.</strong> Anyone can read what you post there, so leave out anything
                   private, such as a page from your notebook.
                   {email ? ' If a report needs something private, send it by email.' : null}
                 </p>

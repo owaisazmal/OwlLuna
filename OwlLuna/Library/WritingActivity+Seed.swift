@@ -2,7 +2,8 @@
 import Foundation
 
 extension WritingActivity {
-    /// A lived-in log for screenshots and audits: three days this week, a scatter of earlier days, a month and a year ago.
+    /// A lived-in log for screenshots and audits: three days this week, a scatter of earlier days, a month and a year ago, and
+    /// cards studied on some days of this week, one of them with no writing.
     static func seedForTests(root: StorageRoot) async {
         guard !FileManager.default.fileExists(atPath: root.activityFile.path(percentEncoded: false)) else { return }
         var notebooks: [(title: String, id: UUID, pages: [UUID])] = []
@@ -48,6 +49,11 @@ extension WritingActivity {
             var entry = log.days[key(date)] ?? DayActivity()
             for notebook in notebooks.prefix(2) { entry.notebooks[notebook.id, default: []].insert(notebook.pages[0]) }
             log.days[key(date)] = entry
+        }
+        for (offset, cards) in [(-1, 6), (-2, 3), (-4, 9)] where day(offset) >= weekStart {
+            var entry = log.days[key(day(offset))] ?? DayActivity()
+            entry.cardsStudied = cards
+            log.days[key(day(offset))] = entry
         }
         try? ActivityFile.write(log, to: root)
     }

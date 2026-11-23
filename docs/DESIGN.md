@@ -130,7 +130,7 @@ At night the cover boards dim about 10% and labels stay light; paper and ink nev
 - A PDF's contents (`NotebookContents`) are set like a printed contents page: dots run from each title to its page number, chapters fold, and the entry the page falls under has an accent edge.
 - Washes always have an edge: selected text (accent), find matches and the transcript's current line (mustard). The current find match also gets an Ink outline.
 - Stickers (`Sticker`) are pastel paper with a deeper edge and a shadow of layered tints, not blurs, so they stay vector in a PDF. Study tape (`TapeArt`) is opaque washi; lifted, it leaves a dashed outline.
-- Flashcards are cream index cards (`CardPaper`). In study, Show Answer and Good are cloth; Again and Easy are boards.
+- Flashcards are cream index cards (`CardPaper`). In study, Show Answer and Good are cloth; Again and Easy are boards. A card made from study tape answers in place: its tape peels off the clipping (`TapeLiftClipping`). A sitting ends with a tally slip (`TallySlip`): a plate with a cloth edge, the counts, and this week's study days as squares, ticked where cards were studied. It never counts a run of days.
 - Widgets use Paper and Ink, the system serif and small caps. This Week never frames a run of days as a streak to keep.
 
 ## App icon

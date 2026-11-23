@@ -66,6 +66,7 @@ final class AppModel {
         library.onSearchTextChanged = { [spotlight] in spotlight.noteTextChanged($0) }
         library.onJournalSetAside = { [sync] in sync.noteJournalSetAside($0) }
         flashcards.onSaved = { [sync] in sync.schedule() }
+        flashcards.onGraded = { [activity] _, date in activity.recordStudy(at: date) }
     }
 
     /// A Control Center button was pressed: what it asked for becomes the pending action.

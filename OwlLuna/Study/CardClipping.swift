@@ -5,18 +5,49 @@ import PencilKit
 enum CardClipping {
     static let scale: CGFloat = 2
 
-    /// The part of the page a strip of study tape sits in: the line it covers and a little of what is round it.
+    /// A tape card's two clippings, what they read as, and the part of the page they were cut from.
+    struct TapeCut: Sendable {
+        let front: UIImage
+        let back: UIImage
+        let frontText: String?
+        let backText: String?
+        let clip: CardClip?
+    }
+
+    /// The fixed area round a strip of study tape: the line it covers and a little of what is round it. Every tape card
+    /// was cut from it before a card kept its own area, and a new card's area is never smaller.
     static func region(around tape: PageItem, on page: NotebookPage) -> CGRect {
+        fitted(fixed(around: tape), to: page)
+    }
+
+    private static func fixed(around tape: PageItem) -> CGRect {
         let box = tape.boundingBox
         let reach = max((420 - box.width) / 2, 90)
-        return fitted(box.insetBy(dx: -reach, dy: -64), to: page)
+        return box.insetBy(dx: -reach, dy: -64)
+    }
+
+    /// The area a new tape card starts with: the fixed one, grown to the whole line the tape is on and the lines that run
+    /// on above and below it.
+    static func startingRegion(around tape: PageItem, on page: NotebookPage, ink: PKDrawing, assets: URL) -> CGRect {
+        let found = CardArea.marks(near: tape, on: page, ink: ink, assets: assets)
+        return fitted(CardArea.region(around: tape, fixed: fixed(around: tape), marks: found.marks, held: found.held,
+                                      limit: CardArea.limit(round: tape, on: page)), to: page)
+    }
+
+    /// What a card's clippings show now: the area kept with it, or the fixed one round the tape for a card that kept
+    /// none or whose tape has since been moved out of it.
+    static func region(of clip: CardClip?, tape: PageItem, on page: NotebookPage) -> CGRect {
+        let box = tape.boundingBox.intersection(CGRect(origin: .zero, size: page.size))
+        guard let kept = clip.map({ fitted($0.region, to: page) }), kept.contains(box) else { return region(around: tape, on: page) }
+        return kept
     }
 
     static func region(around ink: PKDrawing, on page: NotebookPage) -> CGRect {
         fitted(ink.bounds.insetBy(dx: -18, dy: -18), to: page)
     }
 
-    private static func fitted(_ rect: CGRect, to page: NotebookPage) -> CGRect {
+    /// `rect` in whole points, and no more of it than the page has.
+    static func fitted(_ rect: CGRect, to page: NotebookPage) -> CGRect {
         let cut = rect.intersection(CGRect(origin: .zero, size: page.size)).integral
         guard cut.isNull || cut.width < 8 || cut.height < 8 else { return cut }
         return page.isBoard ? CGRect(x: rect.midX - 210, y: rect.midY - 150, width: 420, height: 300).integral : CGRect(origin: .zero, size: page.size)
@@ -45,17 +76,32 @@ enum CardClipping {
         }
     }
 
-    /// The two sides of a card made from a strip of study tape: the page with the tape on, and with it lifted.
-    static func tapeSides(_ tape: PageItem, on page: NotebookPage, ink: PKDrawing, assets: URL) -> (front: UIImage, back: UIImage) {
-        let region = region(around: tape, on: page)
+    /// The two sides of a card made from a strip of study tape: `region` of the page with the tape on, and with it
+    /// lifted. Without a region, the one a new card starts with.
+    static func tapeSides(_ tape: PageItem, on page: NotebookPage, ink: PKDrawing, assets: URL, region: CGRect? = nil) -> (front: UIImage, back: UIImage) {
+        let region = region ?? startingRegion(around: tape, on: page, ink: ink, assets: assets)
         return (image(of: page, ink: ink, assets: assets, region: region),
                 image(of: page, ink: ink, assets: assets, region: region, lifted: [tape.id], revealed: tape))
     }
 
     /// The words of a tape card's sides, read from the answer: on the question, those under the tape are one blank.
-    static func tapeText(_ tape: PageItem, on page: NotebookPage, answer: UIImage) async -> (front: String?, back: String?) {
-        let region = region(around: tape, on: page)
-        return tapeText(PageWords.words(in: await NotebookFind.readInBackground(answer) ?? [], size: region.size), tape: tape, region: region)
+    static func tapeText(_ tape: PageItem, region: CGRect, answer: UIImage) async -> (front: String?, back: String?) {
+        tapeText(PageWords.words(in: await NotebookFind.readInBackground(answer) ?? [], size: region.size), tape: tape, region: region)
+    }
+
+    /// Both sides of a tape card cut from `region`, read, and with the record of where they came from. A card is made
+    /// this way, and cut again this way when its area is changed.
+    static func cut(_ tape: PageItem, on page: NotebookPage, ink: PKDrawing, assets: URL, region: CGRect) async -> TapeCut {
+        let region = fitted(region, to: page)
+        let sides = tapeSides(tape, on: page, ink: ink, assets: assets, region: region)
+        let words = await tapeText(tape, region: region, answer: sides.back)
+        return TapeCut(front: sides.front, back: sides.back, frontText: words.front, backText: words.back, clip: CardClip(region: region, tape: tape))
+    }
+
+    /// `window` of a page with its tape on, for choosing a card's area from: all of an ordinary page, a piece of a whiteboard.
+    static func picture(of page: NotebookPage, ink: PKDrawing, assets: URL, window: CGRect) -> UIImage {
+        let shown = page.isBoard && page.cut == nil ? Whiteboard.piece(of: page, in: window) : page
+        return PageRenderer.image(of: shown, ink: ink, assets: assets, width: shown.size.width, scale: Whiteboard.scale(for: shown.size, wanted: scale, limit: 3200))
     }
 
     /// `words` lie in `region`, measured from its corner.

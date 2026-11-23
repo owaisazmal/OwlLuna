@@ -160,6 +160,8 @@ final class FlashcardLibrary {
     private(set) var lastError: String?
     /// Called after every write, so a sync can follow it.
     @ObservationIgnored var onSaved: (() -> Void)?
+    /// Called with the notebook and the time whenever a card is answered.
+    @ObservationIgnored var onGraded: ((UUID, Date) -> Void)?
     /// Cards deleted here, kept so a write never takes one back from the file.
     @ObservationIgnored private var removals: [UUID: [UUID: Date]] = [:]
     @ObservationIgnored private let writer = CardWriter()
@@ -322,6 +324,7 @@ final class FlashcardLibrary {
         guard let card = decks[notebook]?.first(where: { $0.id == id }) else { return nil }
         let next = CardSchedule.graded(card, grade, now: now, calendar: calendar)
         update(next, in: notebook, now: now)
+        onGraded?(notebook, now)
         return decks[notebook]?.first(where: { $0.id == id }) ?? card
     }
 

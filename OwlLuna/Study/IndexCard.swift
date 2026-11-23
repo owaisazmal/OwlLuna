@@ -41,18 +41,28 @@ struct CardPaper: View {
 }
 
 /// One side of a card, large enough to study from.
-struct CardFace: View {
+struct CardFace<Clipping: View>: View {
     let side: CardSide
-    let image: UIImage?
     let isAnswer: Bool
     /// Printed at the head of the card beside the side's name: the notebook it belongs to.
     var source: String?
+    private let hasClipping: Bool
+    private let clipping: Clipping
+
+    init(side: CardSide, isAnswer: Bool, source: String? = nil, hasClipping: Bool, @ViewBuilder clipping: () -> Clipping) {
+        self.side = side
+        self.isAnswer = isAnswer
+        self.source = source
+        self.hasClipping = hasClipping
+        self.clipping = clipping()
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
                 Text(isAnswer ? "Answer" : "Question")
                     .eyebrowStyle(Color.labelInk)
+                    .animation(nil, value: isAnswer)
                 Spacer(minLength: Space.x3)
                 if let source {
                     Text(source)
@@ -66,13 +76,14 @@ struct CardFace: View {
             GeometryReader { proxy in
                 ScrollView {
                     VStack(spacing: Space.x4) {
-                        if let image { CardClippingView(image: image, tape: isAnswer ? .sage : .mustard) }
+                        clipping
                         if !side.text.isEmpty {
                             Text(side.text)
-                                .displayTextFont(image == nil ? 28 : 20, relativeTo: image == nil ? .title : .title3)
+                                .displayTextFont(hasClipping ? 20 : 28, relativeTo: hasClipping ? .title3 : .title)
                                 .foregroundStyle(Color.labelInk)
                                 .multilineTextAlignment(.center)
                                 .fixedSize(horizontal: false, vertical: true)
+                                .animation(nil, value: side.text)
                         }
                     }
                     .padding(.horizontal, Space.x6)
@@ -87,6 +98,14 @@ struct CardFace: View {
     }
 }
 
+extension CardFace where Clipping == CardClippingView? {
+    init(side: CardSide, image: UIImage?, isAnswer: Bool, source: String? = nil) {
+        self.init(side: side, isAnswer: isAnswer, source: source, hasClipping: image != nil) {
+            if let image { CardClippingView(image: image, tape: isAnswer ? .sage : .mustard) }
+        }
+    }
+}
+
 /// A clipping from a page, held to the card by a strip of washi tape.
 struct CardClippingView: View {
     let image: UIImage
@@ -97,19 +116,36 @@ struct CardClippingView: View {
         Image(uiImage: image)
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .clipShape(RoundedRectangle(cornerRadius: 3))
-            .overlay { RoundedRectangle(cornerRadius: 3).strokeBorder(Color.labelInk.opacity(0.2), lineWidth: 1) }
-            .shadow(color: Color.labelInk.opacity(0.12), radius: 1.5, y: 1)
-            .overlay(alignment: .top) {
-                if showsTape {
-                    TapeStrip(color: tape)
-                        .frame(width: 58, height: 16)
-                        .rotationEffect(.degrees(-3))
-                        .offset(y: -8)
-                }
-            }
-            .padding(.top, showsTape ? 8 : 0)
+            .clippingCut()
+            .clippingShadow()
+            .clippingHolder(showsTape ? tape : nil)
             .accessibilityLabel(Text("Clipping from the page"))
+    }
+}
+
+extension View {
+    /// The cut edge of a clipping.
+    func clippingCut() -> some View {
+        clipShape(RoundedRectangle(cornerRadius: 3))
+            .overlay { RoundedRectangle(cornerRadius: 3).strokeBorder(Color.labelInk.opacity(0.2), lineWidth: 1) }
+    }
+
+    /// The faint shadow a clipping casts on the card.
+    func clippingShadow() -> some View {
+        shadow(color: Color.labelInk.opacity(0.12), radius: 1.5, y: 1)
+    }
+
+    /// The strip of washi tape across a clipping's top edge that holds it to the card.
+    func clippingHolder(_ tape: TapeColor?) -> some View {
+        overlay(alignment: .top) {
+            if let tape {
+                TapeStrip(color: tape)
+                    .frame(width: 58, height: 16)
+                    .rotationEffect(.degrees(-3))
+                    .offset(y: -8)
+            }
+        }
+        .padding(.top, tape == nil ? 0 : 8)
     }
 }
 

@@ -4,3 +4,6 @@ contact_links:
   - name: Support and common questions
     url: https://owaisazmal.github.io/OwlLuna/support/
     about: Answers about getting started, your notes and iCloud, privacy and troubleshooting.
+  - name: Questions and ideas
+    url: https://github.com/owaisazmal/OwlLuna/discussions
+    about: Ask how something works, talk an idea over, or show how you use OwlLuna.

@@ -27,6 +27,31 @@ struct WeekSummary: Hashable {
     }
 }
 
+/// This week's study days: which of its seven days had a card answered, in the calendar's order.
+struct StudyWeek: Hashable {
+    struct Day: Hashable {
+        let date: Date
+        let cards: Int
+    }
+
+    private(set) var days: [Day] = []
+    private(set) var today = Date.distantPast
+    var dayCount: Int { days.count(where: { $0.cards > 0 }) }
+    var includesToday: Bool { days.contains { $0.date == today && $0.cards > 0 } }
+
+    init() {}
+
+    init(log: ActivityLog, now: Date, calendar: Calendar) {
+        today = calendar.startOfDay(for: now)
+        guard let week = calendar.dateInterval(of: .weekOfYear, for: now) else { return }
+        days = (0..<7).compactMap { offset in
+            calendar.date(byAdding: .day, value: offset, to: week.start).map { date in
+                Day(date: date, cards: log.days[ActivityFile.dayKey(for: date, calendar: calendar)]?.cardsStudied ?? 0)
+            }
+        }
+    }
+}
+
 /// The private writing log. Pages are recorded after their ink is saved, and the file is written off the main thread.
 @MainActor
 @Observable
@@ -38,6 +63,8 @@ final class WritingActivity {
     private(set) var log = ActivityLog()
     private(set) var week = WeekSummary()
     private(set) var hasHistory = false
+    /// Whether anything is kept at all: pages written, or cards studied.
+    var hasRecord: Bool { hasHistory || log.hasStudy }
 
     @ObservationIgnored var writeDelay: Duration = .seconds(3)
     @ObservationIgnored private let defaults: UserDefaults
@@ -83,6 +110,22 @@ final class WritingActivity {
         if !hasHistory { hasHistory = true }
         refresh()
         scheduleWrite()
+    }
+
+    /// A card was answered: its day is a study day, with one more card on it. A day with cards and no pages is not a day written.
+    func recordStudy(at date: Date) {
+        guard isEnabled, !log.isNewerThanSupported else { return }
+        let key = ActivityFile.dayKey(for: date, calendar: .current)
+        guard log.opaqueDays[key] == nil else { return }
+        var day = log.days[key] ?? DayActivity()
+        day.cardsStudied += 1
+        log.days[key] = day
+        scheduleWrite()
+    }
+
+    /// The seven days of the week `now` falls in, with the cards answered on each.
+    func studyWeek(now: Date = .now) -> StudyWeek {
+        StudyWeek(log: log, now: now, calendar: .current)
     }
 
     /// Permanently deleted notebooks keep only their page counts.

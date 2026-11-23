@@ -98,6 +98,8 @@ A notebook's cards are `cards.json` beside its manifest (`FlashcardFile`: a vers
 
 `CardFiles.Deck.merged` takes the copy of each card with the later `stamp`, keeps one-sided cards, and drops a card deleted at or after its stamp. Sync, restore and every write merge this way, so cards a sync brought in meanwhile stay. `CardSchedule` is SM-2 with three answers, and a card falls due on a calendar day rather than at an hour.
 
+A card made from study tape keeps `clip` (`CardClip`): the part of the page its clippings show and where the tape lay. Change Area cuts the card again from it (`CardClipping.cut`), and the review lifts the tape by it (`LiftStrip`). Older cards have none and an older build drops it when it rewrites a card, so the review then finds the tape from the two clippings, and Change Area starts from the area round the tape.
+
 ## Study guide
 
 `AppleStudyModel` (behind the `StudyModel` protocol) asks Apple's on-device Foundation Models for main points and questions through guided generation. The model reads about 4,000 tokens, so `StudyGuide.chunks` cuts the text between lines into 3,200-character pieces. Tests use `ScriptedStudyModel` (`-fakeModel`).
@@ -279,7 +281,7 @@ On close, after a successful save, files nothing references are removed. An asse
 
 ### Writing history
 
-`Library/activity.json` is the private writing log behind the This Week strip and the writing calendar: `{version, days: {"yyyy-MM-dd": {notebooks: {<notebook id>: [<page id>]}, otherPages}}}`. It is recorded after a save, not at stroke end (`NotebookDocument.onInkSaved`, `WritingActivity`), and page lists older than 400 days shrink to counts in `otherPages`.
+`Library/activity.json` is the private writing log behind the This Week strip and the writing calendar: `{version, days: {"yyyy-MM-dd": {notebooks: {<notebook id>: [<page id>]}, otherPages, cardsStudied}}}`. It is recorded after a save, not at stroke end (`NotebookDocument.onInkSaved`, `WritingActivity`), and page lists older than 400 days shrink to counts in `otherPages`. `cardsStudied` counts the flashcards answered that day (`FlashcardLibrary.onGraded`), for the slip that ends a sitting. A day with cards and no pages is not a day written.
 
 ### Library index
 

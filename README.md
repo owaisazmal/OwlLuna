@@ -181,7 +181,7 @@ The site, with its Privacy Policy and Support page, is in [`website/`](website/R
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). Bugs and feature requests go in [GitHub Issues](https://github.com/owaisazmal/OwlLuna/issues). Report security problems privately, as [SECURITY.md](SECURITY.md) describes.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). Bugs and feature requests go in [GitHub Issues](https://github.com/owaisazmal/OwlLuna/issues). Questions, ideas and anything else go in [GitHub Discussions](https://github.com/owaisazmal/OwlLuna/discussions). Report security problems privately, as [SECURITY.md](SECURITY.md) describes.
 
 ## License
 

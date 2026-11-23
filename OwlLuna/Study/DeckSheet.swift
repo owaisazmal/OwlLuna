@@ -61,7 +61,7 @@ struct DeckSheet: View {
         }
         .onChange(of: draft != nil || reviewing != nil) { _, covered in if covered { changes.dismiss() } }
         .sheet(item: $draft) { draft in
-            CardComposer(notebook: notebook, draft: draft)
+            CardComposer(notebook: notebook, draft: draft, session: session)
                 .presentationCornerRadius(Radius.sheet)
                 .appModels()
                 .presentationDetents([.medium, .large])
@@ -283,6 +283,8 @@ private struct DeckRow: View {
 /// Writing or changing a card: the question over the answer, and a way to turn the card round.
 struct CardComposer: View {
     let notebook: UUID
+    /// The open notebook, where the card was opened from its deck: a tape card's area is changed on its page.
+    var session: EditorSession?
     /// Called with the card once it is kept.
     var onSave: ((Flashcard) -> Void)?
     @Environment(FlashcardLibrary.self) private var library
@@ -292,12 +294,14 @@ struct CardComposer: View {
     @State private var backImage: UIImage?
     @State private var isSaving = false
     @State private var failure: String?
+    @State private var area: CardAreaSource?
     @FocusState private var focus: Field?
 
     private enum Field { case front, back }
 
-    init(notebook: UUID, draft: CardDraft, onSave: ((Flashcard) -> Void)? = nil) {
+    init(notebook: UUID, draft: CardDraft, session: EditorSession? = nil, onSave: ((Flashcard) -> Void)? = nil) {
         self.notebook = notebook
+        self.session = session
         self.onSave = onSave
         _draft = State(initialValue: draft)
     }
@@ -337,7 +341,29 @@ struct CardComposer: View {
         .task(id: draft.front.imageName) { frontImage = await library.image(draft.front.imageName, in: notebook) }
         .task(id: draft.back.imageName) { backImage = await library.image(draft.back.imageName, in: notebook) }
         .onAppear { if draft.card == nil { focus = draft.front.isEmpty ? .front : .back } }
+        .fullScreenCover(item: $area) { source in
+            CardAreaEditor(source: source) { cut in
+                draft.recut(cut)
+                AccessibilityNotification.Announcement(String(localized: "Area changed")).post()
+            }
+            .appModels()
+        }
         .notice("The card couldn't be saved", message: $failure)
+    }
+
+    /// A tape card's page and its tape, while both are still in the open notebook and the card still has a clipping.
+    private var areaSource: CardAreaSource? {
+        guard let session, !session.document.isReadOnly, let card = draft.card, let tapeID = card.tapeID,
+              let page = session.document.pages.first(where: { $0.id == card.pageID }), page.hasItems,
+              let tape = page.items.first(where: { $0.id == tapeID && $0.tape != nil }) else { return nil }
+        return CardAreaSource(document: session.document, page: page, tape: tape, clip: draft.clip)
+    }
+
+    /// Change Area stands under the first clipping there is: both sides show the same part of the page.
+    private var areaField: Field? {
+        guard areaSource != nil else { return nil }
+        if draft.front.imageName != nil || draft.front.newImage != nil { return .front }
+        return draft.back.imageName != nil || draft.back.newImage != nil ? .back : nil
     }
 
     private func side(_ title: LocalizedStringKey, prompt: LocalizedStringKey, side: Binding<CardDraft.Side>, image: UIImage?, field: Field) -> some View {
@@ -349,13 +375,18 @@ struct CardComposer: View {
             if let clipping {
                 HStack(alignment: .top, spacing: Space.x2) {
                     CardClippingView(image: clipping, showsTape: false)
-                        .frame(maxHeight: 150)
+                        .frame(maxHeight: 200)
                     Spacer(minLength: 0)
                     Button(role: .destructive) {
                         side.wrappedValue.newImage = nil
                         side.wrappedValue.imageName = nil
                     } label: { Label("Remove Clipping", systemImage: "xmark") }
                         .buttonStyle(.barIcon)
+                }
+                if areaField == field {
+                    Button { area = areaSource } label: { Label("Change Area", systemImage: "crop") }
+                        .buttonStyle(.owlLuna(.secondary, compact: true))
+                        .accessibilityIdentifier("composer.area")
                 }
             }
             TextField(prompt, text: side.text, prompt: Text(clipping == nil ? prompt : "Add words, if you like").foregroundStyle(Color.textSecondary), axis: .vertical)

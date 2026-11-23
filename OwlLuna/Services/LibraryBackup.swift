@@ -294,7 +294,7 @@ enum LibraryBackup {
         if keepsHistory {
             var log = ActivityFile.read(root)
             let old = ActivityFile.read(backup)
-            if !log.isNewerThanSupported, !old.isNewerThanSupported, old.hasPages {
+            if !log.isNewerThanSupported, !old.isNewerThanSupported, old.hasPages || old.hasStudy {
                 log.merge(old)
                 try? ActivityFile.write(log, to: root)
             }

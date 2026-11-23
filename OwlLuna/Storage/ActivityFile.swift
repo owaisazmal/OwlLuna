@@ -2,11 +2,19 @@ import Foundation
 
 /// One day of writing: the pages written in each notebook, plus a bare count for pages no longer listed by ID.
 struct DayActivity: Sendable, Hashable {
+    static let cardsStudiedKey = "cardsStudied"
+
     var notebooks: [UUID: Set<UUID>] = [:]
     var otherPages = 0
     var extra: [String: JSONValue] = [:]
 
     var pageCount: Int { notebooks.values.reduce(otherPages) { $0 + $1.count } }
+
+    /// Flashcards answered on this day. Kept in `extra`, so a build that doesn't know it writes it back as it found it.
+    var cardsStudied: Int {
+        get { max(extra[Self.cardsStudiedKey]?.intValue ?? 0, 0) }
+        set { extra[Self.cardsStudiedKey] = newValue > 0 ? .number(Double(newValue)) : nil }
+    }
 }
 
 struct ActivityLog: Sendable, Hashable {
@@ -21,18 +29,21 @@ struct ActivityLog: Sendable, Hashable {
 
     var hasPages: Bool { days.values.contains { $0.pageCount > 0 } }
 
+    var hasStudy: Bool { days.values.contains { $0.cardsStudied > 0 } }
+
     /// Days recorded before the file was read are kept alongside what it held.
     mutating func merge(_ other: ActivityLog) {
         for (key, day) in other.days {
-            var merged = days[key] ?? DayActivity()
+            var merged = days[key] ?? DayActivity(extra: day.extra)
             for (notebook, pages) in day.notebooks { merged.notebooks[notebook, default: []].formUnion(pages) }
             merged.otherPages = max(merged.otherPages, day.otherPages)
+            merged.cardsStudied = max(merged.cardsStudied, day.cardsStudied)
             days[key] = merged
             opaqueDays[key] = nil
         }
     }
 
-    /// Days before `cutoff` (a day key) keep only their page count.
+    /// Days before `cutoff` (a day key) keep only their page count, and the cards studied on them.
     mutating func compact(before cutoff: String) {
         for (key, day) in days where key < cutoff && !day.notebooks.isEmpty {
             days[key] = DayActivity(otherPages: day.pageCount, extra: day.extra)
@@ -40,7 +51,7 @@ struct ActivityLog: Sendable, Hashable {
     }
 }
 
-/// `Library/activity.json`, the private writing log: which pages were written on which day. Never synced; a backup holds it.
+/// `Library/activity.json`, the private writing log: which pages were written on which day, and how many cards were studied. Never synced; a backup holds it.
 enum ActivityFile {
     static let currentVersion = 1
     static let detailedDays = 400

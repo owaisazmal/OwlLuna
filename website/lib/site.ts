@@ -10,6 +10,7 @@ export const site = {
   repo,
   issues: `${repo}/issues`,
   newIssue: `${repo}/issues/new`,
+  discussions: `${repo}/discussions`,
   license: `${repo}/blob/main/LICENSE`,
   fontLicenses: `${repo}/tree/main/OwlLuna/Resources/Fonts`,
   contributing: `${repo}/blob/main/CONTRIBUTING.md`,
@@ -28,7 +29,7 @@ export const site = {
   /** An address for privacy and support questions. Empty shows GitHub Issues alone. */
   contactEmail: '',
   /** The day the privacy policy last changed, as YYYY-MM-DD. */
-  policyUpdated: '2026-11-15',
+  policyUpdated: '2026-11-22',
 }
 
 /** The share card every page carries, linked to the page it is on. */

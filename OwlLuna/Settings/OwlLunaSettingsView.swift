@@ -277,10 +277,10 @@ struct OwlLunaSettingsView: View {
     }
 
     private var historySection: some View {
-        SettingsSection("Writing History", note: "OwlLuna keeps a list of the days you wrote and which pages. It is not synced, but it is part of every backup you make.") {
+        SettingsSection("Writing History", note: "OwlLuna keeps a list of the days you wrote and which pages, and the days you studied flashcards and how many. It is not synced, but it is part of every backup you make.") {
             Toggle("Keep Writing History", isOn: Bindable(activity).isEnabled).settingsRow()
             SettingsActionRow(title: "Clear Writing History…", systemImage: "trash", role: .destructive) { confirmingHistoryClear = true }
-                .disabled(!activity.hasHistory)
+                .disabled(!activity.hasRecord)
                 .notice("Clear your writing history?", isPresented: $confirmingHistoryClear,
                         message: Text("The week strip and calendar start afresh. Your notebooks and pages aren't affected.")) {
                     Button("Cancel", role: .cancel) {}

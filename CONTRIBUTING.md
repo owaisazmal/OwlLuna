@@ -32,4 +32,6 @@ OwlLuna collects no data. Don't add analytics, tracking, ads, or network calls t
 
 Use the bug report form in [GitHub Issues](https://github.com/owaisazmal/OwlLuna/issues/new/choose). Include your iPad model, iPadOS version, the app's version and build, the steps, and what you expected. For drawing bugs, say whether you used Apple Pencil or a finger.
 
-Issues are public. Report security problems, or privacy questions about your own notes, privately: see [SECURITY.md](SECURITY.md).
+A question about how something works, or an idea that isn't worked out yet, goes in [GitHub Discussions](https://github.com/owaisazmal/OwlLuna/discussions).
+
+Issues and Discussions are public. Report security problems, or privacy questions about your own notes, privately: see [SECURITY.md](SECURITY.md).

@@ -309,6 +309,28 @@
         }
       }
     },
+    "%@ studied." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ gelernt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Has estudiado %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez étudié %@."
+          }
+        }
+      }
+    },
     "%@ · %@" : {
       "localizations" : {
         "de" : {
@@ -1866,6 +1888,122 @@
         }
       }
     },
+    "%lld came round" : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld kam wieder"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld kamen wieder"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld volvió a salir"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld volvieron a salir"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld est revenue"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sont revenues"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld came round again." : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld kam noch einmal dran."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld kamen noch einmal dran."
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld volvió a salir."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld volvieron a salir."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld est revenue."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sont revenues."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld cards" : {
       "localizations" : {
         "de" : {
@@ -2416,6 +2554,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld first time" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld beim ersten Mal"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld a la primera"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld du premier coup"
           }
         }
       }
@@ -5402,6 +5562,52 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "À %1$lld pt de la gauche et %2$lld pt du haut"
+          }
+        }
+      }
+    },
+    "%lld remembered first time." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld beim ersten Mal gewusst."
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld recordada a la primera."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld recordadas a la primera."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld retenue du premier coup."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld retenues du premier coup."
+                }
+              }
+            }
           }
         }
       }
@@ -8532,6 +8738,28 @@
         }
       }
     },
+    "Area changed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereich geändert"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Área cambiada"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zone modifiée"
+          }
+        }
+      }
+    },
     "Arrange" : {
       "localizations" : {
         "de" : {
@@ -9510,6 +9738,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tableau noir"
+          }
+        }
+      }
+    },
+    "Change Area" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereich ändern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar área"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier la zone"
           }
         }
       }
@@ -18174,6 +18424,28 @@
         }
       }
     },
+    "Lifts the tape" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hebt das Klebeband an"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Levanta la cinta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soulève le ruban"
+          }
+        }
+      }
+    },
     "Lifts the tape or puts it back. Touch and hold to move or resize." : {
       "localizations" : {
         "de" : {
@@ -23797,24 +24069,24 @@
         }
       }
     },
-    "OwlLuna keeps a list of the days you wrote and which pages. It is not synced, but it is part of every backup you make." : {
+    "OwlLuna keeps a list of the days you wrote and which pages, and the days you studied flashcards and how many. It is not synced, but it is part of every backup you make." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OwlLuna führt eine Liste der Tage, an denen du geschrieben hast, und der zugehörigen Seiten. Sie wird nicht synchronisiert, ist aber Teil jedes Backups, das du erstellst."
+            "value" : "OwlLuna führt eine Liste der Tage, an denen du geschrieben hast, und der zugehörigen Seiten sowie der Tage, an denen du Karteikarten gelernt hast, und wie viele. Sie wird nicht synchronisiert, ist aber Teil jedes Backups, das du erstellst."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OwlLuna guarda una lista de los días en que escribiste y en qué páginas. No se sincroniza, pero forma parte de cada copia de seguridad que haces."
+            "value" : "OwlLuna guarda una lista de los días en que escribiste y en qué páginas, y de los días en que estudiaste tarjetas y cuántas. No se sincroniza, pero forma parte de cada copia de seguridad que haces."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OwlLuna conserve la liste des jours où vous avez écrit et des pages concernées. Elle n’est pas synchronisée, mais elle fait partie de chaque sauvegarde que vous créez."
+            "value" : "OwlLuna conserve la liste des jours où vous avez écrit et des pages concernées, ainsi que des jours où vous avez étudié des cartes et leur nombre. Elle n’est pas synchronisée, mais elle fait partie de chaque sauvegarde que vous créez."
           }
         }
       }
@@ -25920,6 +26192,28 @@
         }
       }
     },
+    "Puts the tape back" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klebt das Klebeband wieder auf"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vuelve a colocar la cinta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remet le ruban en place"
+          }
+        }
+      }
+    },
     "Quality" : {
       "localizations" : {
         "de" : {
@@ -27728,6 +28022,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Signaler un problème ou suggérer une fonctionnalité"
+          }
+        }
+      }
+    },
+    "Reset Area" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereich zurücksetzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer área"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinitialiser la zone"
           }
         }
       }
@@ -31286,6 +31602,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redressé en %@"
+          }
+        }
+      }
+    },
+    "Studied on %@ this week, including today." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Woche %@ gelernt, heute eingeschlossen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Has estudiado %@ esta semana, hoy incluido."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez étudié %@ cette semaine, aujourd’hui compris."
+          }
+        }
+      }
+    },
+    "Studied on %@ this week." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Woche %@ gelernt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Has estudiado %@ esta semana."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez étudié %@ cette semaine."
           }
         }
       }
