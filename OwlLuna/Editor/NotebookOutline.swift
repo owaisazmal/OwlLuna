@@ -17,13 +17,13 @@ extension NotebookPage {
 }
 
 extension NotebookDocument {
-    /// One undo step for any change to a page's pictures and stickers.
-    func updateItems(onPage pageID: UUID, actionName: String, _ change: (inout [PageItem]) -> Void) {
+    /// One undo step for any change to a page's pictures and stickers, or for a whole `run` of them.
+    func updateItems(onPage pageID: UUID, actionName: String, run: UUID? = nil, _ change: (inout [PageItem]) -> Void) {
         guard let index = index(of: pageID) else { return }
         var items = pages[index].items
         change(&items)
         guard items != pages[index].items else { return }
-        updatePage(pageID, actionName: actionName) { $0.items = items }
+        updatePage(pageID, actionName: actionName, run: run) { $0.items = items }
     }
 
     /// Whether any page is a page of an imported PDF, whose text can be selected.

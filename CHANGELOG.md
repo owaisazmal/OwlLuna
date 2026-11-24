@@ -12,6 +12,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - The editor's ⋯ › View card has System, Light and Dark and a Keep Paper Light row, the same choices as Settings › Appearance, so the look can be changed without leaving a notebook. The pages that are open change at once, paper and ink together. Keep Paper Light is dimmed while the app is light, where paper is light anyway.
 - Change Area in the editor of a flashcard made from study tape opens its page under the crop frame, to choose how much of the page the card shows. Both sides are cut again when you save. It works on cards you already have, while the page and its tape are still there.
 - Finishing a flashcard sitting shows a slip with the cards you studied, how many you knew the first time, and the days of this week you studied. The study days are kept with the writing history, which Settings › Writing History turns off or clears.
+- While a text box is typed in, a strip of its type controls stands on the keyboard: typeface, size (hold − or + to keep going), Bold, Italic, Underline, list, text colour, and More for the whole Text Style card. With a hardware keyboard or on a Mac it stands at the foot of the window, and a narrow pane keeps the most used. Before, these were only behind the Text Style button in the bar over the page.
+- The Text Style card has a size strip: slide the knob, or tap − and +, to set any size from 8 to 200 pt. The four named sizes are marked on it, the size is read out in points beside Size, and a whole slide is one Undo.
+- A text box can be a dashed list, beside bullets, numbers and a checklist.
 
 ### Changed
 

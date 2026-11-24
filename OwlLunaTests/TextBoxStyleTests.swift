@@ -129,8 +129,8 @@ final class TextBoxStyleTests: XCTestCase {
         }
         for (name, change) in [("italic", { (box: inout TextBox) in box.isItalic = true }), ("underline", { $0.isUnderlined = true }),
                                ("bold italic serif", { $0.isBold = true; $0.isItalic = true; $0.face = .serif }),
-                               ("highlight", { $0.highlight = .yellow }), ("bullets", { $0.list = .bullet }), ("numbers", { $0.list = .number }),
-                               ("checklist", { $0.list = .check; $0.checked = [1] }),
+                               ("highlight", { $0.highlight = .yellow }), ("bullets", { $0.list = .bullet }), ("dashes", { $0.list = .dash }),
+                               ("numbers", { $0.list = .number }), ("checklist", { $0.list = .check; $0.checked = [1] }),
                                ("everything", { $0.face = .fraunces; $0.isItalic = true; $0.isUnderlined = true; $0.highlight = .pink; $0.list = .check; $0.checked = [0, 3] })] {
             var box = TextBox(string: lines)
             change(&box)
@@ -181,6 +181,7 @@ final class TextBoxStyleTests: XCTestCase {
         XCTAssertEqual(everything["highlight"], .string("pink"))
         XCTAssertEqual(everything["list"], .string("check"))
         XCTAssertEqual(everything["checked"], .array([.number(0), .number(3)]))
+        XCTAssertEqual(decoded.items.first { $0.text?.list == .dash }?.json.objectValue?["list"], .string("dash"))
 
         var plain = decoded.items[decoded.items.count - 1]
         plain.content = .text(TextBox(string: "Plain again"))
@@ -293,6 +294,55 @@ final class TextBoxStyleTests: XCTestCase {
         short.string = "Step 1\nStep 2"
         let tenth = UITextView.typeset(long, width: 300).firstGlyphX, second = UITextView.typeset(short, width: 300).firstGlyphX
         XCTAssertGreaterThan(tenth, second, "a list of ten or more stands in far enough for its widest number")
+    }
+
+    func testADashListStandsInAndDrawsItsMarkerLikeABulletListAndNumbersNothing() {
+        XCTAssertEqual(TextBox.List.allCases.map(\.rawValue), ["bullet", "dash", "number", "check"], "the card offers them in this order")
+        XCTAssertEqual(TextBox.List(rawValue: "dash"), .dash)
+        XCTAssertNotNil(UIImage(systemName: TextBox.List.dash.symbol), "the card's icon for dashes exists")
+
+        let width: CGFloat = 200, lines = "Oats\n\nFlour\nEggs"
+        let bullets = TextBox(string: lines, list: .bullet), dashes = TextBox(string: lines, list: .dash)
+        let bulleted = UITextView.typeset(bullets, width: width), dashed = UITextView.typeset(dashes, width: width)
+        XCTAssertEqual(dashed.firstGlyphX, bulleted.firstGlyphX, accuracy: 0.01, "the words stand in as far as a bullet list's")
+        XCTAssertEqual(dashes.height(width: width), bullets.height(width: width), "and take as much room")
+
+        let withDashes = drawn(dashes, width: width)
+        XCTAssertNotEqual(withDashes, drawn(bullets, width: width), "a dash is drawn where a bullet would be")
+        for (line, start) in dashed.lineStarts.enumerated() {
+            let room = CGRect(x: 0, y: start.minY, width: dashed.firstGlyphX - 3, height: start.height)
+            if TextBox.isItem(dashes.lines[line]) {
+                XCTAssertGreaterThan(withDashes.dark(in: room), 10, "line \(line) has its dash before the words")
+            } else {
+                XCTAssertEqual(withDashes.dark(in: room), 0, "a blank line is passed over")
+            }
+        }
+
+        let long = TextBox(string: (1...12).map { "Step \($0)" }.joined(separator: "\n"), list: .dash)
+        var short = long
+        short.string = "Step 1\nStep 2"
+        XCTAssertEqual(UITextView.typeset(long, width: 300).firstGlyphX, UITextView.typeset(short, width: 300).firstGlyphX, accuracy: 0.01,
+                       "a dash counts nothing, so ten items stand in no further than two")
+    }
+
+    func testADashSitsAtTheHeightOfABulletInEveryTypefaceAndSize() {
+        func middle(of marker: String, in font: UIFont) -> CGFloat? {
+            var characters = Array(marker.utf16), glyphs = [CGGlyph](repeating: 0, count: characters.count)
+            guard CTFontGetGlyphsForCharacters(font, &characters, &glyphs, characters.count) else { return nil }
+            var bounds = CGRect.zero
+            CTFontGetBoundingRectsForGlyphs(font, .default, glyphs, &bounds, 1)
+            return bounds.midY / font.pointSize
+        }
+        for face in TextBox.Face.allCases {
+            for size in [13, 34] as [CGFloat] {
+                for bold in [false, true] {
+                    let font = TextBox(string: "", fontSize: size, isBold: bold, face: face).font()
+                    let dash = middle(of: "\u{2013}", in: font), bullet = middle(of: "\u{2022}", in: font)
+                    XCTAssertNotNil(dash, "\(face) has an en dash of its own at \(Int(size)) pt")
+                    if let dash, let bullet { XCTAssertEqual(dash, bullet, accuracy: 0.03, "\(face) at \(Int(size)) pt, bold \(bold): a dash is as high as a bullet") }
+                }
+            }
+        }
     }
 
     func testTicksFollowTheirLinesThroughEdits() {

@@ -8,7 +8,7 @@ The look is Clothbound: the library is a shelf of cloth-bound notebooks, and the
 - Controls are bound like the notebooks: plates ruled onto bars, boards standing on the desk, wells pressed into it, and cloth for the action that finishes a task. No Liquid Glass and no blur of our own.
 - We draw our own menus, alerts, lists, switches, progress and empty states. Only the library sidebar (a `List`, for its selection and drag and drop) and the share sheet are system.
 - Cut square. Controls use the corner scale below, never capsules.
-- Each control lives in one place. The exceptions: the tool tray's shortcuts are also in the Add and More menus, and a text box's Bold, Italic and Underline are on its Text Style card and in the arrange bar where it has room.
+- Each control lives in one place. The exceptions: the tool tray's shortcuts are also in the Add and More menus, and a text box's Bold, Italic and Underline are on its Text Style card and in the arrange bar where it has room. While a text box is typed in, the type strip on the keyboard repeats the card's most used controls (typeface, size, Bold, Italic, Underline, list, text colour), because the bar over the page goes unnoticed then.
 - Colour never carries meaning alone. Favourites get a starred flag and a spoken label, selection gets stitching and a check mark, and a wash that marks something has an edge too.
 - Printed matter keeps its colours at night: covers, labels, tags, stickers, index cards, the splash tiles.
 

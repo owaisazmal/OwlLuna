@@ -37,6 +37,8 @@ final class NotebookDocument {
     private(set) var isSetAside = false
 
     @ObservationIgnored let undoManager = DocumentUndoManager()
+    /// The run the newest undo step belongs to, and how many steps had been taken when it was.
+    @ObservationIgnored private var lastRun: (id: UUID, page: UUID, step: Int)?
     @ObservationIgnored private var heaviestEditedPage = 0
     @ObservationIgnored weak var inkObserver: InkObserver?
     /// The editor's recorder, so closing a window can stop a recording before the last save.
@@ -465,12 +467,15 @@ final class NotebookDocument {
         return NotebookPaper(id: paper.id, background: paper.background(file: file), size: paper.size)
     }
 
-    func updatePage(_ pageID: UUID, actionName: String, _ change: (inout NotebookPage) -> Void) {
+    /// Changes that share a `run`, with no other step between them, are one undo step: a knob slid along, a button held.
+    func updatePage(_ pageID: UUID, actionName: String, run: UUID? = nil, _ change: (inout NotebookPage) -> Void) {
         guard !isReadOnly, let index = index(of: pageID) else { return }
         let before = manifest.pages[index]
         change(&manifest.pages[index])
         structureChanged()
+        if let run, let last = lastRun, last.id == run, last.page == pageID, last.step == undoManager.registrations { return }
         registerPageRestore(before, actionName: actionName)
+        lastRun = run.map { ($0, pageID, undoManager.registrations) }
     }
 
     /// The ink's hash stays as the last save left it: the ink has undo steps of its own.

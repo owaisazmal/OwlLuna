@@ -52,7 +52,7 @@ struct OwlLunaSegmentedPicker<Value: Hashable, Label: View>: View {
                 .accessibilityIdentifier(identifier?(option) ?? "", isEnabled: identifier != nil)
             }
         }
-        .background { thumbView.matchedGeometryEffect(id: selection, in: thumb, isSource: false) }
+        .background { if options.contains(selection) { thumbView.matchedGeometryEffect(id: selection, in: thumb, isSource: false) } }
         .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.86), value: selection)
         .background { Color.clear.well(in: RoundedRectangle.track).padding(.vertical, inBar ? BarMetrics.inset : 0) }
         .fixedSize(horizontal: inBar, vertical: true)

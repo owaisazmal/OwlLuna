@@ -287,6 +287,18 @@ Expect: a sentence becomes one text box in the pen's colour, onto the next line,
 
 Tunable (`InkTyping`): rest 1.0 s, reading from 0.4 s. Aim for about one second from lift to text. On Debug, compare `-inkTypingPause 0.8` and `1.4`.
 
+## Typing in a text box
+
+The simulator's keyboard and a pointer on a knob are stand-ins, so the strip over a real keyboard and the size knob have only been tried there.
+
+1. Add a text box near the foot of a page and type four lines. On the strip over the keyboard hold +, turn on Bold, and pick a typeface, a list and a colour. Tap More.
+2. Type a word with a Japanese or Chinese keyboard and tap Bold before choosing it.
+3. Repeat step 1 with a keyboard attached, with the on-screen keyboard floating, and on iPadOS 18.
+4. Tap Done, select the box and open Text Style. Slide the size knob with a finger, then with the Pencil. Hold +. Tap Undo.
+5. With VoiceOver, swipe up and down on Size, on the card and on the strip.
+
+Expect: the line being typed stays above the strip. Every control leaves the caret where it was. A card takes the keyboard's place, and the keyboard comes back when it closes. The half-typed word stays marked and is bold once chosen. With a keyboard attached nothing of the system's covers the strip. The knob doesn't jump when picked up, the box grows as it slides, and one Undo takes back the whole slide or the whole hold. VoiceOver moves the size a point a swipe.
+
 ## PDF text
 
 Import PDF… a one-column PDF, a two-column paper and a scanned PDF with no text. Turn on Settings › Apple Pencil › Snap Highlighter to PDF Text.

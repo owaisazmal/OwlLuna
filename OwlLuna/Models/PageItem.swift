@@ -20,7 +20,7 @@ struct TextBox: Sendable, Hashable {
 
     /// Every line of a box that is a list is an item of it.
     enum List: String, Sendable, CaseIterable, Identifiable {
-        case bullet, number, check
+        case bullet, dash, number, check
         var id: String { rawValue }
     }
 
@@ -47,12 +47,19 @@ struct TextBox: Sendable, Hashable {
 }
 
 extension TextBox {
+    /// The whole point `steps` up or down from a size, the first step from between two points going to the nearer one that way.
+    static func size(_ size: CGFloat, steppedBy steps: Int) -> CGFloat {
+        guard steps != 0 else { return size }
+        let first = steps > 0 ? size.rounded(.down) + 1 : size.rounded(.up) - 1
+        return min(max(first + CGFloat(steps - steps.signum()), fontSizes.lowerBound), fontSizes.upperBound)
+    }
+
     var lines: [String] { (string as NSString).components(separatedBy: "\n") }
 
     /// Whether any of the text is written between dollar signs, to be set as a formula.
     var hasFormulas: Bool { MathRun.find(in: string as NSString).contains { !$0.isEscape } }
 
-    /// A line with nothing written on it is passed over by a list: it has no bullet, number or box.
+    /// A line with nothing written on it is passed over by a list: it has no bullet, dash, number or box.
     static func isItem(_ line: String) -> Bool {
         !line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }

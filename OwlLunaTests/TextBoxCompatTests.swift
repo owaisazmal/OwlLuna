@@ -97,6 +97,7 @@ final class TextBoxCompatTests: XCTestCase {
             ("Fraunces", TextBox(string: "Lab notes\nTitration", face: .fraunces)),
             ("Mono", TextBox(string: "Write up the titration and its error bars before Friday", face: .mono)),
             ("checklist", TextBox(string: "Buy oats\nWrite up the titration and its error bars\nReturn the burette", list: .check, checked: [1])),
+            ("dashes", TextBox(string: "Buy oats\nWrite up the titration and its error bars\nReturn the burette", list: .dash)),
         ]
         for (name, box) in boxes {
             let width = try XCTUnwrap(stride(from: 120 as CGFloat, through: 320, by: 4).first { LegacyText.height(box, width: $0) < box.height(width: $0) },
@@ -204,6 +205,32 @@ final class TextBoxCompatTests: XCTestCase {
         XCTAssertEqual(restyled.json.objectValue?["align"], .string("center"))
     }
 
+    func testAListKindThisBuildDoesNotKnowIsPlainWordsAndSurvivesAMove() throws {
+        let placed = item(TextBox(string: "Oats\nFlour", list: .dash))
+        var future = try XCTUnwrap(placed.json.objectValue)
+        future["list"] = .string("arrow")
+        let read = try XCTUnwrap(PageItem(json: .object(future)))
+        XCTAssertNil(read.text?.list, "a list from a newer version is plain words here")
+        XCTAssertEqual(read.size, placed.size, "and keeps the height the newer version gave it")
+
+        var moved = read
+        moved.center.x += 10
+        let kept = try XCTUnwrap(moved.json.objectValue)
+        XCTAssertEqual(kept["list"], .string("arrow"), "this build keeps a newer list it can't read")
+        XCTAssertEqual(kept["fit"], future["fit"])
+
+        var restyled = read
+        restyled.content = .text(TextBox(string: "Oats\nFlour", list: .dash))
+        XCTAssertEqual(restyled.json.objectValue?["list"], .string("dash"), "choosing one replaces it")
+    }
+
+    func testADashListSurvivesTheOlderBuildsEdits() throws {
+        let back = try throughOlderBuild(item(TextBox(string: "Oats\nFlour", list: .dash))) { $0 += "\nEggs" }
+        XCTAssertEqual(back.text?.list, .dash)
+        XCTAssertEqual(back.text?.string, "Oats\nFlour\nEggs")
+        XCTAssertEqual(back.json.objectValue?["list"], .string("dash"))
+    }
+
     // MARK: Thumbnails
 
     func testOnlyPagesWithStyledTextGetNewThumbnailNames() {
@@ -214,8 +241,8 @@ final class TextBoxCompatTests: XCTestCase {
                        PageItem(content: .sticker("heart"), center: CGPoint(x: 400, y: 400), size: CGSize(width: 80, height: 80))]
         XCTAssertEqual(plain.appearanceKey, unsaltedKey(plain), "a page of plain boxes keeps the thumbnail it has")
 
-        let changes: [(String, (inout TextBox) -> Void)] = [("list", { $0.list = .bullet }), ("face", { $0.face = .mono }), ("italic", { $0.isItalic = true }),
-                                                             ("underline", { $0.isUnderlined = true }), ("highlight", { $0.highlight = .yellow })]
+        let changes: [(String, (inout TextBox) -> Void)] = [("list", { $0.list = .bullet }), ("dash list", { $0.list = .dash }), ("face", { $0.face = .mono }),
+                                                             ("italic", { $0.isItalic = true }), ("underline", { $0.isUnderlined = true }), ("highlight", { $0.highlight = .yellow })]
         for (name, change) in changes {
             var box = TextBox(string: "Oats")
             change(&box)

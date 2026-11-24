@@ -306,6 +306,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         }
         NotificationCenter.default.addObserver(self, selector: #selector(sceneDidActivate), name: UIScene.didActivateNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardChanged), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        watchTypeStrip()
         NotificationCenter.default.addObserver(self, selector: #selector(secondScreenChanged), name: .owlLunaExternalDisplayChanged, object: nil)
         for name in [UIScene.willDeactivateNotification, Notification.Name.owlLunaCloseEditor] {
             NotificationCenter.default.addObserver(self, selector: #selector(finishTyping), name: name, object: nil)
@@ -663,7 +664,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         }
         scrollView.contentInset = UIEdgeInsets(top: max(vertical + view.safeAreaInsets.top, slack), left: horizontal,
                                                bottom: max(vertical, toolsObscured + addPageRoom, slack, panel,
-                                                           textView == nil && !isFinding ? 0 : keyboardOverlap),
+                                                           textView != nil ? typingObscured : isFinding ? keyboardOverlap : 0),
                                                right: horizontal)
         layoutAddPage()
     }
@@ -1929,9 +1930,34 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         revealTextEditor()
     }
 
+    /// What the keyboard and the type strip on it take of the view's foot while a box is typed in.
+    private var typingObscured: CGFloat {
+        let strip = session.typeStripHeight
+        return strip > 0 ? max(strip, keyboardOverlap + TypeStrip.height) : keyboardOverlap
+    }
+
+    /// The type strip came, went or moved: the words being typed keep clear of it.
+    private func watchTypeStrip() {
+        withObservationTracking { _ = session.typeStripHeight } onChange: { [weak self] in
+            Task { @MainActor in
+                guard let self else { return }
+                self.watchTypeStrip()
+                guard self.textView != nil else { return }
+                self.updateInsets()
+                self.revealTextEditor()
+            }
+        }
+    }
+
+    /// Shows the box being typed in, or the line the caret is on where the box is too tall to show whole.
     private func revealTextEditor() {
         guard let textView, let slot = textView.superview else { return }
-        scrollView.scrollRectToVisible(scrollView.convert(textView.frame, from: slot).insetBy(dx: 0, dy: -24), animated: !UIAccessibility.isReduceMotionEnabled)
+        var rect = scrollView.convert(textView.frame, from: slot)
+        let inset = scrollView.contentInset, margin: CGFloat = 24
+        if rect.height + margin * 2 > scrollView.bounds.height - inset.top - inset.bottom, let caret = textView.selectedTextRange?.end {
+            rect = scrollView.convert(textView.caretRect(for: caret), from: textView)
+        }
+        scrollView.scrollRectToVisible(rect.insetBy(dx: 0, dy: -margin), animated: !UIAccessibility.isReduceMotionEnabled)
     }
 
     // MARK: Dropping and pasting pictures

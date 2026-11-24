@@ -64,6 +64,7 @@ extension TextBox.List {
     var displayName: String {
         switch self {
         case .bullet: String(localized: "Bullets")
+        case .dash: String(localized: "Dashes")
         case .number: String(localized: "Numbers")
         case .check: String(localized: "Checklist")
         }
@@ -72,6 +73,7 @@ extension TextBox.List {
     var symbol: String {
         switch self {
         case .bullet: "list.bullet"
+        case .dash: "list.dash"
         case .number: "list.number"
         case .check: "checklist"
         }
@@ -199,6 +201,7 @@ extension TextBox {
             guard let number = numbers[index] else { return nil }
             return switch list {
             case .bullet: "•"
+            case .dash: "\u{2013}"
             case .number: "\(number)."
             case .check: ""
             }
@@ -345,7 +348,7 @@ extension TextBox {
     }
 
     /// Draws in page points, in a y-down context; at a `scale`, in points that many times larger. With `markersOnly`
-    /// only a list's bullets, numbers and boxes are drawn, where the editor's words leave room for them.
+    /// only a list's bullets, dashes, numbers and boxes are drawn, where the editor's words leave room for them.
     func draw(in ctx: CGContext, rect: CGRect, onDark: Bool, scale: CGFloat = 1, markersOnly: Bool = false) {
         guard !string.isEmpty else { return }
         let color = tint.color(onDark: onDark)

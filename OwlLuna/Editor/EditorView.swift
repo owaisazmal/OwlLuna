@@ -310,6 +310,9 @@ fileprivate struct EditorContent: View {
                         .frame(maxHeight: .infinity, alignment: .bottom)
                         .ignoresSafeArea(.keyboard, edges: .bottom)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
+                } else if session.isEditingText, session.mode == .writing || session.mode == .focus, !isCovered, let box = session.selectedItem?.text {
+                    TypeStrip(session: session, box: box, room: paneWidth)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
             .overlay {
@@ -319,6 +322,7 @@ fileprivate struct EditorContent: View {
             }
             .overlay { AnyView(InkCard(session: session)) }
             .animation(Motion.adaptive(Motion.standard, reduceMotion: reduceMotion), value: session.showsToolTray)
+            .animation(Motion.adaptive(Motion.standard, reduceMotion: reduceMotion), value: session.isEditingText)
             .onChange(of: session.showsToolTray) { session.canvas?.toolTrayDidChange() }
             .onChange(of: session.mode) { session.dish = nil }
     }

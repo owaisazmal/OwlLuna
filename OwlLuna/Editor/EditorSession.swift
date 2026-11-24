@@ -102,6 +102,9 @@ final class EditorSession {
     var paperIsNight = false
     /// How far the zoom window stands above the foot of the editor's safe area, for the tray to stand on it.
     var zoomPanelLift: CGFloat = 0
+    /// How much of the editor's foot the type strip covers while a box is typed in, the keyboard under it included, for the canvas to keep the words clear of it.
+    var typeStripHeight: CGFloat = 0
+    @ObservationIgnored private var sizeSteps: (run: UUID, last: ContinuousClock.Instant)?
     /// Where the ink dish is out, in the page view's points: at the Pencil's tip when it was squeezed. Nil while it is put away.
     var dish: CGPoint?
     /// The words selected on a PDF page, while its text is being selected. The canvas owns the selection.
@@ -394,10 +397,10 @@ final class EditorSession {
         }
     }
 
-    /// One undo step for a change to the selected item.
-    private func updateSelectedItem(actionName: String, _ change: (inout PageItem) -> Void) {
+    /// One undo step for a change to the selected item, or for a whole `run` of them.
+    private func updateSelectedItem(actionName: String, run: UUID? = nil, _ change: (inout PageItem) -> Void) {
         guard let selection else { return }
-        document.updateItems(onPage: selection.pageID, actionName: actionName) { items in
+        document.updateItems(onPage: selection.pageID, actionName: actionName, run: run) { items in
             guard let index = items.firstIndex(where: { $0.id == selection.itemID }) else { return }
             change(&items[index])
         }
@@ -454,8 +457,9 @@ final class EditorSession {
         canvas?.editText()
     }
 
-    func updateText(_ change: (inout TextBox) -> Void) {
-        updateSelectedItem(actionName: String(localized: "Text Style")) { item in
+    /// With a `run`, every change made under it is one undo step: a new `UUID` for each slide of a knob.
+    func updateText(run: UUID? = nil, _ change: (inout TextBox) -> Void) {
+        updateSelectedItem(actionName: String(localized: "Text Style"), run: run) { item in
             guard var box = item.text else { return }
             let before = box
             change(&box)
@@ -464,6 +468,14 @@ final class EditorSession {
             item = item.fittedToText()
             item.raw["agenda"] = nil
         }
+    }
+
+    /// The type a whole point or more larger or smaller. Steps within a second of one another are one undo step.
+    func stepTextSize(by points: Int) {
+        let now = ContinuousClock.now
+        if sizeSteps.map({ now - $0.last > .seconds(1) }) ?? true { sizeSteps = (UUID(), now) }
+        sizeSteps?.last = now
+        updateText(run: sizeSteps?.run) { $0.fontSize = TextBox.size($0.fontSize, steppedBy: points) }
     }
 
     var selectedItem: PageItem? {

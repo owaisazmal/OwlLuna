@@ -1,6 +1,7 @@
 import SwiftUI
 
-private enum Emphasis: String, CaseIterable, Identifiable {
+/// Bold, italic and underline, each with its place in a text box and its key.
+enum TextEmphasis: String, CaseIterable, Identifiable {
     case bold, italic, underline
 
     var id: Self { self }
@@ -42,7 +43,7 @@ struct TextStyleControls: View {
     var body: some View {
         HStack(spacing: 0) {
             if roomy {
-                ForEach(Emphasis.allCases) { emphasis in
+                ForEach(TextEmphasis.allCases) { emphasis in
                     let on = box[keyPath: emphasis.path]
                     Button { session.updateText { $0[keyPath: emphasis.path].toggle() } } label: {
                         Label(emphasis.title, systemImage: emphasis.rawValue)
@@ -59,7 +60,7 @@ struct TextStyleControls: View {
         }
         .background {
             if shortcuts && !roomy {
-                ForEach(Emphasis.allCases) { emphasis in
+                ForEach(TextEmphasis.allCases) { emphasis in
                     Button(emphasis.title) { session.updateText { $0[keyPath: emphasis.path].toggle() } }
                         .keyboardShortcut(KeyboardShortcut(emphasis.key))
                 }
@@ -104,7 +105,11 @@ struct TextStylePanel: View {
                 .accessibilityLabel(Text(face.displayName))
             }
             .accessibilityIdentifier("editor.text.face")
-            sizes(box)
+            VStack(alignment: .leading, spacing: Space.x1) {
+                sizeHeading(box)
+                sizes(box)
+                TextSizeStrip(session: session, box: box)
+            }
             let stacked = textSize.isAccessibilitySize
             (stacked ? AnyLayout(VStackLayout(alignment: .leading, spacing: Space.x3)) : AnyLayout(HStackLayout(spacing: Space.x3))) {
                 emphasis(box)
@@ -116,7 +121,7 @@ struct TextStylePanel: View {
                     $0.list = list
                 }
             }), options: [nil] + TextBox.List.allCases.map(Optional.some)) { list in
-                Label(list?.displayName ?? String(localized: "No List"), systemImage: list?.symbol ?? "text.alignleft").labelStyle(.iconOnly)
+                Label { Text(list?.displayName ?? String(localized: "No List")) } icon: { ListIcon(list: list) }.labelStyle(.iconOnly)
             }
             .accessibilityIdentifier("editor.text.list")
             colours(box)
@@ -140,35 +145,54 @@ struct TextStylePanel: View {
         return TextBox.Face.allCases.allSatisfy { ($0.displayName as NSString).size(withAttributes: [.font: font]).width.rounded(.up) <= room }
     }
 
-    /// The four sizes, and the box's own when it has been scaled to one of its own: named, or in points where a name won't
-    /// fit, with a tenth on the box's own where it would otherwise read as a preset.
-    private func sizes(_ box: TextBox) -> some View {
-        let presets = TextBox.sizes.map(\.points)
-        let options = presets.contains(box.fontSize) ? presets : presets + [box.fontSize]
-        let name: (CGFloat) -> String = { points in
-            TextBox.sizes.first { $0.points == points }?.name ?? String(localized: "\(Int(points.rounded())) pt")
+    /// "Size", and the box's size in points beside it, which the strip under it changes as it slides.
+    private func sizeHeading(_ box: TextBox) -> some View {
+        let name = Text("Size"), points = TextBox.pointsLabel(box.fontSize)
+        let figure = Text(points).monospacedDigit().foregroundStyle(Color.ink)
+        return ViewThatFits(in: .horizontal) {
+            HStack {
+                name.lineLimit(1)
+                Spacer(minLength: Space.x2)
+                figure.lineLimit(1)
+            }
+            VStack(alignment: .leading, spacing: 0) {
+                name
+                figure
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        let named = namesFit(options.map(name))
+        .font(.footnote.weight(.semibold))
+        .foregroundStyle(Color.textSecondary)
+        .accessibilityElement(children: .ignore)
+        .accessibilityAddTraits(.isStaticText)
+        .accessibilityLabel(name)
+        .accessibilityValue(Text(points))
+        .accessibilityIdentifier("editor.text.size.value")
+    }
+
+    /// The four named sizes, in points where a name won't fit. None is chosen while the box's size is between them.
+    private func sizes(_ box: TextBox) -> some View {
+        let named = namesFit()
         return OwlLunaSegmentedPicker("Size", selection: Binding(get: { box.fontSize }, set: { size in session.updateText { $0.fontSize = size } }),
-                                      options: options, padding: Space.x2) { points in
+                                      options: TextBox.sizes.map(\.points), padding: Space.x2) { points in
+            let name = Text(TextBox.sizes.first { $0.points == points }?.name ?? "")
             if named {
-                Text(name(points))
+                name
             } else {
-                let near = !presets.contains(points) && presets.contains(points.rounded())
-                let number = Text(Double(points), format: .number.precision(.fractionLength(near ? 1 : 0)))
-                number.accessibilityLabel(Text(name(points))).accessibilityInputLabels([number, Text(name(points))])
+                let number = Text(Double(points), format: .number)
+                number.accessibilityLabel(name).accessibilityInputLabels([number, name])
             }
         }
         .accessibilityIdentifier("editor.text.size")
     }
 
-    /// Whether every name keeps its words whole on a segment's two lines, measured as the chosen segment sets it.
-    private func namesFit(_ names: [String]) -> Bool {
+    /// Whether every size's name keeps its words whole on a segment's two lines, measured as the chosen segment sets it.
+    private func namesFit() -> Bool {
         guard !textSize.isAccessibilitySize else { return true }
         let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(textSize))
         let font = UIFont.systemFont(ofSize: UIFont.preferredFont(forTextStyle: .subheadline, compatibleWith: traits).pointSize, weight: .semibold)
-        let room = (Self.width - 2 * Space.x4) / CGFloat(max(names.count, 1)) - 2 * Space.x2
-        return names.allSatisfy { name in
+        let room = (Self.width - 2 * Space.x4) / CGFloat(TextBox.sizes.count) - 2 * Space.x2
+        return TextBox.sizes.map(\.name).allSatisfy { name in
             let words = name.split(whereSeparator: \.isWhitespace).allSatisfy {
                 (String($0) as NSString).size(withAttributes: [.font: font]).width.rounded(.up) <= room
             }
@@ -180,7 +204,7 @@ struct TextStylePanel: View {
 
     private func emphasis(_ box: TextBox) -> some View {
         HStack(spacing: 0) {
-            ForEach(Emphasis.allCases) { emphasis in
+            ForEach(TextEmphasis.allCases) { emphasis in
                 let on = box[keyPath: emphasis.path]
                 Button { session.updateText { $0[keyPath: emphasis.path].toggle() } } label: {
                     Label(emphasis.title, systemImage: emphasis.rawValue)
@@ -335,6 +359,35 @@ private struct PaletteStrip<Value: Hashable>: View {
         .background(paper)
         .clipShape(RoundedRectangle.thumb)
         .overlay { RoundedRectangle.thumb.strokeBorder(plateEdge(contrast), lineWidth: 1) }
+    }
+}
+
+/// A kind of list as an icon. The dashes are drawn here, longer than the symbol's, which are too near its bullets to tell apart.
+struct ListIcon: View {
+    let list: TextBox.List?
+
+    var body: some View {
+        if list == .dash {
+            Image(systemName: TextBox.List.bullet.symbol)
+                .hidden()
+                .overlay { DashedLines().fill().flipsForRightToLeftLayoutDirection(true) }
+        } else {
+            Image(systemName: list?.symbol ?? "text.alignleft")
+        }
+    }
+
+    private struct DashedLines: Shape {
+        func path(in rect: CGRect) -> Path {
+            var path = Path()
+            let marks = rect.insetBy(dx: rect.width * 0.1, dy: 0)
+            let thick = max(rect.height * 0.11, 1), dash = marks.width * 0.27, words = marks.width * 0.42
+            for row in [0.16, 0.5, 0.84] {
+                let y = marks.minY + marks.height * row - thick / 2, round = CGSize(width: thick / 2, height: thick / 2)
+                path.addRoundedRect(in: CGRect(x: marks.minX, y: y, width: dash, height: thick), cornerSize: round)
+                path.addRoundedRect(in: CGRect(x: marks.minX + words, y: y, width: marks.width - words, height: thick), cornerSize: round)
+            }
+            return path
+        }
     }
 }
 
