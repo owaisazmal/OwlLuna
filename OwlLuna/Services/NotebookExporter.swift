@@ -167,18 +167,24 @@ enum NotebookExporter {
 
     private static func bytes(_ text: String) -> Int { text.decomposedStringWithCanonicalMapping.utf8.count }
 
+    /// The " 07" a page's file name ends in, padded to the widest number; nothing for a lone page.
+    static func pageNumber(_ index: Int, of count: Int) -> String {
+        guard count > 1 else { return "" }
+        let number = String(index + 1)
+        return " " + String(repeating: "0", count: String(count).count - number.count) + number
+    }
+
     /// Writes each page as a PNG, twice the page's size in points, numbered in page order.
     static func exportImages(_ input: Input, options: Options = Options(), progress: @escaping @Sendable (Double) async -> Void) async throws -> [URL] {
         let interval = signposter.beginInterval("Export", "\(input.pages.count) images")
         defer { signposter.endInterval("Export", interval) }
         return try await ExportFolder.make(.export) { directory in
             let assets = input.package.assetsDirectory, links = LinkTitles(pages: input.allPages)
-            let digits = String(input.pages.count).count, count = Double(max(input.pages.count, 1))
+            let count = Double(max(input.pages.count, 1))
             var urls: [URL] = []
             for (index, page) in input.pages.enumerated() {
                 try Task.checkCancellation()
-                let number = input.pages.count == 1 ? "" : " " + String(repeating: "0", count: digits - String(index + 1).count) + String(index + 1)
-                let url = directory.appending(path: fileName(input.title, number: number, extension: "png"))
+                let url = directory.appending(path: fileName(input.title, number: pageNumber(index, of: input.pages.count), extension: "png"))
                 let ink = input.ink(for: page)
                 let data = autoreleasepool {
                     let page = Whiteboard.whole(page, ink: ink)
@@ -186,6 +192,27 @@ enum NotebookExporter {
                                               paper: options.paper).pngData()
                 }
                 guard let data else { throw ImportError.unreadable }
+                try data.write(to: url, options: .atomic)
+                urls.append(url)
+                await progress(Double(index + 1) / count)
+            }
+            return urls
+        }
+    }
+
+    /// Writes each page as an SVG with a shape for every stroke, numbered in page order and titled with the notebook and the page.
+    static func exportSVG(_ input: Input, options: Options = Options(), progress: @escaping @Sendable (Double) async -> Void) async throws -> [URL] {
+        let interval = signposter.beginInterval("Export", "\(input.pages.count) SVGs")
+        defer { signposter.endInterval("Export", interval) }
+        return try await ExportFolder.make(.export) { directory in
+            let assets = input.package.assetsDirectory, links = LinkTitles(pages: input.allPages), numbers = input.numbers
+            let count = Double(max(input.pages.count, 1))
+            var urls: [URL] = []
+            for (index, page) in input.pages.enumerated() {
+                try Task.checkCancellation()
+                let url = directory.appending(path: fileName(input.title, number: pageNumber(index, of: input.pages.count), extension: "svg"))
+                let title = input.allPages.count == 1 ? input.title : input.title + ", " + page.bookmarkTitle(number: numbers[page.id] ?? index + 1)
+                let data = autoreleasepool { PageSVG.data(for: page, ink: input.ink(for: page), assets: assets, title: title, options: options, links: links) }
                 try data.write(to: url, options: .atomic)
                 urls.append(url)
                 await progress(Double(index + 1) / count)

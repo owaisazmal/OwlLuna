@@ -13237,6 +13237,28 @@
         }
       }
     },
+    "Each stroke is a shape of its own that other apps can edit. Everything else goes in as pictures." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeder Strich ist eine eigene Form, die andere Apps bearbeiten können. Alles andere kommt als Bild hinein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada trazo es una figura propia que otras apps pueden editar. Todo lo demás va como imagen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque trait est une forme à part que d’autres apps peuvent modifier. Tout le reste est inséré en image."
+          }
+        }
+      }
+    },
     "Earlier this month" : {
       "localizations" : {
         "de" : {
@@ -13629,6 +13651,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chaque page en image…"
+          }
+        }
+      }
+    },
+    "Every Page as an SVG…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Seite als SVG …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las páginas como SVG…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque page en SVG…"
           }
         }
       }
@@ -14027,6 +14071,28 @@
         }
       }
     },
+    "Export as SVG" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als SVG exportieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar como SVG"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter en SVG"
+          }
+        }
+      }
+    },
     "Export as Text" : {
       "localizations" : {
         "de" : {
@@ -14155,6 +14221,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exporter les PDF"
+          }
+        }
+      }
+    },
+    "Export SVG" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SVG exportieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar SVG"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter le SVG"
           }
         }
       }
@@ -32557,6 +32645,28 @@
         }
       }
     },
+    "SVG…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SVG …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SVG…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SVG…"
+          }
+        }
+      }
+    },
     "Swap Question and Answer" : {
       "localizations" : {
         "de" : {
@@ -36765,6 +36875,28 @@
         }
       }
     },
+    "This Page as an SVG…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Seite als SVG …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta página como SVG…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette page en SVG…"
+          }
+        }
+      }
+    },
     "This page has no edges." : {
       "localizations" : {
         "de" : {
@@ -40814,6 +40946,82 @@
         }
       }
     },
+    "Your %lld SVGs are ready." : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dein %lld SVG ist fertig."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Deine %lld SVGs sind fertig."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Your %lld SVG is ready."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Your %lld SVGs are ready."
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Tu %lld SVG está listo."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Tus %lld SVG están listos."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Votre %lld SVG est prêt."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Vos %lld SVG sont prêts."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Your iCloud storage is full, so changes made on this iPad can't be uploaded. Free up space, or choose a bigger plan in Settings › your name › iCloud." : {
       "localizations" : {
         "de" : {
@@ -41112,6 +41320,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Votre étagère est prête."
+          }
+        }
+      }
+    },
+    "Your SVG is ready." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein SVG ist fertig."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu SVG está listo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre SVG est prêt."
           }
         }
       }

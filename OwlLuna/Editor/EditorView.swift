@@ -803,6 +803,9 @@ fileprivate struct EditorContent: View {
                     export = ExportJob(document: document, choosing: true, current: here, thisPage: true)
                 }
                 exportRow("Image…", "photo", spoken: "This Page as an Image…") { export = ExportJob(document: document, format: .images, pages: [page]) }
+                exportRow("SVG…", "scribble", spoken: "This Page as an SVG…") {
+                    export = ExportJob(document: document, format: .svg, choosing: true, current: here, thisPage: true)
+                }
                 exportRow("Time-lapse Video…", "film", spoken: "This Page as a Time-lapse Video…") {
                     export = ExportJob(document: document, format: .timelapse, pages: [page])
                 }
@@ -815,6 +818,9 @@ fileprivate struct EditorContent: View {
             exportRow("PDF…", "doc.richtext", spoken: "Notebook as a PDF…") { export = ExportJob(document: document, choosing: true, current: here) }
             exportRow("Images…", "photo.on.rectangle", spoken: "Every Page as an Image…") {
                 export = ExportJob(document: document, format: .images, choosing: true, current: here)
+            }
+            exportRow("SVG…", "scribble.variable", spoken: "Every Page as an SVG…") {
+                export = ExportJob(document: document, format: .svg, choosing: true, current: here)
             }
             exportRow("Text…", "doc.plaintext", spoken: "Notebook as Text…") {
                 export = ExportJob(document: document, format: .text, choosing: true, current: here)

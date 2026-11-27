@@ -38,6 +38,7 @@ struct ExportSheet: View {
         switch job.format {
         case .pdf: job.isSeveral ? Text("Export PDFs") : Text("Export PDF")
         case .images: Text("Export Images")
+        case .svg: Text("Export SVG")
         case .timelapse: Text("Export Video")
         case .text: Text("Export Text")
         }
@@ -126,6 +127,7 @@ struct ExportSheet: View {
         switch job.format {
         case .pdf: count == 1 ? String(localized: "Your PDF is ready.") : String(localized: "Your \(count) PDFs are ready.")
         case .images: count == 1 ? String(localized: "Your image is ready.") : String(localized: "Your \(count) images are ready.")
+        case .svg: count == 1 ? String(localized: "Your SVG is ready.") : String(localized: "Your \(count) SVGs are ready.")
         case .timelapse: String(localized: "Your video is ready.")
         case .text: String(localized: "Your text is ready.")
         }

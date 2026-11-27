@@ -5,8 +5,8 @@ import os
 @Observable
 final class ExportJob: Identifiable {
     enum State: Equatable { case choosing, running, finished([URL]), failed(String), cancelled }
-    /// One PDF, a PNG for every page, a film of one page being written, or the words as text.
-    enum Format: Sendable { case pdf, images, timelapse, text }
+    /// One PDF, a PNG or an SVG for every page, a film of one page being written, or the words as text.
+    enum Format: Sendable { case pdf, images, svg, timelapse, text }
     /// The PDF zipped with the notebook's recordings, once that has been asked for.
     enum Bundle: Equatable { case making, made(URL), failed(String) }
 
@@ -131,6 +131,7 @@ final class ExportJob: Identifiable {
                         switch format {
                         case .pdf: urls.append(try await NotebookExporter.export(input, options: options, progress: progress))
                         case .images: urls += try await NotebookExporter.exportImages(input, options: options, progress: progress)
+                        case .svg: urls += try await NotebookExporter.exportSVG(input, options: options, progress: progress)
                         case .timelapse: urls.append(try await InkTimelapse.export(input, progress: progress))
                         case .text: urls.append(try await NotebookExporter.exportText(input, markdown: options.markdown, progress: progress))
                         }

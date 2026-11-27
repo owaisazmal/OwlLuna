@@ -937,6 +937,7 @@ struct ShelfView: View {
     private func exportButtons(for record: NotebookRecord) -> some View {
         Button { startExport(record, as: .pdf) } label: { Label("Export as PDF", systemImage: "square.and.arrow.up") }
         Button { startExport(record, as: .images) } label: { Label("Export as Images", systemImage: "photo.on.rectangle") }
+        Button { startExport(record, as: .svg) } label: { Label("Export as SVG", systemImage: "scribble.variable") }
         Button { startExport(record, as: .text) } label: { Label("Export as Text", systemImage: "doc.plaintext") }
     }
 

@@ -339,6 +339,19 @@ Sharing from Files to OwlLuna on the iPad Pro 11-inch simulator (iOS 27.0) made 
 
 For [issue 26](https://github.com/owaisazmal/OwlLuna/issues/26), also run the checks in [PDF-IMPORT-26.md](PDF-IMPORT-26.md#device-checks-still-needed): an iCloud PDF whose download was removed, the same offline, and a retry once it can be reached.
 
+## SVG export
+
+Use a notebook with a ruled page of handwriting in every ink, some of it highlighted, an imported PDF page, a page with a photo, a sticker, a text box and study tape, and a whiteboard.
+
+1. Export › This Page › SVG… with Paper On, then No Paper. Export › Whole Notebook › SVG… for a run of pages. In the library, hold the notebook and choose Export as SVG.
+2. Share the files to Files and AirDrop them to a Mac. Open one in Safari and in Quick Look, then in a drawing app such as Inkscape, Affinity or Figma.
+3. In the drawing app, select one written line, recolour it and move it. Move a picture and a text box. Hide the paper.
+4. Export a long notebook of dense handwriting, some of it in fountain pen.
+
+Expect: one file a page, named and numbered like the PNGs, that looks like the page. Each stroke is one object, in the order written, with pencil, highlighter, crayon and watercolour as flat shapes. The highlighter darkens what is under it where the app blends, and is see-through where it doesn't. No Paper leaves the background clear but keeps an imported PDF page and a photo page. The long export keeps moving and can be cancelled.
+
+The files have only been opened in Chrome and Quick Look on a Mac, never in a drawing app or on a device.
+
 ## Backup and restore
 
 1. Make a notebook with ink and a picture, then Settings › Backup › Back Up Library…. Save to Files, first in On My iPad, then in iCloud Drive. Repeat with a third-party storage provider if one is installed.

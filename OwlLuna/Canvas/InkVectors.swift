@@ -17,10 +17,16 @@ enum InkVectors {
     /// How far a simplified outline may stray from the nib's path, in points of the page.
     static let tolerance: CGFloat = 0.03
 
+    /// `rect` of a drawing laid over a page of `size`.
+    static func toPage(from rect: CGRect, size: CGSize) -> CGAffineTransform {
+        let factor = size.width / max(rect.width, 1)
+        return CGAffineTransform(translationX: -rect.minX, y: -rect.minY).concatenating(CGAffineTransform(scaleX: factor, y: factor))
+    }
+
     /// Draws `rect` of the drawing to fill `size` of the context, stroke by stroke in the order they were written.
     static func draw(_ drawing: PKDrawing, from rect: CGRect, in ctx: CGContext, size: CGSize, style: Style = Style()) {
         let factor = size.width / max(rect.width, 1)
-        let toPage = CGAffineTransform(translationX: -rect.minX, y: -rect.minY).concatenating(CGAffineTransform(scaleX: factor, y: factor))
+        let toPage = Self.toPage(from: rect, size: size)
         ctx.saveGState()
         ctx.clip(to: CGRect(origin: .zero, size: size))
         var run: [PKStroke] = [], multiplies = false
@@ -67,26 +73,62 @@ enum InkVectors {
         var azimuth: CGFloat
     }
 
-    private static func fill(_ stroke: PKStroke, nib: Nib, toPage: CGAffineTransform, in ctx: CGContext, appearance: UIUserInterfaceStyle) {
+    /// A stroke's colour and place: moved or turned goes into its coordinates, stretched unevenly it is drawn through `whole`.
+    struct Placement {
+        var color: UIColor
+        var alpha: CGFloat
+        var whole: CGAffineTransform
+        var even: Bool
+        var scale: CGFloat
+        var turn: CGFloat
+
+        var placed: CGAffineTransform { even ? whole : .identity }
+        /// The tolerance in the units the stroke's coordinates are in.
+        var tolerance: CGFloat { InkVectors.tolerance / scale }
+    }
+
+    static func placement(of stroke: PKStroke, toPage: CGAffineTransform, appearance: UIUserInterfaceStyle) -> Placement {
         var color = stroke.ink.color
         if appearance == .dark { color = PKInkingTool.convertColor(color, from: .light, to: .dark) }
         var alpha: CGFloat = 1
         color.getRed(nil, green: nil, blue: nil, alpha: &alpha)
-        // A stroke moved or turned is placed on the page here; one stretched unevenly is drawn through a transform instead.
         let whole = stroke.transform.concatenating(toPage)
         let determinant = whole.a * whole.d - whole.b * whole.c
         let even = determinant > 0 && abs(whole.a - whole.d) < 1e-4 && abs(whole.b + whole.c) < 1e-4
-        let placed = even ? whole : .identity, scale = even ? sqrt(determinant) : 1, turn = even ? atan2(whole.b, whole.a) : 0
+        return Placement(color: color, alpha: alpha, whole: whole, even: even, scale: even ? sqrt(determinant) : 1, turn: even ? atan2(whole.b, whole.a) : 0)
+    }
+
+    /// The stroke's path half a point at a time, or the points it was given where it has no length.
+    static func points(of stroke: PKStroke) -> [PKStrokePoint] {
         let interpolated = Array(stroke.path.interpolatedPoints(by: .distance(0.5)))
-        let samples = (interpolated.isEmpty ? Array(stroke.path) : interpolated).map { point in
-            Sample(location: rounded(point.location.applying(placed)), radius: radius(point) * scale, azimuth: point.azimuth + turn)
+        return interpolated.isEmpty ? Array(stroke.path) : interpolated
+    }
+
+    static func samples(of stroke: PKStroke, at placement: Placement) -> [Sample] {
+        let placed = placement.placed
+        return points(of: stroke).map { point in
+            Sample(location: rounded(point.location.applying(placed)), radius: radius(point) * placement.scale, azimuth: point.azimuth + placement.turn)
         }
+    }
+
+    /// What a nib leaves on the page: a dot, a line of one width with round ends and joins, or an outline to fill.
+    enum Piece {
+        case dot(CGPoint, radius: CGFloat)
+        case line([CGPoint], width: CGFloat)
+        case outline([CGPoint], closed: Bool)
+    }
+
+    private static func fill(_ stroke: PKStroke, nib: Nib, toPage: CGAffineTransform, in ctx: CGContext, appearance: UIUserInterfaceStyle) {
+        let placement = Self.placement(of: stroke, toPage: toPage, appearance: appearance)
+        let samples = Self.samples(of: stroke, at: placement)
         guard !samples.isEmpty else { return }
-        let isolated = !even || stroke.mask != nil || alpha < 1
+        var color = placement.color
+        let alpha = placement.alpha
+        let isolated = !placement.even || stroke.mask != nil || alpha < 1
         if isolated { ctx.saveGState() }
-        if !even { ctx.concatenate(whole) }
+        if !placement.even { ctx.concatenate(placement.whole) }
         if let mask = stroke.mask {
-            var maskTransform = placed
+            var maskTransform = placement.placed
             if let path = mask.cgPath.copy(using: &maskTransform) { ctx.addPath(path) }
             ctx.clip()
         }
@@ -95,61 +137,78 @@ enum InkVectors {
             ctx.beginTransparencyLayer(auxiliaryInfo: nil)
             color = color.withAlphaComponent(1)
         }
-        let tolerance = Self.tolerance / scale
         switch nib {
-        case .round: round(samples, color: color.cgColor, tolerance: tolerance, dot: stroke.path.count == 1, in: ctx)
-        case .oval: oval(samples, color: color.cgColor, tolerance: tolerance, in: ctx)
+        case .round: drawLines(round(samples, tolerance: placement.tolerance, dot: stroke.path.count == 1), color: color.cgColor, in: ctx)
+        case .oval: drawOutlines(oval(samples, tolerance: placement.tolerance), color: color.cgColor, in: ctx)
         }
         if alpha < 1 { ctx.endTransparencyLayer() }
         if isolated { ctx.restoreGState() }
     }
 
-    private static func rounded(_ point: CGPoint) -> CGPoint {
+    static func rounded(_ point: CGPoint) -> CGPoint {
         CGPoint(x: (point.x * 100).rounded() / 100, y: (point.y * 100).rounded() / 100)
     }
 
     /// Runs of segments as wide as one another are one line with round ends and joins. PencilKit draws a single point as a dot,
     /// and several in one place as nothing.
-    private static func round(_ samples: [Sample], color: CGColor, tolerance: CGFloat, dot: Bool, in ctx: CGContext) {
+    static func round(_ samples: [Sample], tolerance: CGFloat, dot: Bool, step: CGFloat = 0.03) -> [Piece] {
+        guard let start = samples.first?.location else { return [] }
+        if samples.allSatisfy({ abs($0.location.x - start.x) < 0.01 && abs($0.location.y - start.y) < 0.01 }) {
+            let r = samples.map(\.radius).max() ?? 0
+            return dot && r > 0 ? [.dot(start, radius: r)] : []
+        }
+        var pieces: [Piece] = [], first = 0
+        while first < samples.count - 1 {
+            let width = samples[first].radius + samples[first + 1].radius
+            var last = first + 1
+            while last + 1 < samples.count, abs(samples[last].radius + samples[last + 1].radius - width) <= max(step, width * step) { last += 1 }
+            if width > 0 { pieces.append(.line(simplified(samples, first, last, tolerance: tolerance).map { samples[$0].location }, width: width)) }
+            first = last
+        }
+        return pieces
+    }
+
+    private static func drawLines(_ pieces: [Piece], color: CGColor, in ctx: CGContext) {
         ctx.setStrokeColor(color)
         ctx.setFillColor(color)
         ctx.setLineCap(.round)
         ctx.setLineJoin(.round)
-        let start = samples[0].location
-        if samples.allSatisfy({ abs($0.location.x - start.x) < 0.01 && abs($0.location.y - start.y) < 0.01 }) {
-            let r = samples.map(\.radius).max() ?? 0
-            if dot, r > 0 { ctx.fillEllipse(in: CGRect(x: start.x - r, y: start.y - r, width: 2 * r, height: 2 * r)) }
-            return
-        }
-        var first = 0
-        while first < samples.count - 1 {
-            let width = samples[first].radius + samples[first + 1].radius
-            var last = first + 1
-            while last + 1 < samples.count, abs(samples[last].radius + samples[last + 1].radius - width) <= max(0.03, width * 0.03) { last += 1 }
-            if width > 0 {
-                let kept = simplified(samples, first, last, tolerance: tolerance)
+        for piece in pieces {
+            switch piece {
+            case .dot(let centre, let r): ctx.fillEllipse(in: CGRect(x: centre.x - r, y: centre.y - r, width: 2 * r, height: 2 * r))
+            case .line(let points, let width):
                 ctx.setLineWidth(width)
-                ctx.addLines(between: kept.map { samples[$0].location })
+                ctx.addLines(between: points)
                 ctx.strokePath()
+            case .outline: break
             }
-            first = last
         }
     }
 
-    /// Each step of the nib is the hull of the oval where it starts and where it ends; together they make the stroke.
-    private static func oval(_ samples: [Sample], color: CGColor, tolerance: CGFloat, in ctx: CGContext) {
-        let path = CGMutablePath()
-        let kept = simplified(samples, 0, samples.count - 1, tolerance: tolerance)
-        var previous = ellipse(samples[kept[0]], tolerance: tolerance)
-        if kept.count == 1, previous.count > 2 { path.addLines(between: convexHull(previous)) }
-        for index in kept.dropFirst() {
-            let next = ellipse(samples[index], tolerance: tolerance)
+    /// The fountain pen's oval at each sample a straight run can't skip, swept from one to the next.
+    static func oval(_ samples: [Sample], tolerance: CGFloat) -> [Piece] {
+        guard !samples.isEmpty else { return [] }
+        return swept(simplified(samples, 0, samples.count - 1, tolerance: tolerance).map { ellipse(samples[$0], tolerance: tolerance) })
+    }
+
+    /// Each step of the nib is the hull of its shape where it starts and where it ends; together they make the stroke.
+    static func swept(_ nibs: [[CGPoint]]) -> [Piece] {
+        guard var previous = nibs.first else { return [] }
+        var pieces: [Piece] = []
+        if nibs.count == 1, previous.count > 2 { pieces.append(.outline(convexHull(previous), closed: false)) }
+        for next in nibs.dropFirst() {
             let hull = convexHull(previous + next)
-            if hull.count > 2 {
-                path.addLines(between: hull)
-                path.closeSubpath()
-            }
+            if hull.count > 2 { pieces.append(.outline(hull, closed: true)) }
             previous = next
+        }
+        return pieces
+    }
+
+    private static func drawOutlines(_ pieces: [Piece], color: CGColor, in ctx: CGContext) {
+        let path = CGMutablePath()
+        for case .outline(let points, let closed) in pieces {
+            path.addLines(between: points)
+            if closed { path.closeSubpath() }
         }
         ctx.setFillColor(color)
         ctx.addPath(path)
@@ -186,14 +245,19 @@ enum InkVectors {
 
     /// The fountain pen's nib: a quarter as thick as it is long, turned to the Pencil's azimuth.
     private static func ellipse(_ sample: Sample, tolerance: CGFloat) -> [CGPoint] {
-        let a = sample.radius, b = a / 4
-        guard a > 0 else { return [sample.location] }
-        let sides = Int(min(max((CGFloat.pi / acos(max(1 - tolerance / a, -1))).rounded(.up), 8), 64))
-        let c = cos(sample.azimuth), s = sin(sample.azimuth)
+        ellipse(at: sample.location, along: sample.radius, across: sample.radius / 4, azimuth: sample.azimuth, tolerance: tolerance)
+    }
+
+    /// An oval tip as a polygon, reaching `a` from its centre along its azimuth and `b` across it, cut off `cut` along it.
+    static func ellipse(at centre: CGPoint, along a: CGFloat, across b: CGFloat, azimuth: CGFloat, tolerance: CGFloat, cut: CGFloat = .infinity) -> [CGPoint] {
+        let reach = max(a, b)
+        guard reach > 0 else { return [centre] }
+        let sides = Int(min(max((CGFloat.pi / acos(max(1 - tolerance / reach, -1))).rounded(.up), 8), 64))
+        let c = cos(azimuth), s = sin(azimuth)
         return (0..<sides).map { index in
             let t = CGFloat(index) / CGFloat(sides) * 2 * .pi
-            let x = a * cos(t), y = b * sin(t)
-            return rounded(CGPoint(x: sample.location.x + x * c - y * s, y: sample.location.y + x * s + y * c))
+            let x = min(max(a * cos(t), -cut), cut), y = b * sin(t)
+            return rounded(CGPoint(x: centre.x + x * c - y * s, y: centre.y + x * s + y * c))
         }
     }
 

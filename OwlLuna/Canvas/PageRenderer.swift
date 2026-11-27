@@ -72,7 +72,7 @@ enum PageRenderer {
         PageItemRenderer.draw(page.items, pageSize: page.size, assets: assets, in: ctx, size: size, overInk: true, lifted: lifted)
     }
 
-    private static func drawPaper(_ page: NotebookPage, assets: URL, in ctx: CGContext, size: CGSize, night: Bool) {
+    static func drawPaper(_ page: NotebookPage, assets: URL, in ctx: CGContext, size: CGSize, night: Bool) {
         switch page.background {
         case .template where page.isBoard:
             drawBoardPaper(page.template ?? .blank, color: page.paperColor, origin: page.cut ?? .zero, scale: size.width / max(page.size.width, 1), in: ctx,

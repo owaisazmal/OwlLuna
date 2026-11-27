@@ -23,6 +23,9 @@ struct ExportChoices: View {
                                   identifier: "export.paper")
                         note(job.options.paper ? "Pages keep their colour and ruling." : "Leaves out the colour and ruling. Imported PDF pages and photos stay.")
                     }
+                    if job.format == .svg {
+                        note("Each stroke is a shape of its own that other apps can edit. Everything else goes in as pictures.")
+                    }
                     if job.format == .pdf {
                         PlatePair(title: "Quality", selection: $job.options.quality, first: (.smaller, "Smaller File"), second: (.sharper, "Sharper Ink"),
                                   identifier: "export.quality")

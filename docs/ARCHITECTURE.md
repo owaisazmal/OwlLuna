@@ -206,6 +206,12 @@ The lock is a flag, not encryption: `library.locked` in the manifest and `isLock
 
 A page range is `Input.narrowed(to:)`, which keeps the whole notebook so links use real page numbers. Searchable handwriting is `PageWords` writing each recognised word as invisible text under the ink, sized and sloped to the writing.
 
+## SVG export
+
+`NotebookExporter.exportSVG` writes one file a page from `PageSVG`: a `paper` group (the colour as a `<rect>`, and ruling, an imported page or a photo as one picture), an `items` group with each picture, sticker, text box and link as an `<image>` of it alone placed by a `transform`, the `ink` group, and a `tape` group over it. Pictures are base64 in `xlink:href`, PNG where see-through and JPEG for opaque photos, at 2 pixels a point for paper and 3 for items, and never over 4096 pixels. A text box keeps its words in a `<desc>`.
+
+`InkSVG` writes one child of the `ink` group for each stroke, `ink-1` onwards in the order written. Pen, fineliner and fountain pen use the geometry `InkVectors` gives the PDF (`round`, `oval`, `swept`), and the fountain pen's hulls are merged into one outline with `CGPath.normalized`. The inks the PDF draws as pictures are flat shapes here: what their tip sweeps and one opacity, fitted to PencilKit's own pictures. The highlighter has `mix-blend-mode: multiply`, which only reaches the paper while no group above `ink` has an opacity, a clip or a filter. A stroke rubbed out in part carries a `<clipPath>`, and one stretched unevenly a `matrix`. `InkSVGTests` and `PageSVGTests` draw what was written with a small reader and compare it with `InkVectors` and `PageRenderer`.
+
 ## Time-lapse video
 
 `InkTimelapse.Plan` orders strokes by PencilKit's creation dates and gives each a share of the film by its drawing time, dropping the gaps. Finished strokes are painted once into a bitmap carried between frames, so a frame costs one stroke whatever the page holds. Frames go into an `AVAssetWriter` off the main thread.

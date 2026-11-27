@@ -15,6 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - While a text box is typed in, a strip of its type controls stands on the keyboard: typeface, size (hold − or + to keep going), Bold, Italic, Underline, list, text colour, and More for the whole Text Style card. With a hardware keyboard or on a Mac it stands at the foot of the window, and a narrow pane keeps the most used. Before, these were only behind the Text Style button in the bar over the page.
 - The Text Style card has a size strip: slide the knob, or tap − and +, to set any size from 8 to 200 pt. The four named sizes are marked on it, the size is read out in points beside Size, and a whole slide is one Undo.
 - A text box can be a dashed list, beside bullets, numbers and a checklist.
+- A page, a run of pages or a whole notebook can be exported as SVG, from Export in the editor and Export as SVG in the library, one file a page. Every stroke is a shape of its own, in the order it was written, so a drawing app can select, recolour or move each line. Pen, fineliner and fountain pen are as exact as in a PDF; pencil, highlighter, crayon, watercolour and the calligraphy pen are plain shapes of the same width, colour and strength, without their grain. The paper, pictures, stickers, text boxes, links and study tape go in as pictures, each on its own so it can be moved, and No Paper leaves out the colour and ruling.
 
 ### Changed
 
