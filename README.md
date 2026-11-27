@@ -25,7 +25,7 @@ The App Store version comes later. To build it yourself, see [Getting started](#
 - Shapes: drag out a line, arrow, circle, rectangle or triangle in the current pen's ink.
 - Pencil gestures: scribble over ink to erase it, loop round ink to select it, and choose what double-tap and squeeze do. A squeeze can bring an ink dish of your pens to the Pencil's tip.
 - Finger taps: two fingers undo and three redo, or choose another action for each, and for a one-finger double-tap.
-- Lasso ink, resize, stretch and turn it, carry it to another page, and cut, copy and paste it, also to and from Notes.
+- Lasso ink, resize, stretch and turn it, change its colour and line width, carry it to another page, and cut, copy and paste it, also to and from Notes.
 - Handwriting to text, read on the device: convert a selection, or have writing set as type as you go. Translate it with Apple's translator.
 - A zoom window for writing small and neat.
 - Whiteboards: a page with no edges, for diagrams and brainstorming.
@@ -111,9 +111,7 @@ git clone https://github.com/owaisazmal/OwlLuna.git
 open OwlLuna/OwlLuna.xcodeproj
 ```
 
-Pick an iPad simulator and run. Only the Apple Pencil draws at first; **⋯ › Draw With › Pencil and Finger** lets a finger, or the simulator's mouse, draw too.
-
-To run on a device, copy the signing settings, which git ignores:
+To run on your iPad, copy the signing settings, which git ignores:
 
 ```bash
 cp Config/Signing.local.xcconfig.example Config/Signing.local.xcconfig
@@ -121,15 +119,9 @@ cp Config/Signing.local.xcconfig.example Config/Signing.local.xcconfig
 
 Set your team ID and a bundle ID prefix you own. The bundle IDs, App Group and iCloud container follow the prefix (`<prefix>.OwlLuna`, `group.<prefix>.OwlLuna`, `iCloud.<prefix>.OwlLuna`); set `APP_GROUP` or `ICLOUD_CONTAINER` if yours differ. Set the team there, not in Signing & Capabilities, which writes it into the project. A free developer account can't sign the iCloud capability: uncomment `APP_ENTITLEMENTS` and `MAC_APP_ENTITLEMENTS` in the same file and the app runs with sync shown as unavailable.
 
-Run the unit tests (`OwlLunaTests`) from Xcode's Test navigator, or from Terminal with any iPad simulator. ⌘U also runs the UI tests, which are much slower.
+Pick your iPad and run. Only the Apple Pencil draws at first; **⋯ › Draw With › Pencil and Finger** lets a finger draw too.
 
-```bash
-xcrun simctl list devices available | grep iPad
-```
-
-```bash
-xcodebuild test -project OwlLuna.xcodeproj -scheme OwlLuna -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M5)' -only-testing:OwlLunaTests
-```
+Run the unit tests (`OwlLunaTests`) from Xcode's Test navigator. ⌘U also runs the UI tests, which are much slower.
 
 ## Architecture
 
@@ -151,29 +143,13 @@ OwlLunaWidgets/   Widgets and Control Center buttons
 Shared/           Code shared by the app and the widgets: the app icon art, the widget snapshot, control actions
 ```
 
-The main decisions, with measurements, are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). The visual system is in [docs/DESIGN.md](docs/DESIGN.md).
+The main decisions, with measurements, are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). The visual system is in [docs/DESIGN.md](docs/DESIGN.md). The steps for checking features on a real iPad or Mac are in [docs/DEVICE-CHECKS.md](docs/DEVICE-CHECKS.md).
 
 - **One package per notebook.** Each notebook is `Library/<id>.owlluna/`: a `manifest.json`, one ink file per page, plus assets, thumbnails and recognised text. Saves write only changed pages, atomically, with the manifest last, off the main thread. Files that can't be read are set aside as `.corrupt`, never overwritten.
 - **One canvas per visible page.** Pages sit in a UIKit scroll view and only the visible pages ±1 have a `PKCanvasView`, so cost follows what's on screen, not the notebook's size.
 - **One undo history.** Strokes and page changes register against the document, not the views, so undo survives canvases being recycled.
 - **One document per notebook.** Every window shares it. Closing waits for recordings, imports and the last save, and a failed save keeps the editor open.
 - **The index is a cache.** SwiftData indexes the library for sorting and search, and can always be rebuilt from the manifests.
-
-## Roadmap
-
-Some features can't be fully tested in the simulator. The steps for checking them on a real iPad or Mac are in [docs/DEVICE-CHECKS.md](docs/DEVICE-CHECKS.md). Help with any of these is welcome.
-
-- [x] iCloud sync between two real iPads: arrival, edits on both, delete, restore, lock, folders, large uploads, offline catch-up (October 2026).
-- [ ] The rest of iCloud sync: a notebook open on both iPads, many deletes at once, evicted files, a fast clock, different Recently Deleted lengths, another Apple Account.
-- [ ] Transcription with real speech and a long recording.
-- [ ] Camera scanning, Face ID, translation, the calendar prompt, Control Center buttons, and the zoom window with a Pencil.
-- [ ] The study guide on an iPad with Apple Intelligence.
-- [ ] Pencil double-tap, squeeze, scribble and loop with a real Pencil, and finger taps with a hand resting on the page.
-- [ ] Handwriting to Text with real handwriting.
-- [ ] Whiteboards, tabs, one page at a time, PDF text and the tool tray with a Pencil on a real iPad.
-- [ ] PDFs shared or dropped from Files, iCloud Drive and other storage providers.
-- [ ] The Mac version, once it's signed for iCloud: the title bar, right-click menus, drawing with a trackpad, and sync with an iPad.
-- [ ] Native-speaker review of the translations, and more languages.
 
 ## Website
 

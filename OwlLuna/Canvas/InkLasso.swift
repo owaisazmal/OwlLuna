@@ -158,6 +158,19 @@ enum InkLasso {
         }
         return result
     }
+
+    /// Whether two drawings hold the same strokes in the same places, whatever their colours and lines: so a
+    /// selection in the one still points at its strokes in the other.
+    static func sameStrokes(_ one: PKDrawing, _ other: PKDrawing) -> Bool {
+        let old = one.strokes, new = other.strokes
+        guard old.count == new.count else { return false }
+        return zip(old, new).allSatisfy { was, now in
+            let before = was.path, after = now.path
+            return was.transform == now.transform && was.ink.inkType == now.ink.inkType && before.count == after.count
+                && before.creationDate == after.creationDate && before.first?.location == after.first?.location
+                && before.last?.location == after.last?.location
+        }
+    }
 }
 
 /// Ink on the clipboard, as PencilKit's own drawing type, so it pastes into Notes and comes back from it, beside a

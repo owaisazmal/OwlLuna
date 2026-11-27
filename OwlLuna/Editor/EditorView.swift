@@ -1104,6 +1104,7 @@ fileprivate struct EditorContent: View {
         // What the card on the caught ink holds, for those who can't tap the ink itself.
         .accessibilityActions {
             if count > 0 {
+                if !document.isReadOnly { Button("Colour and Width") { session.canvas?.showInkMenu() } }
                 Button("Cut") { session.canvas?.cutInkSelection() }
                 Button("Copy") { session.canvas?.copyInkSelection() }
                 Button("Duplicate") { session.canvas?.duplicateInkSelection() }

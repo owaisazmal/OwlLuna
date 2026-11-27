@@ -1250,6 +1250,28 @@
         }
       }
     },
+    "%@–%@ pt" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@–%2$@ pt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@–%2$@ pt"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@–%2$@ pt"
+          }
+        }
+      }
+    },
     "%@, %@" : {
       "localizations" : {
         "de" : {
@@ -9420,6 +9442,28 @@
         }
       }
     },
+    "Broader" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breiter"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más grueso"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus épais"
+          }
+        }
+      }
+    },
     "Brown" : {
       "localizations" : {
         "de" : {
@@ -9848,6 +9892,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modifier la hauteur"
+          }
+        }
+      }
+    },
+    "Change Ink Colour" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tintenfarbe ändern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar color de la tinta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier la couleur de l’encre"
+          }
+        }
+      }
+    },
+    "Change Ink Width" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tintenstärke ändern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar grosor de la tinta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier l’épaisseur de l’encre"
           }
         }
       }
@@ -10826,6 +10914,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Couleur"
+          }
+        }
+      }
+    },
+    "Colour and Width" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbe und Stärke"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Color y grosor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleur et épaisseur"
           }
         }
       }
@@ -16935,6 +17045,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Encre"
+          }
+        }
+      }
+    },
+    "Ink colour changed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tintenfarbe geändert"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Color de la tinta cambiado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleur de l’encre modifiée"
+          }
+        }
+      }
+    },
+    "Ink width changed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tintenstärke geändert"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grosor de la tinta cambiado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épaisseur de l’encre modifiée"
           }
         }
       }
@@ -29801,6 +29955,28 @@
         }
       }
     },
+    "Several colours" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehrere Farben"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varios colores"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plusieurs couleurs"
+          }
+        }
+      }
+    },
     "Shade" : {
       "localizations" : {
         "de" : {
@@ -35773,6 +35949,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ils ont tous disparu en même temps de ce Mac ou d’un autre appareil, ce qui ressemble à une erreur. La synchronisation les a donc laissés tels quels. « Conserver » les rétablit partout et « Supprimer » laisse passer les suppressions."
+          }
+        }
+      }
+    },
+    "Thinner" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dünner"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más fino"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus fin"
           }
         }
       }

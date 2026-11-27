@@ -4,7 +4,7 @@ import SwiftUI
 struct InkMenu: Equatable {
     /// What it opens beside, in the page view's points.
     var rect: CGRect
-    /// Where in the page stack to paste. Nil on caught ink, which the card cuts, copies, duplicates or deletes.
+    /// Where in the page stack to paste. Nil on caught ink, which the card recolours, widens, cuts, copies, duplicates or deletes.
     var pastePoint: CGPoint?
     /// The clipboard holds a picture, not ink.
     var picture = false
@@ -20,6 +20,8 @@ struct InkCard: View {
     let session: EditorSession
     /// Kept while the card closes, so its rows stay as they were until it has gone.
     @State private var last: InkMenu?
+    /// The same for how the ink looked, once it has been let go.
+    @State private var look: InkLook?
 
     var body: some View {
         Color.clear
@@ -29,6 +31,7 @@ struct InkCard: View {
             .allowsHitTesting(false)
             .accessibilityHidden(true)
             .onChange(of: session.inkMenu) { _, menu in if let menu { last = menu } }
+            .onChange(of: session.inkLook, initial: true) { _, now in if let now { look = now } }
     }
 
     @ViewBuilder
@@ -44,6 +47,11 @@ struct InkCard: View {
             Button { session.canvas?.pasteInk(at: point) } label: { Label("Paste", systemImage: "doc.on.clipboard") }
                 .accessibilityIdentifier("editor.ink.paste")
         } else {
+            if !session.document.isReadOnly, let look = session.inkLook ?? look {
+                InkColourRow(session: session, look: look)
+                InkWidthRow(session: session, look: look)
+                MenuBreak()
+            }
             Button { session.canvas?.cutInkSelection() } label: { Label("Cut", systemImage: "scissors") }
                 .accessibilityIdentifier("editor.ink.cut")
             Button { session.canvas?.copyInkSelection() } label: { Label("Copy", systemImage: "doc.on.doc") }

@@ -76,6 +76,13 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     /// The overlay for selecting ink across pages, while that is on, and what has been caught.
     private var inkLasso: InkLassoOverlay?
     private var inkSelection: InkSelection = [:]
+    /// The caught ink's pages as the document held them when the ink was caught or last changed from here.
+    private var caughtPages: [UUID: PKDrawing] = [:]
+    /// A line or a colour being tried on what is caught. The pages show it, and nothing is saved until it is settled.
+    private var inkTrial: InkTrial?
+    private var inkTrialCount = 0
+    /// A catch of more strokes than this has what is tried on it worked out off the main thread.
+    var inkTrialAtOnce = 32
     /// Selecting ink as a mode of its own locks the pages. The tray's lasso lays the same overlay and locks nothing.
     private var isSelectingInk = false
     private var lassoMoveOrigin: CGPoint?
@@ -310,6 +317,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         NotificationCenter.default.addObserver(self, selector: #selector(secondScreenChanged), name: .owlLunaExternalDisplayChanged, object: nil)
         for name in [UIScene.willDeactivateNotification, Notification.Name.owlLunaCloseEditor] {
             NotificationCenter.default.addObserver(self, selector: #selector(finishTyping), name: name, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(settleTriedInk), name: name, object: nil)
         }
     }
 
@@ -344,6 +352,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         super.viewWillDisappear(animated)
         keepsAnchor = false
         endTextEditing()
+        dropInkTrial()
         typingTimer?.cancel()
         session.dish = nil
         ExternalDisplay.shared.end(for: self)
@@ -1035,7 +1044,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     private func show(_ ink: PKDrawing, in canvas: PageCanvasView) {
         applyingDrawing {
-            canvas.ink = replayed(withoutHeldInk(ink, on: canvas.pageID), on: canvas.pageID)
+            canvas.ink = replayed(asTried(withoutHeldInk(ink, on: canvas.pageID), on: canvas.pageID), on: canvas.pageID)
             canvas.strokeCount = nil
         }
         canvas.isLoaded = true
@@ -1341,6 +1350,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         guard let drawn = canvasView as? PageCanvasView else { return }
         let canvas = drawn.owner
         canvas.didFinishRendering(drawn)
+        // The next try is put on once PencilKit is done with this callback: one put on from inside it is never reported drawn.
+        if inkTrial?.rendering.remove(ObjectIdentifier(drawn)) != nil { DispatchQueue.main.async { [weak self] in self?.showTriedInk() } }
         if drawn.tileChecks > 0 {
             drawn.tileChecks -= 1
             if drawn.hasBlankInkTile { redrawTiles(of: drawn) } else { drawn.tileChecks = 0 }
@@ -1364,8 +1375,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     // MARK: InkObserver
 
     func document(_ document: NotebookDocument, didReplaceInkOf pageID: UUID) {
-        // An undo or redo under the selection moves strokes about, so what was caught is let go.
-        if !isMovingInk, !inkSelection.isEmpty { clearInkSelection() }
+        if !isMovingInk, !inkSelection.isEmpty { inkWasReplaced(onPage: pageID) }
         guard let ink = document.loadedInk(pageID) else { return }
         replayPages[pageID] = nil
         if zoomWindow?.pageID == pageID, let zoomCanvas { showZoomInk(ink, in: zoomCanvas) }
@@ -1460,7 +1470,10 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     }
 
     func select(_ selection: ItemSelection?) {
-        if selection != nil, !inkSelection.isEmpty { setInkSelection([:]) }
+        if selection != nil, !inkSelection.isEmpty {
+            settleInkTrial()
+            setInkSelection([:])
+        }
         if textView != nil, selection != typing { endTextEditing() }
         if cropView != nil, selection != session.selection { endCrop(keeping: true) }
         if session.selection != selection { session.selection = selection }
@@ -2464,19 +2477,32 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         toolTrayDidChange()
     }
 
-    /// The box round newly caught ink stands upright. Ink that was turned and is still caught keeps its box at that `turn`.
-    private func setInkSelection(_ selection: InkSelection, turn: CGFloat = 0) {
+    /// The box round newly caught ink stands upright; ink still caught keeps its box at that `turn`. A trial is
+    /// let go. `sameLook` spares working the look out again for ink whose lines and colours are as they were.
+    private func setInkSelection(_ selection: InkSelection, turn: CGFloat = 0, sameLook: Bool = false) {
+        dropInkTrial()
         heldLoop = nil
         inkSelection = selection.filter { !$0.value.isEmpty }
         inkTurn = inkSelection.isEmpty || abs(turn) < 1e-6 ? 0 : turn
         inkLasso?.showSelection(InkLasso.box(of: inkSelection, turn: inkTurn, drawings: liveInk, frames: stackFrames))
         let count = inkSelection.values.reduce(0) { $0 + $1.count }
         if session.inkSelectionCount != count { session.inkSelectionCount = count }
+        noteCaughtInk(sameLook: sameLook && session.inkLook != nil && !inkSelection.isEmpty)
         pinInk()
     }
 
-    /// Lets go of what the lasso caught, putting back any of it that was being held.
+    /// Ink was replaced under what is caught, by an undo or a redo. One that only gave it another colour or line
+    /// leaves it caught, its box drawn round it again; one that moved strokes about lets it go.
+    private func inkWasReplaced(onPage pageID: UUID) {
+        dropInkTrial()
+        guard let before = caughtPages[pageID] else { return }
+        guard !holdsInk, let ink = document.loadedInk(pageID), InkLasso.sameStrokes(before, ink) else { return clearInkSelection() }
+        setInkSelection(inkSelection, turn: inkTurn)
+    }
+
+    /// Lets go of what the lasso caught, putting back any of it that was being held. What was being tried on it is settled.
     func clearInkSelection() {
+        settleInkTrial()
         if lassoMoveOrigin != nil {
             let holder = lassoHolder
             endInkDrag()
@@ -2549,6 +2575,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         let draws = lassoMoveOrigin == nil && gesture === lassoPan
         switch gesture.state {
         case .began:
+            settleInkTrial()
             // Where the touch came down decides what it does, not where it had got to when the drag was recognised.
             let down = gesture.start(in: contentView), start = CGPoint(x: down.x / bakedScale, y: down.y / bakedScale)
             // As writing does, the lasso puts a selected picture down.
@@ -2591,12 +2618,25 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         if inkSelection.isEmpty {
             guard lassoTapDraws, pasteTarget(at: point) != nil, InkClipboard.hasInk else { return }
             session.inkMenu = InkMenu(rect: spot, pastePoint: point)
-        } else if isOnInkSelection(point), let bounds = inkLasso?.selectionBounds {
-            let box = view.convert(bounds.scaled(by: bakedScale), from: contentView).insetBy(dx: -8, dy: -8).intersection(view.bounds)
+        } else if isOnInkSelection(point), let box = inkMenuRect() {
             session.inkMenu = InkMenu(rect: box.isNull ? spot : box)
         } else {
             clearInkSelection()
         }
+    }
+
+    /// Where the card on caught ink opens: round as much of the ink's box as shows, in the view's points. Null when none does.
+    private func inkMenuRect() -> CGRect? {
+        guard bakedScale > 0, let bounds = inkLasso?.selectionBounds else { return nil }
+        return view.convert(bounds.scaled(by: bakedScale), from: contentView).insetBy(dx: -8, dy: -8).intersection(view.bounds)
+    }
+
+    /// Opens the card on what is caught as a tap on it does, for whoever can't tap the ink itself. With the ink
+    /// scrolled out of sight, the card opens in the middle of the pages.
+    func showInkMenu() {
+        guard !inkSelection.isEmpty, !holdsInk, let box = inkMenuRect() else { return }
+        let area = readableArea
+        session.inkMenu = InkMenu(rect: box.isNull ? CGRect(x: area.midX, y: area.midY, width: 0, height: 0) : box)
     }
 
     /// Held near the top or the foot of the pages, ink scrolls them.
@@ -2628,6 +2668,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         guard let overlay = inkLasso, bakedScale > 0 else { return }
         switch gesture.state {
         case .began:
+            settleInkTrial()
             let down = gesture.start(in: contentView), start = CGPoint(x: down.x / bakedScale, y: down.y / bakedScale)
             guard !holdsInk, let handle = overlay.handle(at: start), let box = overlay.selectionBox else { return }
             // As writing does, shaping ink puts a selected picture down.
@@ -2668,6 +2709,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     /// A step on one of the box's handles from an assistive technology, as one undo step.
     private func stepInk(_ handle: InkHandle, up: Bool) {
+        settleInkTrial()
         guard !holdsInk, !document.isReadOnly, let box = inkLasso?.selectionBox else { return }
         let change = box.change(stepping: handle, up: up, most: longestInkSide(for: box))
         guard !box.isLeftAlone(by: change) else { return }
@@ -2702,6 +2744,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     /// Selects the ink inside an outline given in the page stack's points, as if a lasso had been drawn there.
     func catchInk(inside outline: [CGPoint]) {
         guard inkLasso != nil, outline.count >= 3 else { return }
+        settleInkTrial()
         var caught: InkSelection = [:]
         let box = ShapeRecognizer.bounds(of: outline)
         for (id, frame) in stackFrames where frame.intersects(box) {
@@ -2766,15 +2809,244 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         let done = document.updateInk(changed.drawings, actionName: actionName)
         isMovingInk = false
         inkLasso?.drop()
-        if done { setInkSelection(changed.selection, turn: turn) } else { restoreLiftedInk() }
+        // Ink that was only moved, or copied as it is, looks as it did.
+        let moved = change.a == 1 && change.b == 0 && change.c == 0 && change.d == 1
+        if done { setInkSelection(changed.selection, turn: turn, sameLook: moved) } else { restoreLiftedInk() }
     }
 
     func duplicateInkSelection() {
+        settleInkTrial()
         moveInkSelection(by: CGSize(width: 18, height: 18), copying: true)
     }
 
     func deleteInkSelection() {
+        settleInkTrial()
         removeInkSelection(actionName: String(localized: "Delete Ink"))
+    }
+
+    // MARK: The look of caught ink
+
+    /// What is shown on caught ink without being saved: a line, or a colour.
+    private enum InkTry: Equatable {
+        case line(InkLine)
+        case tint(UInt32)
+
+        var isLine: Bool {
+            if case .line = self { true } else { false }
+        }
+    }
+
+    /// A trial: the newest line or colour asked for, the one the pages show with their ink as it then is, and what
+    /// is still being worked out or drawn.
+    private struct InkTrial {
+        let id: Int
+        var tried: InkTry
+        var shown: InkTry?
+        var pages: [UUID: PKDrawing] = [:]
+        var isWorking = false
+        /// The canvases still drawing what they were last given. The next try waits for them.
+        var rendering: Set<ObjectIdentifier> = []
+        /// Whether highlighter, and whether other ink, is caught on each page: which of its two canvases will draw.
+        var marks: [UUID: Set<Bool>] = [:]
+    }
+
+    /// How long a canvas is waited for before the next try is put on it regardless, in seconds.
+    private static let inkTrialPatience = 0.25
+
+    /// Whether what is caught can be given another colour or line just now.
+    private var canRestyleInk: Bool { !document.isReadOnly && !inkSelection.isEmpty && !holdsInk }
+
+    /// The pages holding what is caught, as the document has them.
+    private func inkUnderSelection() -> [UUID: PKDrawing] {
+        var result: [UUID: PKDrawing] = [:]
+        for id in inkSelection.keys { result[id] = document.loadedInk(id) }
+        return result
+    }
+
+    /// Keeps the caught pages as the document now has them, and tells the editor how what is caught looks.
+    private func noteCaughtInk(sameLook: Bool = false) {
+        caughtPages = inkUnderSelection()
+        guard !sameLook else { return }
+        let strokes = pages.flatMap { page -> [PKStroke] in
+            guard let indices = inkSelection[page.id], let all = caughtPages[page.id]?.strokes else { return [] }
+            return indices.compactMap { all.indices.contains($0) ? all[$0] : nil }
+        }
+        let look = InkRestyle.look(of: strokes)
+        if session.inkLook != look { session.inkLook = look }
+    }
+
+    /// All of what is caught has one colour now; its lines are as they were.
+    private func noteTint(_ tint: UInt32) {
+        guard var look = session.inkLook, look.tints != [tint] else { return }
+        look.tints = [tint]
+        session.inkLook = look
+    }
+
+    /// Puts caught ink down looking different, as one undo step. No stroke changes its place.
+    private func restyleInk(_ restyled: [UUID: PKDrawing], actionName: String) -> Bool {
+        guard !restyled.isEmpty else { return false }
+        isMovingInk = true
+        let done = document.updateInk(restyled, actionName: actionName)
+        isMovingInk = false
+        return done
+    }
+
+    /// The pages on which a colour changes a caught stroke.
+    private nonisolated static func tinted(_ selection: InkSelection, _ tint: UInt32, in ink: [UUID: PKDrawing]) -> [UUID: PKDrawing] {
+        InkRestyle.tinted(selection, tint, in: ink).filter { page, _ in
+            guard let was = ink[page]?.strokes else { return false }
+            return (selection[page] ?? []).contains { was.indices.contains($0) && ToolPreset.bytes(of: was[$0].ink.color) | 0xFF != tint }
+        }
+    }
+
+    /// The caught ink's pages as a trial shows them, every one of them, reckoned from the ink as the document has it.
+    private nonisolated static func pages(trying tried: InkTry, on selection: InkSelection, in ink: [UUID: PKDrawing]) -> [UUID: PKDrawing] {
+        switch tried {
+        case .line(let line): InkRestyle.lined(selection, line, in: ink)
+        case .tint(let tint): ink.merging(tinted(selection, tint, in: ink)) { $1 }
+        }
+    }
+
+    /// A colour being tried is settled first; a line being tried goes on over the new colour.
+    func tintInkSelection(_ tint: UInt32) {
+        guard canRestyleInk else { return }
+        settleInkTint()
+        let tint = tint | 0xFF
+        guard restyleInk(Self.tinted(inkSelection, tint, in: inkUnderSelection()), actionName: String(localized: "Change Ink Colour")) else { return }
+        heldLoop = nil
+        noteCaughtInk(sameLook: true)
+        noteTint(tint)
+        if let tried = inkTrial?.tried {
+            inkTrial = nil
+            tryInk(tried)
+        }
+        AccessibilityNotification.Announcement(String(localized: "Ink colour changed")).post()
+    }
+
+    func tryInkLine(_ line: InkLine) { tryInk(.line(line)) }
+
+    func tryInkTint(_ tint: UInt32) { tryInk(.tint(tint | 0xFF)) }
+
+    func settleInkLine() {
+        if inkTrial?.tried.isLine == true { settleInkTrial() }
+    }
+
+    func settleInkTint() {
+        if inkTrial?.tried.isLine == false { settleInkTrial() }
+    }
+
+    /// A line and a colour are not tried together: the one that was showing is settled before the other is tried.
+    private func tryInk(_ tried: InkTry) {
+        guard canRestyleInk else { return }
+        if let trial = inkTrial, trial.tried.isLine != tried.isLine { settleInkTrial() }
+        if inkTrial == nil {
+            inkTrialCount += 1
+            inkTrial = InkTrial(id: inkTrialCount, tried: tried)
+        }
+        inkTrial?.tried = tried
+        showTriedInk()
+    }
+
+    /// Puts the newest try on the pages once they have drawn the last: PencilKit draws every drawing it is given,
+    /// one after another. A large catch is worked out off the main thread, so what slides stays smooth.
+    private func showTriedInk() {
+        guard let trial = inkTrial, !trial.isWorking, trial.rendering.isEmpty, trial.shown != trial.tried else { return }
+        let tried = trial.tried, id = trial.id, selection = inkSelection, ink = inkUnderSelection(), turn = inkTurn, frames = stackFrames
+        guard session.inkSelectionCount > inkTrialAtOnce else {
+            let pages = Self.pages(trying: tried, on: selection, in: ink)
+            return show(pages, in: InkLasso.box(of: selection, turn: turn, drawings: pages, frames: frames), trying: tried, for: id)
+        }
+        inkTrial?.isWorking = true
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let pages = PageStackController.pages(trying: tried, on: selection, in: ink)
+            let box = InkLasso.box(of: selection, turn: turn, drawings: pages, frames: frames)
+            await self?.show(pages, in: box, trying: tried, for: id)
+        }
+    }
+
+    /// Shows the caught ink as worked out for a trial, in the box that goes round it, unless that trial is over.
+    private func show(_ pages: [UUID: PKDrawing], in box: InkBox?, trying tried: InkTry, for id: Int) {
+        guard var trial = inkTrial, trial.id == id else { return }
+        trial.isWorking = false
+        trial.shown = tried
+        trial.pages = pages
+        for (page, ink) in pages {
+            // A canvas that shows this already is given nothing to draw, so there is nothing of its to wait for.
+            guard let canvas = canvases[page], canvas.isLoaded, let indices = inkSelection[page], Self.inkDiffers(canvas.ink, ink, at: indices) else { continue }
+            applyingDrawing {
+                canvas.ink = ink
+                canvas.strokeCount = nil
+            }
+            // The highlighter's canvas draws only if highlighter was caught, and the page's own only if other ink was.
+            let strokes = ink.strokes
+            let marks = trial.marks[page] ?? Set(indices.compactMap { strokes.indices.contains($0) ? strokes[$0].ink.inkType == .marker : nil })
+            trial.marks[page] = marks
+            for layer in canvas.both where layer.window != nil && layer.drawing.strokes.contains(where: { marks.contains($0.ink.inkType == .marker) }) {
+                trial.rendering.insert(ObjectIdentifier(layer))
+            }
+        }
+        inkTrial = trial
+        inkLasso?.showSelection(box)
+        guard !trial.rendering.isEmpty else { return showTriedInk() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.inkTrialPatience) { [weak self] in
+            guard let self, inkTrial?.id == id, inkTrial?.shown == tried, inkTrial?.rendering.isEmpty == false else { return }
+            inkTrial?.rendering = []
+            showTriedInk()
+        }
+    }
+
+    /// A page's ink as a trial shows it, for a canvas made or shown again meanwhile. The zoom window shows what is saved.
+    private func asTried(_ ink: PKDrawing, on pageID: UUID?) -> PKDrawing {
+        guard let trial = inkTrial, trial.shown != nil, let pageID else { return ink }
+        return trial.pages[pageID] ?? ink
+    }
+
+    /// Puts what is being tried down as one undo step, if it changes anything. No step is taken on while an undo
+    /// is being carried out: the trial is let go instead.
+    private func settleInkTrial() {
+        guard let trial = inkTrial else { return }
+        guard canRestyleInk, !document.undoManager.isUndoing, !document.undoManager.isRedoing else { return dropInkTrial() }
+        let ink = inkUnderSelection(), tried = trial.tried
+        let pages = (trial.shown == tried ? trial.pages : Self.pages(trying: tried, on: inkSelection, in: ink)).filter { page, shown in
+            ink[page].map { Self.inkDiffers($0, shown, at: inkSelection[page] ?? []) } ?? false
+        }
+        guard !pages.isEmpty else { return dropInkTrial() }
+        inkTrial = nil
+        let done = restyleInk(pages, actionName: tried.isLine ? String(localized: "Change Ink Width") : String(localized: "Change Ink Colour"))
+        // A page the try left as it was may still show an earlier one.
+        showSavedInk(onPages: inkSelection.keys.filter { !done || pages[$0] == nil })
+        setInkSelection(inkSelection, turn: inkTurn, sameLook: done && !tried.isLine)
+        guard done else { return }
+        if case .tint(let tint) = tried { noteTint(tint) }
+        AccessibilityNotification.Announcement(tried.isLine ? String(localized: "Ink width changed") : String(localized: "Ink colour changed")).post()
+    }
+
+    @objc private func settleTriedInk() { settleInkTrial() }
+
+    /// Ends a trial with nothing saved: the pages show their ink as the document holds it.
+    private func dropInkTrial() {
+        guard inkTrial != nil else { return }
+        inkTrial = nil
+        showSavedInk(onPages: Array(inkSelection.keys))
+        inkLasso?.showSelection(InkLasso.box(of: inkSelection, turn: inkTurn, drawings: inkUnderSelection(), frames: stackFrames))
+    }
+
+    private func showSavedInk(onPages ids: [UUID]) {
+        for id in ids {
+            if let canvas = canvases[id], canvas.isLoaded, let ink = document.loadedInk(id) { show(ink, in: canvas) }
+        }
+    }
+
+    /// Whether any of the strokes at `indices` looks different in the two drawings: a restyle changes a stroke's
+    /// colour or the sizes of its points, and nothing else of it.
+    private static func inkDiffers(_ one: PKDrawing, _ other: PKDrawing, at indices: [Int]) -> Bool {
+        let was = one.strokes, now = other.strokes
+        guard was.count == now.count else { return true }
+        return indices.contains { index in
+            guard was.indices.contains(index) else { return false }
+            let before = was[index].path, after = now[index].path
+            return was[index].ink.color != now[index].ink.color || before.count != after.count || zip(before, after).contains { $0.size != $1.size }
+        }
     }
 
     private func removeInkSelection(actionName: String) {
@@ -2803,12 +3075,14 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     }
 
     func copyInkSelection() {
+        settleInkTrial()
         guard let ink = caughtInk() else { return }
         InkClipboard.copy(ink)
         AccessibilityNotification.Announcement(String(localized: "Copied")).post()
     }
 
     func cutInkSelection() {
+        settleInkTrial()
         guard !document.isReadOnly, let ink = caughtInk() else { return }
         InkClipboard.copy(ink)
         removeInkSelection(actionName: String(localized: "Cut Ink"))
@@ -2858,7 +3132,9 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     /// step. It is caught at once, with the lasso taken up if it wasn't in hand, so it can be moved to its place.
     @discardableResult
     func pasteInk(at point: CGPoint? = nil) -> Bool {
-        guard let target = pasteTarget(at: point), let pasted = InkClipboard.ink(), let ink = document.loadedInk(target.pageID) else { return false }
+        guard let target = pasteTarget(at: point), let pasted = InkClipboard.ink() else { return false }
+        settleInkTrial()
+        guard let ink = document.loadedInk(target.pageID) else { return false }
         let frame = layout.frames[target.index]
         let center = point.map { CGPoint(x: $0.x - frame.minX, y: $0.y - frame.minY) } ?? visibleCenter(ofPage: target.index) ?? CGPoint(x: frame.width / 2, y: frame.height / 2)
         let strokes = ink.strokes + InkClipboard.placed(pasted, at: center, onPageOf: frame.size)
@@ -2889,6 +3165,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     /// Takes the selected ink off its pages and types `text` where the first of it was, as one undo step.
     func replaceInkSelection(with text: String) -> ItemSelection? {
+        settleInkTrial()
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, let page = pages.first(where: { inkSelection[$0.id]?.isEmpty == false }),
               let bounds = selectedInk().first?.bounds, !bounds.isNull else { return nil }

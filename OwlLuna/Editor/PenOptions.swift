@@ -126,7 +126,7 @@ struct PenOptions: View {
 }
 
 /// A colour mixed on two strips: its hue on one, and on the other how far it is let down to white or deepened to black.
-private struct InkMixer: View {
+struct InkMixer: View {
     let mix: (UIColor) -> Void
     @State private var hue: Double
     @State private var shade: Double

@@ -28,6 +28,18 @@ protocol EditorCanvasControlling: AnyObject {
     func clearInkSelection()
     func keepHeldLoop()
     func duplicateInkSelection()
+    /// Gives the caught ink a colour, as one undo step. Each stroke stays as faint as it was.
+    func tintInkSelection(_ tint: UInt32)
+    /// Shows the caught ink with its lines changed from how they were when the change began. Nothing is saved until it is settled.
+    func tryInkLine(_ line: InkLine)
+    /// Puts the line that was tried down as one undo step.
+    func settleInkLine()
+    /// Shows the caught ink in a colour, each stroke as faint as it was. Nothing is saved until it is settled.
+    func tryInkTint(_ tint: UInt32)
+    /// Puts the colour that was tried down as one undo step.
+    func settleInkTint()
+    /// Opens the card on the caught ink, as a tap on it does.
+    func showInkMenu()
     func deleteInkSelection()
     func copyInkSelection()
     func cutInkSelection()
@@ -114,6 +126,8 @@ final class EditorSession {
     private(set) var mode = EditorMode.writing
     /// How many strokes the lasso has caught, with the tray's lasso in hand or while selecting ink.
     var inkSelectionCount = 0
+    /// The colours and line widths of what the lasso has caught. The canvas keeps it; nil with nothing caught.
+    var inkLook: InkLook?
     /// The card open on the page for ink, on what is caught or where bare paper was tapped. The canvas opens it.
     var inkMenu: InkMenu?
     /// Whether the round loop that started the selection can still be kept as the circle it reads as.
