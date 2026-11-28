@@ -145,10 +145,10 @@ private struct FavoriteFlagBehind: ViewModifier {
 extension NotebookRecord {
     @MainActor
     func coverRequest(width: CGFloat, scale: CGFloat, colorScheme: ColorScheme, contrast: ColorSchemeContrast, root: StorageRoot,
-                      spec: CoverSpec? = nil) -> CoverRequest {
+                      spec: CoverSpec? = nil, even: Bool = EvenHighlights.isOn) -> CoverRequest {
         let spec = spec ?? cover
         let package = NotebookPackage(root: root, id: id)
-        let thumbKey = firstPageThumbKey ?? "none"
+        let thumbKey = (firstPageThumbKey ?? "none") + (even ? PageThumbnailer.evenSuffix : "")
         let thumb = firstPageID.map { package.thumbURL($0, key: thumbKey) }
         return CoverRequest(notebookID: id, spec: spec, title: title.orUntitled,
                             meta: folder?.name ?? createdAt.formatted(.dateTime.month(.abbreviated).year()), width: width, scale: scale,

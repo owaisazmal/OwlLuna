@@ -220,6 +220,7 @@ struct SavedPageThumbnail: View {
     let page: NotebookPage
     @State private var image: UIImage?
     @PaperNight private var night
+    @AppStorage(SettingsKey.evenHighlights) private var evenHighlights = false
 
     var body: some View {
         Group {
@@ -231,7 +232,7 @@ struct SavedPageThumbnail: View {
         }
         .aspectRatio(page.size.width / max(page.size.height, 1), contentMode: .fit)
         .overlay { Rectangle().strokeBorder(Color.hairline, lineWidth: 1) }
-        .task(id: "\(page.id)-\(page.thumbnailKey)-\(night)") { image = await PageThumbnailer.thumbnail(package: package, page: page, night: night) }
+        .task(id: "\(page.id)-\(page.thumbnailKey)-\(night)-\(evenHighlights)") { image = await PageThumbnailer.thumbnail(package: package, page: page, night: night) }
     }
 }
 

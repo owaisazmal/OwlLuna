@@ -125,6 +125,7 @@ private struct PresenterThumbnail: View {
     let document: NotebookDocument
     let page: NotebookPage
     @State private var image: UIImage?
+    @AppStorage(SettingsKey.evenHighlights) private var evenHighlights = false
 
     var body: some View {
         Group {
@@ -136,7 +137,7 @@ private struct PresenterThumbnail: View {
         }
         .aspectRatio(page.shownSize.width / max(page.shownSize.height, 1), contentMode: .fit)
         .overlay { Rectangle().strokeBorder(Color.hairline, lineWidth: 1) }
-        .task(id: "\(page.id)-\(page.inkHash ?? "")-\(page.appearanceKey)") { image = await document.thumbnail(for: page) }
+        .task(id: "\(page.id)-\(page.inkHash ?? "")-\(page.appearanceKey)-\(evenHighlights)") { image = await document.thumbnail(for: page) }
     }
 }
 

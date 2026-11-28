@@ -108,6 +108,7 @@ final class ExportJob: Identifiable {
     func start() {
         guard state == .choosing else { return }
         if choosesPages { inputs = [inputs[0].narrowed(to: range)] }
+        options.evenHighlights = EvenHighlights.isOn
         state = .running
         run()
     }
@@ -132,7 +133,7 @@ final class ExportJob: Identifiable {
                         case .pdf: urls.append(try await NotebookExporter.export(input, options: options, progress: progress))
                         case .images: urls += try await NotebookExporter.exportImages(input, options: options, progress: progress)
                         case .svg: urls += try await NotebookExporter.exportSVG(input, options: options, progress: progress)
-                        case .timelapse: urls.append(try await InkTimelapse.export(input, progress: progress))
+                        case .timelapse: urls.append(try await InkTimelapse.export(input, evenHighlights: options.evenHighlights, progress: progress))
                         case .text: urls.append(try await NotebookExporter.exportText(input, markdown: options.markdown, progress: progress))
                         }
                     }

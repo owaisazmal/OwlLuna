@@ -175,6 +175,19 @@ To finish, compare the two libraries notebook by notebook.
 
 Expect: each kind looks like its picture in the roll and marks even at the thinnest Width. Low opacity is fainter, never darker. Ink keeps up with the tip, doesn't change on lift, and is sharp at 5×. Swatches match the ink in light, dark and on Chalkboard. The calligraphy pen only appears on iPadOS 26. Whole Strokes takes exactly the strokes touched, Part of a Stroke cuts only under the width shown, one Undo restores one rub, and erasing never scrolls. Print under a highlight stays as dark as beside it, also while the stroke is drawn, and a highlight is always under the pens' ink. Nothing blinks or changes shade when the tool changes. Highlighter Only takes highlighter and leaves the writing. After coming back, every pen is in its own slot and no pen is left highlighted.
 
+## Even Colour
+
+Use a notebook with a ruled page, an imported PDF page and a Chalkboard page. Do the whole check in Light, then steps 2 and 3 with Settings › Appearance › Dark.
+
+1. Open the highlighter's options and turn on Even Colour. Close and reopen the card, then leave the notebook and come back. Open a pen's options.
+2. On each page, with an Apple Pencil and then a finger: highlight a line of print, cross it twice with the same highlighter, then with another colour and with a broader highlighter, and scribble back and forth over one spot. Then draw twenty short highlights as fast as you can, each across the last.
+3. Rub across the highlights with Eraser › Part of a Stroke, slowly and with pauses, then with Whole Strokes, undoing and redoing each rub. Catch highlights with the lasso and move, recolour and delete them.
+4. Zoom to 5× and scroll with highlights on screen. Open the zoom window and highlight in it.
+5. Turn Even Colour off and on with highlights on screen.
+6. With it on, look at the page in the page list and on the notebook's cover, and export it as PDF, Image, SVG and Time-lapse.
+
+Expect: the switch is off at first, stays as it was left, and only the highlighter's card shows it. With it on, lines from one highlighter show no crossing, a later colour covers an earlier one, and print under a highlight stays as dark as beside it. On Chalkboard and in Dark the highlights have the colours they have with the switch off. While a stroke is drawn, a crossing with an older highlight is darker and evens out when the tip lifts, with no blink, and no stroke is lost however fast they follow. What an eraser takes goes as it passes and stays gone when it lifts, and one Undo restores one rub. Turning the switch changes the page at once, without a flash and without the notebook counting as changed. The page list, the cover and every export match the page.
+
 ## Lasso
 
 The simulator has no Pencil, so only fingers have tried the lasso.

@@ -131,6 +131,8 @@ enum SettingsKey {
     static let toolPresets = "toolPresets"
     static let toolPresetsChangedAt = "toolPresetsChangedAt"
     static let snapsHighlighter = "snapsHighlighter"
+    /// Highlights keep one strength where they cross.
+    static let evenHighlights = "evenHighlights"
     static let highlightColor = "highlightColor"
     static let toolbox = "toolbox"
     static let appearance = "appearance"

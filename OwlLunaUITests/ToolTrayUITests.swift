@@ -51,6 +51,23 @@ final class ToolTrayUITests: XCTestCase {
                 canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.1)).tap()
                 XCTAssertTrue(element.waitForNonExistence(timeout: 5))
             }
+            // An element's own swipe finds no visible frame in a popover on a screen on its side; the window's points do.
+            let window = app.windows.firstMatch
+            func scrollUp(from element: XCUIElement) {
+                let x = element.frame.midX / window.frame.width
+                window.coordinate(withNormalizedOffset: CGVector(dx: x, dy: element.frame.midY / window.frame.height))
+                    .press(forDuration: 0.05, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: x, dy: 0.04)))
+            }
+            // Options that don't fit scroll; they are dragged from the roll, then from the switch, never from a bar.
+            func reachEnd(of last: XCUIElement) -> Bool {
+                for _ in 0..<4 where last.exists && !last.isHittable {
+                    if app.element("editor.tools.pen.kind").isHittable { scrollUp(from: app.element("editor.tools.pen.kind")) }
+                    else if app.switches["editor.tools.pen.even"].isHittable { scrollUp(from: app.switches["editor.tools.pen.even"]) }
+                    else { break }
+                    sleep(1)
+                }
+                return last.isHittable
+            }
             attach(app, "\(mode.name)-tray")
             // The iPadOS 27 simulator can ignore the switch; the app's own setting holds, and this says so if it ever doesn't.
             XCTAssertEqual(isDark(app.screenshot()), mode.appearance == .dark, "the desk is \(mode.name == "dark" ? "dark" : "light")")
@@ -63,6 +80,12 @@ final class ToolTrayUITests: XCTestCase {
             app.buttons["Fountain Pen"].tap()
             attach(app, "\(mode.name)-pen-options")
             try audit(app, mode.checks, screen: "\(mode.name) pen options", popover: true, largeText: large)
+            // The highlighter's options are the tallest: they hold the Even Colour switch as well.
+            app.buttons["Highlighter"].tap()
+            XCTAssertTrue(app.switches["editor.tools.pen.even"].waitForExistence(timeout: 5))
+            XCTAssertTrue(reachEnd(of: remove), "the highlighter's options reach their last row")
+            attach(app, "\(mode.name)-highlighter-options")
+            try audit(app, mode.checks, screen: "\(mode.name) highlighter options", popover: true, largeText: large)
             close(remove)
 
             eraser.tap()
@@ -96,22 +119,13 @@ final class ToolTrayUITests: XCTestCase {
             if mode.name == "largest" {
                 XCUIDevice.shared.orientation = .landscapeLeft
                 defer { XCUIDevice.shared.orientation = .portrait }
-                let window = app.windows.firstMatch
                 wait(for: [expectation(for: NSPredicate { _, _ in window.frame.width > window.frame.height }, evaluatedWith: nil)], timeout: 10)
                 sleep(2)
                 black.tap()
                 black.tap()
                 XCTAssertTrue(remove.waitForExistence(timeout: 5))
                 sleep(2)
-                // An element's own swipe finds no visible frame in a popover on a screen on its side; the window's points do.
-                func scrollUp(from element: XCUIElement) {
-                    let x = element.frame.midX / window.frame.width
-                    window.coordinate(withNormalizedOffset: CGVector(dx: x, dy: element.frame.midY / window.frame.height))
-                        .press(forDuration: 0.05, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: x, dy: 0.04)))
-                }
-                if remove.exists, !remove.isHittable { scrollUp(from: app.element("editor.tools.pen.kind")) }
-                sleep(2)
-                XCTAssertTrue(remove.isHittable, "the end of the options is reached on a screen on its side")
+                XCTAssertTrue(reachEnd(of: remove), "the end of the options is reached on a screen on its side")
                 try audit(app, mode.checks, screen: "largest pen options on its side", popover: true, largeText: true)
                 close(remove)
                 app.buttons["editor.tools.customise"].tap()
@@ -209,6 +223,56 @@ final class ToolTrayUITests: XCTestCase {
         XCTAssertEqual(strokeCount(canvas), 3, "what Undo gave back is not read again")
         typing.tap()
         XCTAssertFalse(typing.isSelected)
+    }
+
+    /// The highlighter's options hold one switch, Even Colour, for every highlighter; no other pen's options show it.
+    func testTheHighlightersOptionsHoldTheEvenColourSwitch() throws {
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication()
+        app.launchArguments = ["-storageRoot", "tools", "-resetStorage", "-seedLibrary", "3", "-drawingInput", "anyInput", "-freshToolPresets"]
+        app.launch()
+        let notebook = app.buttons["notebook.Studio Notes 2"]
+        XCTAssertTrue(notebook.waitForExistence(timeout: 30))
+        notebook.tap()
+        let black = app.buttons["editor.tools.1"], highlighter = app.buttons["editor.tools.4"]
+        XCTAssertTrue(highlighter.waitForExistence(timeout: 20))
+        let canvas = app.element("page.canvas.1"), even = app.switches["editor.tools.pen.even"], remove = app.buttons["editor.tools.pen.remove"]
+        func close(_ element: XCUIElement) {
+            canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.1)).tap()
+            XCTAssertTrue(element.waitForNonExistence(timeout: 5))
+        }
+
+        highlighter.tap()
+        waitUntilSelected(highlighter)
+        highlighter.tap()
+        XCTAssertTrue(even.waitForExistence(timeout: 5), "the highlighter's options hold the switch")
+        XCTAssertTrue(even.label.hasPrefix("Even Colour"), even.label)
+        XCTAssertEqual(even.value as? String, "0", "it starts off")
+        XCTAssertTrue(remove.isHittable, "and the last row is still within reach")
+        even.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        XCTAssertEqual(even.value as? String, "1")
+        attach(app, "highlighter-even-colour")
+        try audit(app, screen: "highlighter options", popover: true)
+
+        // It is one setting, not the highlighter's own: it stays on when the options are closed and opened again.
+        close(even)
+        highlighter.tap()
+        XCTAssertTrue(even.waitForExistence(timeout: 5))
+        XCTAssertEqual(even.value as? String, "1")
+
+        // It comes and goes with the kind chosen on the roll, and keeps its place.
+        app.buttons["Pen"].tap()
+        XCTAssertTrue(even.waitForNonExistence(timeout: 5), "a pen's options have no such switch")
+        app.buttons["Highlighter"].tap()
+        XCTAssertTrue(even.waitForExistence(timeout: 5))
+        XCTAssertEqual(even.value as? String, "1")
+        close(even)
+
+        black.tap()
+        waitUntilSelected(black)
+        black.tap()
+        XCTAssertTrue(remove.waitForExistence(timeout: 5))
+        XCTAssertFalse(even.exists, "a pen's options have no such switch")
     }
 
     /// A squeeze of the Pencil brings the ink dish to its tip; a UI test taps with two fingers instead.

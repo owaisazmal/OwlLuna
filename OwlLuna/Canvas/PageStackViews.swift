@@ -27,9 +27,29 @@ final class PageCanvasView: PKCanvasView {
     private var isLaying = false
     /// The canvas that is drawing ink a tool change moved to it. Until it has, the other goes on showing that ink.
     private weak var awaited: PageCanvasView?
+    /// The highlights as flat shapes, under the highlighter's canvas, while they are kept even.
+    private(set) var wash: HighlightWashView?
+    /// Whether highlights keep one strength where they cross. The wash then shows the highlighter's ink and the ground
+    /// holds it out of sight, in ink that draws nothing once it has been laid there; `ink` gives every stroke back as
+    /// it was written.
+    var evens = false {
+        didSet { if evens != oldValue { turnEven() } }
+    }
+    /// `evens` was changed and the page is not yet shown the new way: turned on, the ground goes on showing the
+    /// highlights until the wash has them worked out, and turned off, the wash does until the ground has drawn them.
+    private var turning: Turning?
+    /// Where on the page the eraser last was, while the wash mirrors it.
+    private var rubbed: CGPoint?
+    /// What the strokes the ground still draws itself cover of the page, and a little round them, in patches that
+    /// don't touch one another, with how many strokes the ground held when that was so.
+    private var covered: (count: Int, patches: [(box: CGRect, path: CGPath)])?
+    /// The veil's shape for those patches at the ground's scale, kept from one stroke to the next.
+    private var seen: (scale: CGFloat, path: CGMutablePath)?
+    private let trail = TouchTrail()
 
     /// Where a page's ink lies: the highlighter's under and the rest over, or all of it on one of the two canvases.
     private enum InkLay { case apart, under, over }
+    private enum Turning { case on, off }
 
     override var undoManager: UndoManager? { undoProxy ?? super.undoManager }
 
@@ -64,6 +84,8 @@ final class PageCanvasView: PKCanvasView {
         under.sheet = self
         under.isAccessibilityElement = false
         under.accessibilityElementsHidden = true
+        under.drawingGestureRecognizer.addTarget(self, action: #selector(groundTouched))
+        under.addGestureRecognizer(trail)
         ground = under
         tint(under)
         if let superview { superview.insertSubview(under, belowSubview: self) }
@@ -72,7 +94,13 @@ final class PageCanvasView: PKCanvasView {
     private func tint(_ under: PageCanvasView) {
         under.overrideUserInterfaceStyle = overrideUserInterfaceStyle
         under.layer.compositingFilter = overrideUserInterfaceStyle == .dark ? nil : "multiplyBlendMode"
+        guard let wash, wash.onDark != (overrideUserInterfaceStyle == .dark) else { return }
+        wash.onDark = overrideUserInterfaceStyle == .dark
+        if hides { wash.show(ink.strokes) }
     }
+
+    /// The lowest of the views that show this page's ink. What lies under the ink goes below it.
+    var lowest: UIView { wash ?? ground ?? self }
 
     override var overrideUserInterfaceStyle: UIUserInterfaceStyle {
         didSet { if let ground { tint(ground) } }
@@ -86,6 +114,8 @@ final class PageCanvasView: PKCanvasView {
         super.didMoveToSuperview()
         guard let ground else { return }
         if let superview { superview.insertSubview(ground, belowSubview: self) } else { ground.removeFromSuperview() }
+        guard let wash else { return }
+        if let superview { superview.insertSubview(wash, belowSubview: ground) } else { wash.removeFromSuperview() }
     }
 
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
@@ -106,6 +136,7 @@ final class PageCanvasView: PKCanvasView {
             if canvas.contentSize != content { canvas.contentSize = content }
             if canvas.contentOffset != offset { canvas.contentOffset = offset }
         }
+        wash?.place(frame: frame, offset: offset, scale: scale)
     }
 
     /// Takes the tool in hand. The highlighter draws on the canvas under this one and the eraser rubs there: at the
@@ -121,6 +152,7 @@ final class PageCanvasView: PKCanvasView {
         let ink = ink
         self.lay = lay
         put(ink, handingOver: true)
+        veilAtRest()
     }
 
     var rulerIsOut: Bool { both.contains { $0.isRulerActive } }
@@ -133,8 +165,8 @@ final class PageCanvasView: PKCanvasView {
         get {
             guard let ground else { return drawing }
             if let whole { return whole }
-            var merged = lay == .under ? ground.drawing : drawing
-            let under = lay == .apart ? ground.drawing.strokes : []
+            var merged = lay == .under ? UnseenInk.shown(ground.drawing) : drawing
+            let under = lay == .apart ? UnseenInk.shown(ground.drawing).strokes : []
             if !under.isEmpty {
                 let over = drawing.strokes
                 var strokes: [PKStroke] = []
@@ -148,7 +180,7 @@ final class PageCanvasView: PKCanvasView {
                         o += 1
                     }
                 }
-                merged = over.isEmpty ? ground.drawing : PKDrawing(strokes: strokes + over[o...] + under[u...])
+                merged = over.isEmpty ? UnseenInk.shown(ground.drawing) : PKDrawing(strokes: strokes + over[o...] + under[u...])
             }
             marks = merged.strokes.map { $0.ink.inkType == .marker }
             whole = merged
@@ -173,15 +205,27 @@ final class PageCanvasView: PKCanvasView {
             under = PKDrawing(strokes: zip(strokes, marks).filter { $0.1 }.map(\.0))
             over = PKDrawing(strokes: zip(strokes, marks).filter { !$0.1 }.map(\.0))
         }
+        if hides, marks.contains(true) { under = PKDrawing(strokes: under.strokes.map(UnseenInk.hidden)) }
+        // PencilKit keeps the picture of a stroke it knows, so a ground that still draws a highlight itself is emptied first.
+        let afresh = hides && ground.drawing.strokes.contains(where: draws)
+        covered = hides ? (count: under.strokes.count, patches: []) : nil
+        seen = nil
         awaited = nil
         isLaying = true
         for (canvas, laid) in [(ground, under), (self, over)] where canvas.drawing != laid {
             if handingOver, laid.strokes.count < canvas.drawing.strokes.count { continue }
+            if afresh, canvas === ground { canvas.drawing = PKDrawing() }
             canvas.drawing = laid
             if handingOver { awaited = canvas }
         }
         isLaying = false
         whole = ink
+        if !handingOver || awaited == nil {
+            CATransaction.withoutActions {
+                layWash(strokes)
+                veilAtRest()
+            }
+        }
         guard handingOver else { return }
         guard let awaited else { return settle() }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self, weak awaited] in
@@ -200,10 +244,15 @@ final class PageCanvasView: PKCanvasView {
             if kept.count != strokes.count { canvas.drawing = PKDrawing(strokes: kept) }
         }
         isLaying = false
+        CATransaction.withoutActions {
+            layWash(ink.strokes)
+            veilAtRest()
+        }
     }
 
     func didFinishRendering(_ canvas: PageCanvasView) {
         if awaited === canvas { settle() }
+        if turning == .off, canvas === ground { finishTurningOff() }
     }
 
     /// The ink on one of the two canvases changed. Returns whether PencilKit changed it, and not this canvas laying it.
@@ -211,7 +260,210 @@ final class PageCanvasView: PKCanvasView {
         guard !isLaying else { return false }
         if awaited != nil { settle() }
         whole = nil
+        if hides { land() }
         return true
+    }
+
+    // MARK: Even highlights
+
+    /// Whether the highlighter's strokes on the ground are in unseen ink. PencilKit's own lasso needs them as they are.
+    private var hides: Bool { evens && turning != .on && lay != .over && ground != nil }
+
+    private func layWash(_ strokes: [PKStroke]) {
+        guard hides else {
+            if turning == nil { clearWash() }
+            return
+        }
+        guard let wash = wash ?? makeWash() else { return }
+        wash.isHidden = false
+        wash.show(strokes)
+    }
+
+    private func makeWash() -> HighlightWashView? {
+        guard let ground else { return nil }
+        let made = HighlightWashView(frame: ground.frame)
+        made.onDark = overrideUserInterfaceStyle == .dark
+        made.place(frame: ground.frame, offset: ground.contentOffset, scale: ground.zoomScale)
+        ground.superview?.insertSubview(made, belowSubview: ground)
+        wash = made
+        return made
+    }
+
+    private func clearWash() {
+        wash?.show([])
+        wash?.isHidden = true
+    }
+
+    /// Whether the ground draws a highlighter stroke itself: one the highlighter has drawn since ink was last laid.
+    private func draws(_ stroke: PKStroke) -> Bool {
+        stroke.ink.inkType == .marker && !UnseenInk.isUnseen(stroke) && stroke.ink.color.cgColor.alpha > 0
+    }
+
+    /// At rest the ground shows nothing of its own while the wash shows the highlights, whatever PencilKit has in its
+    /// tiles. Ink moved to it by a tool change is seen once it has drawn it.
+    private func veilAtRest() {
+        guard let ground else { return }
+        let veiled = turning == .off || (hides && (lay == .apart ? awaited == nil : awaited === ground))
+        if !veiled {
+            ground.layer.mask = nil
+        } else if ground.layer.mask == nil || ground.layer.mask is CAShapeLayer {
+            ground.layer.mask = CALayer()
+        }
+    }
+
+    /// While the highlighter draws, the ground is seen, all but where it still draws earlier strokes itself: those the
+    /// wash shows. Laying the ground afresh after each stroke instead costs the next stroke if it comes quickly.
+    func unveil() {
+        guard let ground, let veil = ground.layer.mask, !(veil is CAShapeLayer) else { return }
+        let strokes = ground.drawing.strokes, scale = ground.zoomScale
+        if covered?.count != strokes.count {
+            covered = (count: strokes.count, patches: [])
+            seen = nil
+            for stroke in strokes where draws(stroke) { cover(stroke) }
+        }
+        guard let patches = covered?.patches, !patches.isEmpty else { return ground.layer.mask = nil }
+        if seen?.scale != scale {
+            let path = CGMutablePath(), toCanvas = CGAffineTransform(scaleX: scale, y: scale)
+            path.addRect(CGRect(origin: .zero, size: ground.contentSize).insetBy(dx: -4096, dy: -4096))
+            for patch in patches { path.addPath(patch.path, transform: toCanvas) }
+            seen = (scale, path)
+        }
+        let mask = CAShapeLayer()
+        mask.path = seen?.path
+        mask.fillRule = .evenOdd
+        ground.layer.mask = mask
+    }
+
+    /// Adds a stroke the ground draws itself to what is covered: its mark's outline and two points round it, where
+    /// PencilKit's softer edge of the same stroke falls. It is joined only to the patches it touches, so a long run
+    /// of highlights costs little more a stroke at its end than at its start.
+    private func cover(_ stroke: PKStroke) {
+        guard let outline = wash?.outline(of: stroke) else { return }
+        var path = outline.union(outline.copy(strokingWithWidth: 4, lineCap: .round, lineJoin: .round, miterLimit: 2))
+        var box = path.boundingBoxOfPath, apart: [(box: CGRect, path: CGPath)] = []
+        for patch in covered?.patches ?? [] {
+            if patch.box.intersects(box), patch.path.intersects(path) {
+                path = path.union(patch.path)
+                box = box.union(patch.box)
+            } else {
+                apart.append(patch)
+            }
+        }
+        if apart.count == covered?.patches.count, let scale = seen?.scale {
+            seen?.path.addPath(path, transform: CGAffineTransform(scaleX: scale, y: scale))
+        } else {
+            seen = nil
+        }
+        covered?.patches = apart + [(box, path)]
+    }
+
+    /// PencilKit keeps the picture of a stroke it knows, so the ground is emptied before it is given strokes whose
+    /// ink went from seen to unseen, or back.
+    private func layAfresh(_ strokes: [PKStroke]) {
+        guard let ground else { return }
+        isLaying = true
+        ground.drawing = PKDrawing()
+        ground.drawing = PKDrawing(strokes: strokes)
+        isLaying = false
+    }
+
+    /// PencilKit changed the ground: the highlighter's stroke landed, or an eraser lifted. The wash takes the stroke
+    /// in the same frame as the ground stops being seen. The ground keeps it in its own ink until ink is next laid.
+    private func land() {
+        guard let ground else { return }
+        rubbed = nil
+        let strokes = ground.drawing.strokes
+        // One stroke more, and the highlighter's: the rest of the page is not gone through again.
+        let one = lay == .apart && ground.tool is PKInkingTool && covered?.count == strokes.count - 1 && wash?.isWorking == false
+        let drawn = one ? strokes.last.flatMap { draws($0) ? $0 : nil } : nil
+        // In one transaction, or a frame could show the stroke twice.
+        CATransaction.withoutActions {
+            if let drawn, let wash { wash.add(drawn) } else { layWash(ink.strokes) }
+            veilAtRest()
+        }
+        if let drawn {
+            cover(drawn)
+            covered?.count = strokes.count
+        } else if lay == .under, strokes.contains(where: draws) {
+            // The ground is in sight with an eraser in hand, so a highlight it has been given back is hidden at once.
+            layAfresh(strokes.map { draws($0) ? UnseenInk.hidden($0) : $0 })
+            covered = (count: strokes.count, patches: [])
+            seen = nil
+        } else {
+            covered = nil
+            seen = nil
+        }
+    }
+
+    private func turnEven() {
+        guard let ground else { return }
+        turning = nil
+        let ink = ink
+        guard ground.drawing.strokes.contains(where: { $0.ink.inkType == .marker }) else { return put(ink, handingOver: false) }
+        if evens {
+            turning = .on
+            guard let wash = wash ?? makeWash() else { return finishTurningOn() }
+            wash.isHidden = true
+            wash.show(ink.strokes) { [weak self] in self?.finishTurningOn() }
+        } else {
+            turning = .off
+            put(ink, handingOver: false)
+            layAfresh(ground.drawing.strokes)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in self?.finishTurningOff() }
+        }
+    }
+
+    private func finishTurningOn() {
+        guard turning == .on, let ground else { return }
+        turning = nil
+        put(ink, handingOver: false)
+        layAfresh(ground.drawing.strokes)
+    }
+
+    private func finishTurningOff() {
+        guard turning == .off else { return }
+        turning = nil
+        CATransaction.withoutActions {
+            if !hides { clearWash() }
+            veilAtRest()
+        }
+    }
+
+    /// The highlighter draws on the ground in sight, and an eraser's way over it is mirrored on the wash.
+    @objc private func groundTouched(_ recognizer: UIGestureRecognizer) {
+        guard let ground, hides else { return }
+        let at = recognizer.location(in: ground), scale = max(ground.zoomScale, 0.01)
+        let point = CGPoint(x: at.x / scale, y: at.y / scale)
+        let eraser = ground.tool as? PKEraserTool
+        switch recognizer.state {
+        case .began, .changed:
+            if eraser == nil { unveil() }
+            guard let eraser else { break }
+            // The touch's way since it landed: this recogniser begins some way into a rub.
+            var way = trail.take(near: at).map { CGPoint(x: $0.x / scale, y: $0.y / scale) }
+            if way.isEmpty { way = [point] }
+            var from = rubbed ?? way[0]
+            for next in way {
+                wash?.rub(from: from, to: next, width: eraser.eraserType == .vector ? nil : eraser.width / scale)
+                from = next
+            }
+            rubbed = from
+        case .ended:
+            // PencilKit says what changed in a moment. If nothing did, the wash goes back to what is on the page.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in self?.rest() }
+        default:
+            rest()
+        }
+    }
+
+    /// Nothing is being drawn or rubbed out: the wash shows what the page holds, and the ground nothing.
+    private func rest() {
+        guard let ground, ground.drawingGestureRecognizer.state == .possible else { return }
+        CATransaction.withoutActions {
+            if rubbed != nil, hides { layWash(ink.strokes) }
+            veilAtRest()
+        }
+        rubbed = nil
     }
 
     /// PencilKit draws its tiles again only when the strokes change, so the canvas is emptied and given them back.
@@ -229,7 +481,7 @@ final class PageCanvasView: PKCanvasView {
         let blank = tileLayers(in: self).filter { $0.contents == nil && !$0.isHidden }.map { $0.convert($0.bounds, to: layer) }
         let scale = zoomScale, ink = drawing
         guard !blank.isEmpty, blank.contains(where: { $0.intersects(ink.bounds.scaled(by: scale)) }) else { return false }
-        for stroke in ink.strokes {
+        for stroke in ink.strokes where !UnseenInk.isUnseen(stroke) {
             let near = blank.filter { $0.intersects(stroke.renderBounds.scaled(by: scale)) }
             guard !near.isEmpty else { continue }
             for point in stroke.path.interpolatedPoints(by: .distance(4)) {
@@ -440,7 +692,7 @@ final class PageSlotView: UIView {
             if item.isOverInk {
                 continue
             } else if let canvas, canvas.superview === self {
-                insertSubview(view, belowSubview: canvas.ground ?? canvas)
+                insertSubview(view, belowSubview: canvas.lowest)
             } else {
                 addSubview(view)
             }

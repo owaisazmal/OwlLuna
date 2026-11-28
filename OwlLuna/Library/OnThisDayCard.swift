@@ -11,6 +11,7 @@ struct OnThisDayCard: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var image: UIImage?
     @PaperNight private var night
+    @AppStorage(SettingsKey.evenHighlights) private var evenHighlights = false
 
     private var record: NotebookRecord { memory.record }
     private var notebookTitle: String { record.title.orUntitled }
@@ -65,7 +66,7 @@ struct OnThisDayCard: View {
             Button(action: onHide) { Label("Hide for Today", systemImage: "eye.slash") }
             Button(action: onTurnOff) { Label("Turn Off On This Day", systemImage: "clock.badge.xmark") }
         }
-        .task(id: "\(memory.page?.thumbnailKey ?? "")|\(night)") { await loadImage() }
+        .task(id: "\(memory.page?.thumbnailKey ?? "")|\(night)|\(evenHighlights)") { await loadImage() }
     }
 
     @ViewBuilder
@@ -84,7 +85,8 @@ struct OnThisDayCard: View {
 
     private func loadImage() async {
         guard let page = memory.page else { return }
-        let loaded = await PageThumbnailer.thumbnail(package: NotebookPackage(root: store.root, id: record.id), page: page, night: night)
+        let loaded = await PageThumbnailer.thumbnail(package: NotebookPackage(root: store.root, id: record.id), page: page, night: night,
+                                                         even: evenHighlights)
         guard !Task.isCancelled, let loaded else { return }
         withAnimation(Motion.adaptive(Motion.quick, reduceMotion: reduceMotion)) { image = loaded }
     }

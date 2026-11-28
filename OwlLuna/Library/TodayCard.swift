@@ -170,6 +170,7 @@ struct TodayCard: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var image: UIImage?
     @PaperNight private var night
+    @AppStorage(SettingsKey.evenHighlights) private var evenHighlights = false
 
     private var title: String { record.title.orUntitled }
     private var todayIndex: Int? { manifest?.pages.lastIndex { $0.day == today } }
@@ -216,14 +217,14 @@ struct TodayCard: View {
         .accessibilityHint(Text("Opens the notebook at today's page"))
         .accessibilityAddTraits(.isButton)
         .accessibilityIdentifier("desk.today")
-        .task(id: "\(preview?.id.uuidString ?? "")|\(preview?.thumbnailKey ?? "")|\(record.isLocked)|\(night)") { await loadImage(preview) }
+        .task(id: "\(preview?.id.uuidString ?? "")|\(preview?.thumbnailKey ?? "")|\(record.isLocked)|\(night)|\(evenHighlights)") { await loadImage(preview) }
     }
 
     private func loadImage(_ page: NotebookPage?) async {
         guard let page else { return }
         let loaded = todayIndex == nil || record.isLocked
             ? await BlankPages.image(page, night: night)
-            : await PageThumbnailer.thumbnail(package: NotebookPackage(root: store.root, id: record.id), page: page, night: night)
+            : await PageThumbnailer.thumbnail(package: NotebookPackage(root: store.root, id: record.id), page: page, night: night, even: evenHighlights)
         guard !Task.isCancelled, let loaded else { return }
         withAnimation(Motion.adaptive(Motion.quick, reduceMotion: reduceMotion)) { image = loaded }
     }
@@ -412,10 +413,10 @@ enum BlankPages {
     private static let images = LRUCache<PageThumbnailer.SharedUIImage>(capacity: 8)
 
     static func image(_ page: NotebookPage, night: Bool = false) async -> UIImage? {
-        let key = PageThumbnailer.key(for: page, night: night) + page.appearanceKey
+        let key = PageThumbnailer.key(for: page, night: night, even: false) + page.appearanceKey
         if let hit = images.value(key, create: { nil }) { return hit.image }
         let image = await Task.detached(priority: .utility) {
-            PageThumbnailer.render(page: page, ink: PKDrawing(), assets: FileManager.default.temporaryDirectory, night: night)
+            PageThumbnailer.render(page: page, ink: PKDrawing(), assets: FileManager.default.temporaryDirectory, night: night, even: false)
         }.value
         return images.value(key) { PageThumbnailer.SharedUIImage(image: image) }?.image
     }

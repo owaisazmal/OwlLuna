@@ -236,6 +236,7 @@ private struct ProofThumb: View {
     let number: Int
     let chosen: Bool
     @PaperNight private var night
+    @AppStorage(SettingsKey.evenHighlights) private var evenHighlights = false
     @State private var image: UIImage?
 
     var body: some View {
@@ -253,11 +254,11 @@ private struct ProofThumb: View {
                 .font(.caption2.weight(chosen ? .semibold : .regular).monospacedDigit())
                 .foregroundStyle(chosen ? Color.ink : Color.textSecondary)
         }
-        .task(id: "\(page.id)-\(page.inkHash ?? "")-\(page.appearanceKey)-\(night)") {
+        .task(id: "\(page.id)-\(page.inkHash ?? "")-\(page.appearanceKey)-\(night)-\(evenHighlights)") {
             if let document = DocumentRegistry.shared.document(for: package.id) {
                 image = await document.thumbnail(for: page, night: night)
             } else {
-                image = await PageThumbnailer.thumbnail(package: package, page: page, night: night)
+                image = await PageThumbnailer.thumbnail(package: package, page: page, night: night, even: evenHighlights)
             }
         }
     }

@@ -13655,6 +13655,28 @@
         }
       }
     },
+    "Even Colour" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gleichmäßige Farbe"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Color uniforme"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleur uniforme"
+          }
+        }
+      }
+    },
     "Every card has been through your hands today." : {
       "localizations" : {
         "de" : {
@@ -16163,6 +16185,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Surligneur uniquement"
+          }
+        }
+      }
+    },
+    "Highlights don't get darker where they cross." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markierungen werden nicht dunkler, wo sie sich kreuzen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los resaltados no se oscurecen donde se cruzan."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les surlignages ne foncent pas là où ils se croisent."
           }
         }
       }

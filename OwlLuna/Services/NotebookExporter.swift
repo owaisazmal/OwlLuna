@@ -18,6 +18,8 @@ enum NotebookExporter {
         var quality = Quality.sharper
         var searchable = true
         var markdown = false
+        /// Highlights as flat shapes that keep one strength where they cross, as the setting was when the export began.
+        var evenHighlights = EvenHighlights.isOn
 
         /// Pixels a point for the inks with a grain and the highlighter.
         var inkScale: CGFloat { quality == .sharper ? 3 : 1.5 }
@@ -142,7 +144,7 @@ enum NotebookExporter {
     static func inkStyle(for page: NotebookPage, options: Options) -> InkVectors.Style {
         let dark = options.paper && page.effectivePaperColor.isDark
         return InkVectors.Style(appearance: options.paper ? page.effectivePaperColor.inkAppearance : .light, multipliesHighlighter: !dark,
-                                pictureScale: options.inkScale)
+                                pictureScale: options.inkScale, evenHighlights: options.evenHighlights)
     }
 
     /// Under the file system's 255 bytes for a name, with room for the " 2" a copy saved beside it is given.
@@ -189,7 +191,7 @@ enum NotebookExporter {
                 let data = autoreleasepool {
                     let page = Whiteboard.whole(page, ink: ink)
                     return PageRenderer.image(of: page, ink: ink, assets: assets, width: page.size.width, scale: Whiteboard.scale(for: page.size, wanted: 2), links: links,
-                                              paper: options.paper).pngData()
+                                              paper: options.paper, evenHighlights: options.evenHighlights).pngData()
                 }
                 guard let data else { throw ImportError.unreadable }
                 try data.write(to: url, options: .atomic)

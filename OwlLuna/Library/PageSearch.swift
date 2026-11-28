@@ -165,6 +165,7 @@ private struct PageHitCard: View {
     @Environment(LibraryStore.self) private var store
     @State private var image: UIImage?
     @PaperNight private var night
+    @AppStorage(SettingsKey.evenHighlights) private var evenHighlights = false
 
     var body: some View {
         Button(action: action) {
@@ -202,8 +203,9 @@ private struct PageHitCard: View {
         .hoverEffect(.lift)
         .accessibilityElement(children: .ignore)
         .accessibilityAddTraits(.isButton)
-        .task(id: "\(hit.page.thumbnailKey)-\(night)") {
-            image = await PageThumbnailer.thumbnail(package: NotebookPackage(root: store.root, id: hit.notebookID), page: hit.page, night: night)
+        .task(id: "\(hit.page.thumbnailKey)-\(night)-\(evenHighlights)") {
+            image = await PageThumbnailer.thumbnail(package: NotebookPackage(root: store.root, id: hit.notebookID), page: hit.page, night: night,
+                                                  even: evenHighlights)
         }
     }
 }

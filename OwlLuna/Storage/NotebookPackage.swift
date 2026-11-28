@@ -426,9 +426,7 @@ actor NotebookPackage {
     /// rebuilt, since the files may be all that's left of what the damaged copy listed.
     func collectGarbage(keeping manifest: NotebookManifest) {
         let fileManager = FileManager.default
-        let currentThumbs = Set(manifest.pages.flatMap { page in
-            [page.thumbnailKey, page.thumbnailKey + PageThumbnailer.nightSuffix].map { thumbURL(page.id, key: $0).lastPathComponent }
-        })
+        let currentThumbs = Set(manifest.pages.flatMap { page in PageThumbnailer.keys(for: page).map { thumbURL(page.id, key: $0).lastPathComponent } })
         for file in (try? fileManager.contentsOfDirectory(at: thumbsDirectory, includingPropertiesForKeys: nil)) ?? []
         where !currentThumbs.contains(file.lastPathComponent) {
             try? fileManager.removeItem(at: file)

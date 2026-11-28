@@ -383,6 +383,7 @@ private struct CalendarPageCard: View {
     @Environment(LibraryStore.self) private var store
     @State private var image: UIImage?
     @PaperNight private var night
+    @AppStorage(SettingsKey.evenHighlights) private var evenHighlights = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.x2) {
@@ -411,9 +412,10 @@ private struct CalendarPageCard: View {
                 .accessibilityHidden(true)
                 .onTapGesture(perform: action)
         }
-        .task(id: "\(entry.page.thumbnailKey)|\(isLocked)|\(night)") {
+        .task(id: "\(entry.page.thumbnailKey)|\(isLocked)|\(night)|\(evenHighlights)") {
             guard !isLocked else { return image = nil }
-            let loaded = await PageThumbnailer.thumbnail(package: NotebookPackage(root: store.root, id: notebookID), page: entry.page, night: night)
+            let loaded = await PageThumbnailer.thumbnail(package: NotebookPackage(root: store.root, id: notebookID), page: entry.page, night: night,
+                                                              even: evenHighlights)
             withAnimation(Motion.quick) { image = loaded }
         }
     }

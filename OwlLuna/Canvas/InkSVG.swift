@@ -3,16 +3,58 @@ import PencilKit
 
 /// Ink as SVG shapes, one for each stroke in the order written, so another app can take the lines apart.
 enum InkSVG {
-    /// `rect` of the drawing placed to fill `size`, as one `<g id="ink">`. Every id inside it begins with "ink".
+    /// `rect` of the drawing placed to fill `size`, as one `<g id="ink">`. Every id inside it begins with "ink". With even
+    /// highlights they come first, in a group of their own under the other ink.
     static func group(_ drawing: PKDrawing, from rect: CGRect, size: CGSize, style: InkVectors.Style = InkVectors.Style()) -> String {
         let toPage = InkVectors.toPage(from: rect, size: size)
-        var out = "<g id=\"ink\">", count = 0
+        var out = "", count = 0, highlights: [(number: Int, stroke: PKStroke)] = []
         for stroke in drawing.strokes where stroke.renderBounds.intersects(rect) {
             count += 1
+            if style.evenHighlights, stroke.ink.inkType == .marker {
+                highlights.append((count, stroke))
+                continue
+            }
             out += "\n"
             out += element(for: stroke, number: count, toPage: toPage, style: style)
         }
-        return count == 0 ? "<g id=\"ink\"/>" : out + "\n</g>"
+        if !highlights.isEmpty { out = "\n" + evenHighlights(highlights, toPage: toPage, style: style) + out }
+        return count == 0 ? "<g id=\"ink\"/>" : "<g id=\"ink\">" + out + "\n</g>"
+    }
+
+    /// Each highlight as a flat shape of its own, all in one group. On light paper the group has the strongest one's opacity
+    /// and each shape a colour that comes to its own strength through it, so a reader without blend modes still shows the
+    /// page through them. On dark paper each of `EvenHighlights.layers` is a group at its strength, in the ink's own colour.
+    private static func evenHighlights(_ strokes: [(number: Int, stroke: PKStroke)], toPage: CGAffineTransform, style: InkVectors.Style) -> String {
+        let laid = strokes.map { number, stroke in
+            (number: number, strength: EvenHighlights.strength(of: stroke), color: InkVectors.placement(of: stroke, toPage: toPage, appearance: style.appearance).color,
+             outline: EvenHighlights.outline(of: stroke, at: InkVectors.placement(of: stroke, toPage: toPage, appearance: .light)))
+        }
+        func shape(_ number: Int, _ outline: CGPath, _ hex: String) -> String {
+            "\n<path id=\"ink-\(number)\" data-ink=\"highlighter\" fill=\"\(hex)\" fill-rule=\"nonzero\" d=\"\(SVGText.path(outline))\"/>"
+        }
+        let empty = laid.filter { $0.outline == nil || $0.strength <= 0 }.map { "\n<g id=\"ink-\($0.number)\" data-ink=\"highlighter\"/>" }.joined()
+        let shown = laid.filter { $0.outline != nil && $0.strength > 0 }
+        if style.highlightsOnDark {
+            let marks = shown.map { EvenHighlights.Mark(outline: $0.outline ?? CGMutablePath(), color: $0.color.cgColor, opacity: $0.strength) }
+            var out = "<g id=\"ink-highlights\">" + empty
+            for layer in EvenHighlights.layers(of: marks) {
+                out += "\n<g opacity=\"\(SVGText.number(layer.opacity))\">"
+                for index in layer.marks { out += shape(shown[index].number, marks[index].outline, SVGText.color(shown[index].color).hex) }
+                out += "\n</g>"
+            }
+            return out + "\n</g>"
+        }
+        let strongest = ((shown.map(\.strength).max() ?? 0) * 100).rounded(.up) / 100
+        var out = "<g id=\"ink-highlights\" opacity=\"\(SVGText.number(strongest))\" style=\"mix-blend-mode:multiply\">" + empty
+        for mark in shown {
+            guard let outline = mark.outline else { continue }
+            var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0
+            mark.color.getRed(&red, green: &green, blue: &blue, alpha: nil)
+            let share = mark.strength / strongest
+            func through(_ part: CGFloat) -> CGFloat { 1 - share * (1 - min(max(part, 0), 1)) }
+            out += shape(mark.number, outline, SVGText.color(UIColor(red: through(red), green: through(green), blue: through(blue), alpha: 1)).hex)
+        }
+        return out + "\n</g>"
     }
 
     /// One stroke as a `<path>`, or as a `<g>` where it takes lines of several widths or is clipped.

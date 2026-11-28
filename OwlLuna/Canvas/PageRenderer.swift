@@ -144,16 +144,17 @@ enum PageRenderer {
 
     /// Renders a page (background plus ink clipped to the page) to an image `width` points wide. Thread-safe.
     /// A whiteboard is drawn as the part of it that has something on it.
-    /// Without `paper` the picture is clear where the page has nothing on it.
+    /// Without `paper` the picture is clear where the page has nothing on it. Without the background it keeps PencilKit's highlights.
     static func image(of page: NotebookPage, ink: PKDrawing, assets: URL, width: CGFloat, scale: CGFloat = 1,
-                      includeBackground: Bool = true, links: LinkTitles? = nil, lifted: Set<UUID> = [], night: Bool = false, paper: Bool = true) -> UIImage {
+                      includeBackground: Bool = true, links: LinkTitles? = nil, lifted: Set<UUID> = [], night: Bool = false, paper: Bool = true,
+                      evenHighlights: Bool = EvenHighlights.isOn) -> UIImage {
         let page = Whiteboard.whole(page, ink: ink)
         let factor = width / max(page.size.width, 1)
         let size = CGSize(width: width, height: (page.size.height * factor).rounded())
         let format = UIGraphicsImageRendererFormat(scale: scale, opaque: paper || !includeBackground)
         let onPaper = includeBackground && paper
         let appearance = UITraitCollection(userInterfaceStyle: onPaper ? page.inkAppearance(night: night) : .light)
-        let runs = inkRuns(ink, within: page.inkRect, multiplying: !(onPaper && page.isDark(night: night)))
+        let onDark = onPaper && page.isDark(night: night)
         return UIGraphicsImageRenderer(size: size, format: format).image { context in
             if includeBackground {
                 drawBackground(page, assets: assets, in: context.cgContext, size: size, links: links, night: night, paper: paper)
@@ -161,21 +162,43 @@ enum PageRenderer {
                 UIColor.white.setFill()
                 context.fill(CGRect(origin: .zero, size: size))
             }
-            for run in runs {
-                autoreleasepool {
-                    var picture: UIImage?
-                    appearance.performAsCurrent { picture = run.ink.image(from: page.inkRect, scale: factor * scale) }
-                    picture?.draw(in: CGRect(origin: .zero, size: size), blendMode: run.multiplies ? .multiply : .normal, alpha: 1)
-                }
-            }
+            drawInk(ink, within: page.inkRect, in: context.cgContext, size: size, scale: scale, appearance: appearance, onDark: onDark,
+                    even: evenHighlights && includeBackground, seeThrough: includeBackground && !paper)
             if includeBackground { drawOverInk(page, assets: assets, in: context.cgContext, size: size, lifted: lifted) }
         }
     }
 
+    /// Lays `rect` of the ink over what a context running down the page holds, filling `size` of it, `scale` pixels a point.
+    /// With `even` the highlights go first as flat layers and the rest of the ink over them. `seeThrough`, for a picture
+    /// without paper, multiplies them in as their ink at their strength, so what the picture is laid on still shows through.
+    static func drawInk(_ ink: PKDrawing, within rect: CGRect, in ctx: CGContext, size: CGSize, scale: CGFloat, appearance: UITraitCollection,
+                        onDark: Bool, even: Bool, seeThrough: Bool = false) {
+        let factor = size.width / max(rect.width, 1)
+        if even {
+            let shown = ink.strokes.filter { $0.ink.inkType == .marker && $0.renderBounds.intersects(rect) }
+            EvenHighlights.draw(EvenHighlights.marks(of: shown, toPage: InkVectors.toPage(from: rect, size: size), onDark: onDark || seeThrough,
+                                                     appearance: appearance.userInterfaceStyle), in: ctx, onDark: onDark)
+        }
+        for run in inkRuns(ink, within: rect, multiplying: !onDark, leavingOutHighlights: even) {
+            autoreleasepool {
+                var picture: UIImage?
+                appearance.performAsCurrent { picture = run.ink.image(from: rect, scale: factor * scale) }
+                UIGraphicsPushContext(ctx)
+                picture?.draw(in: CGRect(origin: .zero, size: size), blendMode: run.multiplies ? .multiply : .normal, alpha: 1)
+                UIGraphicsPopContext()
+            }
+        }
+    }
+
     /// The ink as one picture, or cut where the highlighter starts and stops so it can be multiplied over what is under it.
-    static func inkRuns(_ ink: PKDrawing, within rect: CGRect, multiplying: Bool) -> [(ink: PKDrawing, multiplies: Bool)] {
+    /// `leavingOutHighlights` gives the rest of the ink as one picture.
+    static func inkRuns(_ ink: PKDrawing, within rect: CGRect, multiplying: Bool, leavingOutHighlights: Bool = false) -> [(ink: PKDrawing, multiplies: Bool)] {
         let strokes = ink.strokes
         guard !strokes.isEmpty else { return [] }
+        if leavingOutHighlights {
+            let rest = strokes.filter { $0.ink.inkType != .marker }
+            return rest.isEmpty ? [] : [(rest.count == strokes.count ? ink : PKDrawing(strokes: rest), false)]
+        }
         guard multiplying, strokes.contains(where: { $0.ink.inkType == .marker }) else { return [(ink, false)] }
         var runs: [(strokes: [PKStroke], multiplies: Bool)] = []
         for stroke in strokes where stroke.renderBounds.intersects(rect) {

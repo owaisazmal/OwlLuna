@@ -89,7 +89,8 @@ enum InkTimelapse {
         return PKStroke(ink: stroke.ink, path: path, transform: stroke.transform, mask: stroke.mask, randomSeed: stroke.randomSeed)
     }
 
-    static func export(_ input: NotebookExporter.Input, progress: @escaping @Sendable (Double) async -> Void) async throws -> URL {
+    static func export(_ input: NotebookExporter.Input, evenHighlights: Bool = EvenHighlights.isOn,
+                       progress: @escaping @Sendable (Double) async -> Void) async throws -> URL {
         guard let page = input.pages.first else { throw Failure.noInk }
         let ink = input.ink(for: page)
         let plan = Plan(drawing: ink)
@@ -97,12 +98,13 @@ enum InkTimelapse {
 
         return try await ExportFolder.make(.export) { directory in
             let url = directory.appending(path: NotebookExporter.fileName(input.title, extension: "mp4"))
-            try await film(page, ink: ink, plan: plan, assets: input.package.assetsDirectory, links: LinkTitles(pages: input.allPages), to: url, progress: progress)
+            try await film(page, ink: ink, plan: plan, assets: input.package.assetsDirectory, links: LinkTitles(pages: input.allPages), even: evenHighlights,
+                           to: url, progress: progress)
             return url
         }
     }
 
-    private static func film(_ page: NotebookPage, ink: PKDrawing, plan: Plan, assets: URL, links: LinkTitles, to url: URL,
+    private static func film(_ page: NotebookPage, ink: PKDrawing, plan: Plan, assets: URL, links: LinkTitles, even: Bool, to url: URL,
                              progress: @escaping @Sendable (Double) async -> Void) async throws {
         let page = Whiteboard.whole(page, ink: ink)
         let (width, height) = frameSize(for: page.size)
@@ -163,6 +165,28 @@ enum InkTimelapse {
             context.setBlendMode(.normal)
         }
 
+        // With even highlights the finished ones are kept as marks and laid on the paper under a layer of the rest of the ink.
+        var laid: [EvenHighlights.Mark] = []
+        let written = even ? CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: space, bitmapInfo: bitmap) : nil
+        let toFrame = InkVectors.toPage(from: pageRect, size: size)
+        func marks(of stroke: PKStroke) -> [EvenHighlights.Mark] {
+            EvenHighlights.marks(of: [stroke], toPage: toFrame, onDark: onDark, appearance: appearance.userInterfaceStyle)
+        }
+        func lay(_ marks: [EvenHighlights.Mark], on context: CGContext) {
+            context.saveGState()
+            context.translateBy(x: 0, y: size.height)
+            context.scaleBy(x: 1, y: -1)
+            EvenHighlights.draw(marks, in: context, onDark: onDark)
+            context.restoreGState()
+        }
+        func gather() {
+            guard let written else { return }
+            base.clear(whole)
+            if let image = paper.cgImage { base.draw(image, in: whole) }
+            lay(laid, on: base)
+            if let ink = written.makeImage() { base.draw(ink, in: whole) }
+        }
+
         var baseImage = base.makeImage()
         var finished = 0
         let total = plan.frameCount, holdFrames = Int(hold * Double(framesPerSecond)), frames = total + holdFrames
@@ -172,27 +196,41 @@ enum InkTimelapse {
             for frame in 0..<frames {
                 try Task.checkCancellation()
                 while !video.isReadyForMoreMediaData { try await Task.sleep(for: .milliseconds(4)) }
-                var partial: (image: CGImage, rect: CGRect, multiplies: Bool)?
+                var partial: (image: CGImage, rect: CGRect, multiplies: Bool)?, drawing: PKStroke?
                 if frame < total {
                     let state = plan.state(at: Double(frame) / Double(framesPerSecond))
                     if state.finished > finished {
                         for span in plan.spans[finished..<state.finished] {
-                            autoreleasepool { if let done = picture(of: strokes[span.stroke]) { paint(done, on: base) } }
+                            let stroke = strokes[span.stroke]
+                            if even, stroke.ink.inkType == .marker {
+                                laid += marks(of: stroke)
+                            } else {
+                                autoreleasepool { if let done = picture(of: stroke) { paint(done, on: written ?? base) } }
+                            }
                         }
                         finished = state.finished
+                        gather()
                         baseImage = base.makeImage()
                     }
                     if state.finished < plan.spans.count, let stroke = Self.partial(strokes[plan.spans[state.finished].stroke], fraction: state.partial) {
-                        partial = autoreleasepool { picture(of: stroke) }
+                        if even, stroke.ink.inkType == .marker { drawing = stroke } else { partial = autoreleasepool { picture(of: stroke) } }
                     }
                 } else if frame == total {
                     // The finished page is drawn from the whole drawing, the way every other export draws it.
                     if let image = paper.cgImage { base.draw(image, in: whole) }
-                    for run in PageRenderer.inkRuns(ink, within: pageRect, multiplying: !onDark) {
-                        autoreleasepool {
-                            var page: UIImage?
-                            appearance.performAsCurrent { page = run.ink.image(from: pageRect, scale: scale) }
-                            if let image = page?.cgImage { paint((image, whole, run.multiplies), on: base) }
+                    if even {
+                        base.saveGState()
+                        base.translateBy(x: 0, y: size.height)
+                        base.scaleBy(x: 1, y: -1)
+                        PageRenderer.drawInk(ink, within: pageRect, in: base, size: size, scale: 1, appearance: appearance, onDark: onDark, even: true)
+                        base.restoreGState()
+                    } else {
+                        for run in PageRenderer.inkRuns(ink, within: pageRect, multiplying: !onDark) {
+                            autoreleasepool {
+                                var page: UIImage?
+                                appearance.performAsCurrent { page = run.ink.image(from: pageRect, scale: scale) }
+                                if let image = page?.cgImage { paint((image, whole, run.multiplies), on: base) }
+                            }
                         }
                     }
                     baseImage = base.makeImage()
@@ -206,6 +244,7 @@ enum InkTimelapse {
                 if let context = CGContext(data: CVPixelBufferGetBaseAddress(buffer), width: width, height: height, bitsPerComponent: 8,
                                            bytesPerRow: CVPixelBufferGetBytesPerRow(buffer), space: space, bitmapInfo: bitmap) {
                     if let baseImage { context.draw(baseImage, in: whole) }
+                    if let drawing { lay(marks(of: drawing), on: context) }
                     if let partial { paint(partial, on: context) }
                     if let tape { context.draw(tape, in: whole) }
                 }

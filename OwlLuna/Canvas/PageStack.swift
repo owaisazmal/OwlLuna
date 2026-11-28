@@ -52,6 +52,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
     private var slots: [UUID: PageSlotView] = [:]
     private var canvases: [UUID: PageCanvasView] = [:]
     private var pool: [PageCanvasView] = []
+    private var evensShown = EvenHighlights.isOn
     private var canvasWindow: ClosedRange<Int>?
     /// Whether light paper is being shown dark.
     private var night = false
@@ -897,7 +898,19 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             self?.updateNight()
             self?.zoomPanel?.isLeftHanded = UserDefaults.standard.bool(forKey: SettingsKey.leftHanded)
             self?.updateTopTap()
+            self?.updateEvenHighlights()
         }
+    }
+
+    /// Even Colour was switched: every canvas changes over at once, and no page counts as written on. The pictures of
+    /// whiteboards on their cards and of the page on a second screen are drawn again.
+    private func updateEvenHighlights() {
+        let evens = EvenHighlights.isOn
+        guard evens != evensShown else { return }
+        evensShown = evens
+        for canvas in allCanvases + pool where canvas.evens != evens { applyingDrawing { canvas.evens = evens } }
+        for slot in slots.values where slot.card != nil { drawCard(in: slot) }
+        mirrorPresentation()
     }
 
     /// A tap aimed at the bar often lands on the status bar, so that tap scrolls to the first page only where Settings asks.
@@ -1001,6 +1014,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             canvas.maximumSupportedContentVersion = .latest
         }
         canvas.overrideUserInterfaceStyle = .light
+        canvas.evens = EvenHighlights.isOn
         canvas.drawingPolicy = effectivePolicy
         canvas.isAccessibilityElement = true
         canvas.accessibilityTraits = .allowsDirectInteraction
@@ -1015,6 +1029,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
 
     private func attachCanvas(_ page: NotebookPage, to slot: PageSlotView) {
         let canvas = pool.popLast() ?? makeCanvas()
+        canvas.evens = EvenHighlights.isOn
         syncTool(canvas)
         canvas.pageID = page.id
         canvas.overrideUserInterfaceStyle = page.inkAppearance(night: night)
@@ -2259,12 +2274,12 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
         let width = min(max(slot.bounds.width, 320), 1100), scale = max(traitCollection.displayScale, 1), night = slot.night
         Task { [weak self, weak card] in
             guard let self else { return }
-            let ink = await document.ink(id)
-            let key = "\(page.appearanceKey)-\(NotebookFind.fingerprint(ink))"
+            let ink = await document.ink(id), even = EvenHighlights.isOn
+            let key = "\(page.appearanceKey)-\(NotebookFind.fingerprint(ink))-\(even)"
             guard let card, card.shownKey != key else { return }
             card.shownKey = key
             let image = await Task.detached(priority: .userInitiated) {
-                PageRenderer.image(of: page, ink: ink, assets: assets, width: width, scale: scale, links: titles, night: night)
+                PageRenderer.image(of: page, ink: ink, assets: assets, width: width, scale: scale, links: titles, night: night, evenHighlights: even)
             }.value
             if card.shownKey == key { card.image = image }
         }
@@ -2768,8 +2783,9 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             let bounds = picked.bounds.insetBy(dx: -2, dy: -2)
             guard !bounds.isNull, !bounds.isEmpty else { continue }
             var image: UIImage?
-            UITraitCollection(userInterfaceStyle: page.inkAppearance(night: night)).performAsCurrent {
-                image = picked.image(from: bounds, scale: min(screen * bakedScale, 6))
+            let appearance = page.inkAppearance(night: night)
+            UITraitCollection(userInterfaceStyle: appearance).performAsCurrent {
+                image = Self.picture(of: picked, in: bounds, scale: min(screen * bakedScale, 6), appearance: appearance)
             }
             if let image { images.append((image, bounds.offsetBy(dx: frame.minX, dy: frame.minY))) }
             if let canvas = canvases[id] {
@@ -2777,6 +2793,22 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             }
         }
         overlay.lift(images)
+    }
+
+    /// The picture of ink the lasso has lifted. Highlights kept even are laid as they are on the page, each over the
+    /// ones before it and all at their strength, with the rest of the ink over them.
+    static func picture(of ink: PKDrawing, in bounds: CGRect, scale: CGFloat, appearance: UIUserInterfaceStyle) -> UIImage {
+        let strokes = ink.strokes
+        guard EvenHighlights.isOn, strokes.contains(where: { $0.ink.inkType == .marker }) else { return ink.image(from: bounds, scale: scale) }
+        let marks = EvenHighlights.marks(of: strokes, onDark: true, appearance: appearance)
+        let rest = PKDrawing(strokes: strokes.filter { $0.ink.inkType != .marker })
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = scale
+        format.opaque = false
+        return UIGraphicsImageRenderer(bounds: bounds, format: format).image { context in
+            EvenHighlights.draw(marks, in: context.cgContext, onDark: true)
+            if !rest.strokes.isEmpty { rest.image(from: bounds, scale: scale).draw(in: bounds) }
+        }
     }
 
     private func restoreLiftedInk() {
@@ -3918,7 +3950,8 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             width: visible.width / frame.width, height: visible.height / frame.height), by: self)
         let lifted = session.liftedTapes
         let liftedKey = page.hasItems ? page.items.filter { lifted.contains($0.id) }.map(\.id.uuidString).joined() : ""
-        let key = "\(page.id)-\(page.thumbnailKey)-\(Int(pixels.width))x\(Int(pixels.height))-\(liftedKey)-\(page.inkRect)"
+        let even = EvenHighlights.isOn
+        let key = "\(page.id)-\(page.thumbnailKey)-\(Int(pixels.width))x\(Int(pixels.height))-\(liftedKey)-\(page.inkRect)-\(even)"
         guard key != mirrored else { return }
         mirrored = key
         let assets = document.package.assetsDirectory, titles = linkTitles
@@ -3927,7 +3960,7 @@ final class PageStackController: UIViewController, UIScrollViewDelegate, PKCanva
             guard let self else { return }
             let ink = await self.document.ink(page.id)
             let image = await Task.detached(priority: .userInitiated) {
-                PageRenderer.image(of: page, ink: ink, assets: assets, width: width, links: titles, lifted: lifted)
+                PageRenderer.image(of: page, ink: ink, assets: assets, width: width, links: titles, lifted: lifted, evenHighlights: even)
             }.value
             guard self.mirrored == key else { return }
             ExternalDisplay.shared.show(image, pageSize: page.size, by: self)

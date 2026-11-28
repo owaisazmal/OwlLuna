@@ -9,13 +9,14 @@ struct RecordCover: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.displayScale) private var displayScale
+    @AppStorage(SettingsKey.evenHighlights) private var evenHighlights = false
 
     var body: some View {
         let root = store.root
-        let id = record.id
-        CoverView(request: record.coverRequest(width: width, scale: displayScale, colorScheme: colorScheme, contrast: contrast, root: root),
+        let id = record.id, even = evenHighlights
+        CoverView(request: record.coverRequest(width: width, scale: displayScale, colorScheme: colorScheme, contrast: contrast, root: root, even: even),
                   showsShadow: showsShadow, isObscured: record.isLocked) {
-            await PageThumbnailer.ensureFirstPage(root: root, notebookID: id)
+            await PageThumbnailer.ensureFirstPage(root: root, notebookID: id, even: even)
         }
     }
 }

@@ -2,7 +2,8 @@ import UIKit
 import PencilKit
 
 /// Ink as shapes, so a PDF of it is small and sharp at any zoom: the pen, fineliner and fountain pen as the outline their nib
-/// sweeps. Other inks go in as pictures in their place among the strokes, the highlighter multiplied in as the screen shows it.
+/// sweeps. Other inks go in as pictures in their place among the strokes, the highlighter multiplied in as the screen shows it,
+/// or with even highlights as flat shapes under all the other ink.
 enum InkVectors {
     struct Style: Sendable {
         /// Dark converts the colours as PencilKit does on dark paper.
@@ -10,6 +11,10 @@ enum InkVectors {
         var multipliesHighlighter = true
         /// How finely the inks drawn as pictures are drawn, in pixels a point.
         var pictureScale: CGFloat = 3
+        var evenHighlights = EvenHighlights.isOn
+
+        /// Highlights are lightened into paper the highlighter isn't multiplied into.
+        var highlightsOnDark: Bool { !multipliesHighlighter }
     }
 
     enum Nib { case round, oval }
@@ -30,12 +35,18 @@ enum InkVectors {
         ctx.saveGState()
         ctx.clip(to: CGRect(origin: .zero, size: size))
         var run: [PKStroke] = [], multiplies = false
+        let even = style.evenHighlights
+        if even {
+            let shown = drawing.strokes.filter { $0.ink.inkType == .marker && $0.renderBounds.intersects(rect) }
+            EvenHighlights.draw(EvenHighlights.marks(of: shown, toPage: toPage, onDark: style.highlightsOnDark, appearance: style.appearance), in: ctx,
+                                onDark: style.highlightsOnDark)
+        }
         func flush() {
             guard !run.isEmpty else { return }
             picture(of: run, within: rect, toPage: toPage, in: ctx, scale: style.pictureScale * factor, appearance: style.appearance, multiplies: multiplies)
             run.removeAll()
         }
-        for stroke in drawing.strokes where stroke.renderBounds.intersects(rect) {
+        for stroke in drawing.strokes where stroke.renderBounds.intersects(rect) && !(even && stroke.ink.inkType == .marker) {
             if let nib = nib(for: stroke) {
                 flush()
                 fill(stroke, nib: nib, toPage: toPage, in: ctx, appearance: style.appearance)

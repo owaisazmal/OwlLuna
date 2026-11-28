@@ -328,6 +328,7 @@ struct PageThumbnailCell: View {
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @PaperNight private var night
+    @AppStorage(SettingsKey.evenHighlights) private var evenHighlights = false
     @State private var image: UIImage?
     @State private var ribbonDropped = false
 
@@ -336,7 +337,7 @@ struct PageThumbnailCell: View {
             if dynamicTypeSize.isAccessibilitySize { row } else { tile }
         }
         .contentShape(Rectangle())
-        .task(id: "\(page.id)-\(page.inkHash ?? "")-\(page.appearanceKey)-\(night)") {
+        .task(id: "\(page.id)-\(page.inkHash ?? "")-\(page.appearanceKey)-\(night)-\(evenHighlights)") {
             image = await document.thumbnail(for: page, night: night)
         }
     }

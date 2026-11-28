@@ -9,6 +9,7 @@ struct PenOptions: View {
     let turned: Bool
     let remove: () -> Void
     @State private var mixing = false
+    @AppStorage(SettingsKey.evenHighlights) private var evenHighlights = false
     @Environment(\.dynamicTypeSize) private var textSize
     @Environment(\.colorScheme) private var scheme
 
@@ -61,9 +62,25 @@ struct PenOptions: View {
             WidthBar(measure: .opacity, travel: Binding(get: { (pen.opacity - faintest) / (1 - faintest) }, set: { travel in
                 toolbox.changePen(id) { $0.opacity = ((faintest + (1 - faintest) * travel) * 20).rounded() / 20 }
             }), ink: solid, paper: paper, night: night, turned: turned, value: pen.opacityName, identifier: "editor.tools.pen.opacity")
+            if ink == .marker { evenColour }
             place(pen)
         }
         .padding(Space.x4)
+    }
+
+    /// One setting for every highlighter: where highlights cross they keep their strength.
+    private var evenColour: some View {
+        Toggle(isOn: $evenHighlights) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Even Colour").foregroundStyle(Color.ink)
+                Text("Highlights don't get darker where they cross.")
+                    .font(.footnote)
+                    .foregroundStyle(Color.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .toggleStyle(.owlLuna)
+        .accessibilityIdentifier("editor.tools.pen.even")
     }
 
     /// Where the pen stands among the others, and the way off the tray.
